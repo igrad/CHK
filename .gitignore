@@ -1,0 +1,5 @@
+*.exe
+output.txt
+run.bat
+Concept*
+.git
