@@ -22,13 +22,6 @@ enum CORNER_TYPE {
 class Room {
    public:
       Room();
-      int X(int newVal = -1);
-      int Y(int newVal = -1);
-      int W(int newVal = -1);
-      int H(int newVal = -1);
-      int x2();
-      int y2();
-      void SetCenter();
       ~Room();
 
       int x;
@@ -41,7 +34,6 @@ class Room {
       int connections;
       int* connectedRooms;
       int maxConnections;
-      int* neighbors;
 };
 
 
@@ -49,6 +41,8 @@ class Room {
 class Level {
    public:
       Level();
+
+      void PrintRooms();
 
       int GenerateRandomRoomDim();
 

@@ -4,48 +4,22 @@ enum DIRECTION { NORTH, EAST, SOUTH, WEST };
 
 Room::Room() {
    x, y, w, h, cX, cY, connections, maxConnections = 0;
-   neighbors = new int[4];
+   rect = {0, 0, 0, 0};
    connectedRooms = new int[4];
-}
-
-int Room::X(int newVal) {
-   if (newVal != -1) { x = newVal; }
-   return x;
-}
-
-int Room::Y(int newVal) {
-   if (newVal != -1) { y = newVal; }
-   return y;
-}
-
-int Room::W(int newVal) {
-   if (newVal != -1) { w = newVal; }
-   return w;
-}
-
-int Room::H(int newVal) {
-   if (newVal != -1) { h = newVal; }
-   return h;
-}
-
-int Room::x2() {
-   return x + w;
-}
-
-int Room::y2() {
-   return y + h;
-}
-
-void Room::SetCenter() {
-   cX = (x + (x + w))/2;
-   cY = (y + (y + h))/2;
 }
 
 Room::~Room() {
    delete connectedRooms;
-   delete neighbors;
 }
 
+
+
+void Level::PrintRooms() {
+   printf("\nRoomcount: %i", roomCount);
+   for (int k = 0; k < roomCount; k++) {
+      printf("\nRoom #%i: {%i, %i, %i, %i}, connections: %i, maxConnections: %i", k, rooms[k].x, rooms[k].y, rooms[k].w, rooms[k].h, rooms[k].connections, rooms[k].maxConnections);
+   }
+}
 
 
 
@@ -135,7 +109,7 @@ bool Level::CheckNewRoom(SDL_Rect* room) {
 
 void Level::GenerateRandomRoom(int roomNum) {
    bool buildingRoom = true;
-   while(buildingRoom) {
+   while (buildingRoom) {
       // Use the generated coordinates to check if there is a room at that coordinate already, and if so, if there's
       int x = GenerateRandomCoord();
       int y = GenerateRandomCoord();
@@ -154,11 +128,16 @@ void Level::GenerateRandomRoom(int roomNum) {
                }
             }
 
-            rooms[roomNum].rect = room;
-            rooms[roomNum].x = x;
-            rooms[roomNum].y = y;
-            rooms[roomNum].w = w;
-            rooms[roomNum].h = h;
+            Room r;
+            r.rect = room;
+            r.x = x;
+            r.y = y;
+            r.w = w;
+            r.h = h;
+            r.connections = 0;
+            r.maxConnections = 0;
+            r.connectedRooms = new int[4];
+            rooms[roomNum] = r;
             buildingRoom = false;
             break;
          }
@@ -253,7 +232,7 @@ bool Level::DigCorridor(int a, int b) {
          yDist = abs(cY - cBY);
          int remainingDistance = (int) sqrt(pow(xDist, 2) + pow(yDist, 2));
 
-         int segmentLength = (rand() % 7) + 2;
+         int segmentLength = (rand() % 9) + 4;
          int dir = NORTH;
 
          if (xDist > yDist) {
@@ -340,40 +319,65 @@ bool Level::DigCorridor(int a, int b) {
 bool Level::GenerateCorridors() {
    Log("Entering generate corridors");
    int numCorridors = 0;
-   // Each room has 1-4 connections
-   // Go through each room and make a connection to another room. This ensures that each room generated can be reached. Then, go through a second time, and add more corridors until the max number of corridors has been reached
+   // Each room has 1-2 connections stemming from it.
+   // Go through each room and make a connection to another room. This ensures that
+   // each room generated can be reached. Then, go through a second and third time
+   // and add more corridors until the max number of corridors has been reached. If
+   // we don't reach the max number of corridors, that's fine too.
    for (int i = 0; i < roomCount; i++) {
-      int val = (rand() % 1) + 1;
-      rooms[i].maxConnections = val;
+      rooms[i].maxConnections = (rand() % 2) + 1;
    }
+
+   PrintRooms();
 
    for (int j = 0; j < 3; j++) {
       for (int i = 0; i < roomCount; i++) {
          Log("In roomcount");
 
          int dest = (rand() % roomCount);
-         if (dest == i) { i--; }
+         bool bypass = false;
+
+         if ((j == 2) && (rooms[i].connections == 0)) {
+            bypass = true;
+         }
+
+         if (!bypass && (rooms[i].connections >= rooms[i].maxConnections)) { continue; }
+         else if (!bypass && (dest == i)) { i--; }
+         else if (!bypass && (FindDistance(rooms[i].x, rooms[i].y, rooms[dest].x, rooms[dest].y) > (groundSize/2))) {
+            i--;
+         }
          else {
-            if (rooms[dest].connections < rooms[dest].maxConnections) {
+            PrintRooms();
+            Log("In else");
+            printf("\n%i, %i", rooms[dest].connections, rooms[dest].maxConnections);
+            if (bypass || (rooms[dest].connections < rooms[dest].maxConnections)) {
+               PrintRooms();
+               Log("Past comp");
                bool alreadyConnected = false;
                for (int k = 0; k < rooms[i].connections; k++) {
+                  Log("In connection loop");
+                  printf("\nk: %i, connections: %i", k, rooms[i].connections);
+
                   int connRoom = rooms[i].connectedRooms[k];
                   // If our room is already in the list of connections, prevent it
                   if (dest == connRoom) {
+                     Log("dest == connRoom");
                      alreadyConnected = true;
-                     k = 10;
+                     k = rooms[i].connections;
                   }
 
                   // If our room collides with a room that's already connected, prevent it
                   if (IsRectCollision(&rooms[dest].rect, &rooms[connRoom].rect)) {
                      alreadyConnected = true;
-                     break;
+                     k = rooms[i].connections;
+                     Log("Collided");
                   }
                }
 
                if (!alreadyConnected) {
                   printf("\nCalling dig on %i, %i", i, dest);
                   if (DigCorridor(i, dest)) {
+                     Log("Past DigCorridor");
                      numCorridors++;
                      rooms[i].connectedRooms[rooms[i].connections] = dest;
                      rooms[dest].connectedRooms[rooms[dest].connections] = i;
@@ -395,61 +399,38 @@ bool Level::GenerateCorridors() {
    Log("Matching up island rooms");
 
    // Verify that all rooms have at least one connection
-   for (int i = 0; i < roomCount; i++) {
-      // Find another room with an open connection slot
-      int partner = -1;
-      bool connectPartner = false;
-      if (rooms[i].connections == 0) {
-         for (int j = i + 1; j < roomCount; j++) {
-            if (rooms[j].connections == 0) {
-               partner = j;
-               connectPartner = true;
-               break;
-            }
-         }
-
-         // If there are no other rooms with no connections, just connect to a room
-         // with an availability
-         if (partner == -1) {
-            for (int j = 0; j < roomCount; j++) {
-               if (j == i) {
-                  continue;
-               }
-
-               if (rooms[j].connections < rooms[j].maxConnections) {
+   for (int j = 0; j < 2; j++) {
+      for (int i = 0; i < roomCount; i++) {
+         // Find another room with an open connection slot
+         int partner = -1;
+         bool connectPartner = false;
+         if (rooms[i].connections == 0) {
+            for (int j = i + 1; j < roomCount; j++) {
+               if (rooms[j].connections == 0) {
                   partner = j;
+                  connectPartner = true;
                   break;
                }
             }
-         }
-      }
 
-      if (partner != -1) {
-         while (DigCorridor(i, partner)) {
-            Log("Digging corridor from island to partner");
-         }
-         if (connectPartner) {
-            bool connectingPartner = true;
-            while (connectingPartner) {
-               int dest = (rand() % roomCount);
-               bool destIsValid = true;
-               if (rooms[dest].connections != rooms[dest]maxConnections) {
-                  for (int j = 0; j < rooms[dest].connections; j++) {
-                     if (rooms[dest].connectedRooms[j] == partner) {
-                        destIsValid = false;
-                     }
+            // If there are no other rooms with no connections, just connect to a room
+            // with an availability
+            if (partner == -1) {
+               for (int j = 0; j < roomCount; j++) {
+                  if (j == i) {
+                     continue;
                   }
 
-                  if (destIsValid) {
-                     while (DigCorridor(partner, dest)) {
-                        Log("Digging corridor from partner to dest");
-                     }
+                  if (rooms[j].connections < rooms[j].maxConnections) {
+                     partner = j;
+                     break;
                   }
                }
             }
          }
       }
    }
+   PrintRooms();
    printf("\nNumber of corridors: %i", numCorridors);
    return true;
 }
@@ -520,11 +501,29 @@ void Level::WriteOutWholeLevel() {
    ofstream myFile;
    myFile.open("output.txt");
 
+   for (int i = 0; i < roomCount; i++) {
+      for (int y = rooms[i].y; y < rooms[i].y; y++) {
+         for (int x = rooms[i].x; x < rooms[i].w; x++) {
+            myFile << i;
+         }
+      }
+   }
+
    for (int yi = 0; yi < groundSize; yi++) {
       for (int xi = 0; xi < groundSize; xi++) {
-         if (ground[yi][xi]) {
-            myFile << "#";
-            //cout << "#";
+         if (ground[xi][yi]) {
+            bool inRect = false;
+            for (int r = 0; r < roomCount; r++) {
+               if (PointInRect(yi, xi, &rooms[r].rect)) {
+                  myFile << hex << r;
+                  inRect = true;
+               }
+            }
+
+            if (!inRect) {
+               myFile << "#";
+               //cout << "#";
+            }
          } else {
             myFile << " ";
             //cout << " ";
