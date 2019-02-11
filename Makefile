@@ -13,7 +13,7 @@ LIBRARY_PATHS = -LC:\mingw_dev_lib\lib
 #COMPILER_FLAGS specifies the additional compilation options we're using
 # -w suppresses all warnings
 # -Wl,-subsystem,windows gets rid of the console window
-COMPILER_FLAGS = -w -Wl,-v,-subsystem,windows
+COMPILER_FLAGS = -w -Wl,-v,-subsystem,windows -g
 
 #LINKER_FLAGS specifies the libraries we're linking against
 LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf

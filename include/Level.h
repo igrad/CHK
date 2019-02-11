@@ -56,6 +56,8 @@ class Level {
 
       bool GenerateCorridors();
 
+      void CheckConnectionsToSpawn(int iter);
+
       void GenerateLevel();
 
       bool LoadFromFile(string path, int width, int height);
@@ -80,6 +82,8 @@ class Level {
       int roomCount;
       int roomTileCount;
       int desiredRoomTiles;
+
+      bool* connectedToSpawn;
 
       SDL_Rect spawnRoom;
       SDL_Rect exitRoom;

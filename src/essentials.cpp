@@ -1,19 +1,19 @@
 #include "..\include\essentials.h"
 
 void Log(string message) {
-   cout << "\n[LOG]\t" + message;
+   cout << "\n[LOG]\t" << message.c_str();
 }
 
 
 
 void Warn(string message) {
-   cout << "\n[WARN]\t" + message;
+   cout << "\n[WARN]\t" << message.c_str();
 }
 
 
 
 void Fatal(string message) {
-   cout << "\n[ERROR]\t" + message;
+   cout << "\n[ERROR]\t" << message.c_str();
 }
 
 
