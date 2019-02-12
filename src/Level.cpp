@@ -34,6 +34,8 @@ Level::Level() {
    walls = NULL;
    decals = NULL;
 
+   zoom = 1.0;
+
    minRoomDim = 6;
    maxRoomDim = 32;
 
@@ -626,8 +628,8 @@ bool Level::LoadFromFile(string path, int width, int height) {
 
 
 
-bool Level::WriteLevelToFile() {
-   return false;
+void Level::SetZoom(float newZoom) {
+   zoom = newZoom * GZOOM;
 }
 
 
@@ -673,12 +675,30 @@ void Level::WriteOutWholeLevel() {
 
 
 
-void Level::Render() {
+void Level::Render(int camX, int camY) {
+   int tileW = PIXELSPERFEET * 5 * GZOOM;
+   int levelWidthPx = zoom * LEVEL_WIDTH * tileW;
+   int levelHeightPx = zoom * LEVEL_HEIGHT * tileW;
+
+   int minXTile = (camX / levelWidthPx) / (zoom * tileW) - 1;
+   minXTile = (minXTile < 0) ? 0 : minXTile;
+   int minYTile = (camY / levelHeightPx) / (zoom * tileW) - 1;
+   minYTile = (minYTile < 0) ? 0 : minYTile;
+   int maxXTile = ((camX + SCREEN_WIDTH) / levelWidthPx) / (zoom * tileW) + 1;
+   maxXTile = (maxXTile > LEVEL_WIDTH) ? LEVEL_WIDTH : maxXTile;
+   int maxYTile = ((camY + SCREEN_HEIGHT) / levelHeightPx) / (zoom * tileW) + 1;
+   maxYTile = (maxYTile < LEVEL_HEIGHT) ? LEVEL_HEIGHT : maxYTile;
+
    // Render to screen
    for (int yi = 0; yi < groundSize; yi++) {
       for (int xi = 0; xi < groundSize; xi++) {
          if (ground[xi][yi]) {
-            SDL_Rect r = {8 * xi, 8 * yi, 8, 8};
+            int x = (zoom * tileW * xi) - camX;
+            int y = (zoom * tileW * yi) - camY;
+            int w = tileW * zoom;
+            int h = tileW * zoom;
+            //printf("\nRendering level rect: %i, %i, %i, %i", x, y, w, h);
+            SDL_Rect r = {x, y, w, h};
             SDL_RenderFillRect(gRenderer, &r);
          }
       }

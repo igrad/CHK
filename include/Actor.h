@@ -69,7 +69,7 @@ class Actor: public Collider {
 
       void SetActiveTexture(int phase, bool adoptDefaultDrawBox = false);
 
-      void Render(int screenFrame);
+      void Render(int screenFrame, int camX, int camY);
 
       void Free();
 

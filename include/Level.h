@@ -62,13 +62,15 @@ class Level {
 
       bool LoadFromFile(string path, int width, int height);
 
-      bool WriteLevelToFile();
+      void SetZoom(float newZoom);
 
       void WriteOutWholeLevel();
 
-      void Render();
+      void Render(int camX, int camY);
 
       ~Level();
+
+      float zoom;
 
       StaticCollider* walls;
       Decal* decals;

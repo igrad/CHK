@@ -21,13 +21,23 @@
 const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 960;
 
+// Global zoom
+const float GZOOM = 2;
+
+// Unscaled level size constants
+const int LEVEL_HEIGHT = 100;
+const int LEVEL_WIDTH = 100;
 
 // Screen FPS rate
 const int SCREEN_FPS = 60;
 const int SCREEN_TICKS_PER_FRAME = 1000/SCREEN_FPS;
 
+// Camera position
+int CAMX = 0;
+int CAMY = 0;
 
-const float PIXELSPERFEET = 30.0; // This is preliminary and only used for testing. Once we have a proper camera class up and running, the zoom attribute of the camera will determine this value
+
+const float PIXELSPERFEET = 8.0; // This is preliminary and only used for testing. Once we have a proper camera class up and running, the zoom attribute of the camera will determine this value
 
 
 
@@ -40,11 +50,7 @@ SDL_Renderer* gRenderer = NULL;
 // The currently displayed texture
 LTexture gTexture;
 
-//Animation dummy;
-
-//Actor myDummy(2, 0);
-
-Character player(1, 10, 30, 16, 0);
+Character player(1, 10, 75, 16, 0);
 
 Level randomLevel;
 
@@ -105,7 +111,7 @@ bool LoadMedia() {
    }
 
 	player.SetDrawBoxSize(0, 0, 20, 40);
-	player.SetZoom(3.0);
+	//player.SetZoom(5.0);
 	player.LoadAnimation(ANIM_IDLE_I, "media\\images\\Idle_I.png", 8, 2.0, 20, 40);
 	player.LoadAnimation(ANIM_IDLE_II, "media\\images\\Idle_II.png", 8, 2.0, 20, 40);
 	player.LoadAnimation(ANIM_IDLE_III, "media\\images\\Idle_III.png", 8, 2.0, 20, 40);
@@ -115,6 +121,7 @@ bool LoadMedia() {
 	player.LoadAnimation(ANIM_WALK_III, "media\\images\\Walking_III.png", 8, 1.2, 20, 40);
 	player.LoadAnimation(ANIM_WALK_IV, "media\\images\\Walking_IV.png", 8, 1.2, 20, 40);
 	player.SetActiveAnim(ANIM_IDLE_IV);
+	player.SetPosition((SCREEN_WIDTH - CAMX - player.drawBox.w) / 2, (SCREEN_HEIGHT - CAMY - player.drawBox.h) / 2);
 
 	randomLevel.GenerateLevel();
 
@@ -197,22 +204,28 @@ int main(int argc, char* args[]) {
 
 				if (W && S) {
 					player.SetYVelocity(0);
+					CAMY += player.yVelocity;
 				} else if (W) {
 					player.yDirection = false;
 					player.SetYVelocity(-1);
+					CAMY += player.yVelocity;
 				} else if (S) {
 					player.yDirection = true;
 					player.SetYVelocity(1);
+					CAMY += player.yVelocity;
 				}
 
 				if (A && D) {
 					player.SetXVelocity(0);
+					CAMX += player.xVelocity;
 				} else if (A) {
 					player.xDirection = false;
 					player.SetXVelocity(-1);
+					CAMX += player.xVelocity;
 				} else if (D) {
 					player.xDirection = true;
 					player.SetXVelocity(1);
+					CAMX += player.xVelocity;
 				}
 
 				// Calculate and lock the FPS
@@ -228,10 +241,10 @@ int main(int argc, char* args[]) {
             // Render texture to screen
 				gTexture.Render(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-				randomLevel.Render();
+				randomLevel.Render(CAMX, CAMY);
 
 				//myDummy.Render(screenFrame);
-				player.Render(screenFrame);
+				player.Render(screenFrame, CAMX, CAMY);
 
             // Update screen
             SDL_RenderPresent(gRenderer);

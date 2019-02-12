@@ -2,7 +2,7 @@
 
 Actor::Actor(int numAnims, int numTextures) {
    changingRender = false;
-   zoom = 1.0;
+   zoom = GZOOM;
 
    hasAnimations = (numAnims > 0);
    hasTextures = (numTextures > 0);
@@ -46,7 +46,7 @@ void Actor::SetDrawBoxSize(int x, int y, int w, int h) {
 
 
 void Actor::SetZoom(float newZoom) {
-   zoom = newZoom;
+   zoom = newZoom * GZOOM;
    drawBox.w = drawBox.w * zoom;
    drawBox.h = drawBox.h * zoom;
    hitBox.w = hitBox.w * zoom;
@@ -83,9 +83,9 @@ void Actor::SetActiveTexture(int phase, bool adoptDefaultDrawBox) {
 
 
 
-void Actor::Render(int screenFrame) {
-   drawBox.x = xPos;
-   drawBox.y = yPos;
+void Actor::Render(int screenFrame, int camX, int camY) {
+   drawBox.x = xPos - camX;
+   drawBox.y = yPos - camY;
 
    if (usingAnims) {
       // Set the width and height of the draw box according to the size of the anim to be rendered

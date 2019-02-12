@@ -10,7 +10,7 @@ Character::Character(int level, int HP, int moveSpeed, int numAnims, int numText
    this->maxHP = HP;
 
    // The number of feet per 6 seconds times the pixels per feet yeids the pixels moved per second
-   pixelVelocity = (moveSpeed/6.0) * PIXELSPERFEET;
+   pixelVelocity = (moveSpeed/6.0) * PIXELSPERFEET * GZOOM;
    pixelsPerFrame = pixelVelocity / SCREEN_FPS;
 
    stats = new int[6];
@@ -87,21 +87,24 @@ void Character::MoveTowards(int destX, int destY) {
 
 void Character::SetXVelocity(int multiplier) {
    xVelocity = pixelsPerFrame * multiplier;
+   xVelocity = (multiplier < 1) ? ceil(xVelocity) : floor (xVelocity);
 }
 
 
 
 void Character::SetYVelocity(int multiplier) {
    yVelocity = pixelsPerFrame * multiplier;
+   yVelocity = (multiplier < 1) ? ceil(yVelocity) : floor (yVelocity);
 }
 
 
 
-void Character::Render(int screenFrame) {
+void Character::Render(int screenFrame, int camX, int camY) {
    // Position the character on screen
    // TODO: This little bit here needs to be put in a collision handling method instead of the render method
-   xPos += (xVelocity > 0) ? floor(xVelocity) : ceil(xVelocity);
-   yPos += (yVelocity > 0) ? floor(yVelocity) : ceil(yVelocity);
+   xPos += xVelocity;
+   yPos += yVelocity;
+
 
    // Player animations
    bool movingUp = (yVelocity < 0);
@@ -136,7 +139,7 @@ void Character::Render(int screenFrame) {
    xVelocity = 0;
    yVelocity = 0;
 
-   Actor::Render(screenFrame);
+   Actor::Render(screenFrame, camX, camY);
 }
 
 

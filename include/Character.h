@@ -35,7 +35,7 @@ class Character: public Actor {
 
       void SetYVelocity(int multiplier);
 
-      void Render(int screenFrame);
+      void Render(int screenFrame, int camX, int camY);
 
       void Free();
 
@@ -62,7 +62,6 @@ class Character: public Actor {
       int ResourceBonus;
       float ResourceRegenRate;
 
-   private:
       float xVelocity;
       float yVelocity;
 
