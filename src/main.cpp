@@ -20,6 +20,7 @@
 // Screen dimension constants
 const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 960;
+SDL_Rect SCREEN_RECT = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
 // Global zoom
 const float GZOOM = 2;
@@ -50,7 +51,7 @@ SDL_Renderer* gRenderer = NULL;
 // The currently displayed texture
 LTexture gTexture;
 
-Character player(1, 10, 75, 16, 0);
+Character player(1, 10, 12, 16, 0);
 
 Level randomLevel;
 
@@ -111,7 +112,6 @@ bool LoadMedia() {
    }
 
 	player.SetDrawBoxSize(0, 0, 20, 40);
-	//player.SetZoom(5.0);
 	player.LoadAnimation(ANIM_IDLE_I, "media\\images\\Idle_I.png", 8, 2.0, 20, 40);
 	player.LoadAnimation(ANIM_IDLE_II, "media\\images\\Idle_II.png", 8, 2.0, 20, 40);
 	player.LoadAnimation(ANIM_IDLE_III, "media\\images\\Idle_III.png", 8, 2.0, 20, 40);
@@ -239,7 +239,7 @@ int main(int argc, char* args[]) {
 
 				int screenFrame = countedFrames%SCREEN_FPS;
             // Render texture to screen
-				gTexture.Render(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+				gTexture.Render(&SCREEN_RECT);
 
 				randomLevel.Render(CAMX, CAMY);
 

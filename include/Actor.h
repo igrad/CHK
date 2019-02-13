@@ -63,19 +63,17 @@ class Actor: public Collider {
 
       bool LoadAnimation(int phase, string path, int frames, float duration, int frameW, int frameH);
 
-      void SetActiveAnim(int anim, bool adoptDefaultDrawBox = false);
+      void SetActiveAnim(int anim);
 
       bool LoadTexture(int phase, string path);
 
-      void SetActiveTexture(int phase, bool adoptDefaultDrawBox = false);
+      void SetActiveTexture(int phase);
 
       void Render(int screenFrame, int camX, int camY);
 
       void Free();
 
       ~Actor();
-
-      bool changingRender;
 
       float zoom;
 

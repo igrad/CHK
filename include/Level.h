@@ -42,8 +42,6 @@ class Level {
    public:
       Level();
 
-      void PrintRooms();
-
       int GenerateRandomRoomDim();
 
       int GenerateRandomCoord();

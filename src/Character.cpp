@@ -9,8 +9,8 @@ Character::Character(int level, int HP, int moveSpeed, int numAnims, int numText
    this->moveSpeed = moveSpeed;
    this->maxHP = HP;
 
-   // The number of feet per 6 seconds times the pixels per feet yeids the pixels moved per second
-   pixelVelocity = (moveSpeed/6.0) * PIXELSPERFEET * GZOOM;
+   // The number of feet times the pixels per feet yeids the pixels moved per second
+   pixelVelocity = moveSpeed * PIXELSPERFEET * GZOOM;
    pixelsPerFrame = pixelVelocity / SCREEN_FPS;
 
    stats = new int[6];

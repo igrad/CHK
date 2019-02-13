@@ -16,15 +16,6 @@ Room::~Room() {
 
 
 
-void Level::PrintRooms() {
-   printf("\nRoomcount: %i", roomCount);
-   for (int k = 0; k < roomCount; k++) {
-      printf("\nRoom #%i: {%i, %i, %i, %i}, connections: %i, maxConnections: %i", k, rooms[k].x, rooms[k].y, rooms[k].w, rooms[k].h, rooms[k].connections, rooms[k].maxConnections);
-   }
-}
-
-
-
 int NUMROOMCOLLISIONS = 0;
 int NUMROOMCOLLISIONSALLOWED = 0;
 int MAXCORRIDORS = 0;
@@ -387,14 +378,6 @@ bool Level::DigCorridor(int a, int b) {
 
 
 bool Level::GenerateCorridors() {
-   Log("Entering generate corridors");
-   // Log("[Start of GenerateCorridors] Room connections matrix");
-   // for (int i = 0; i < roomCount; i++) {
-   //    printf("\n\tRoom %i:", i);
-   //    for (int j = 0; j < rooms[i].connections; j++) {
-   //       printf(" %i,", rooms[i].connectedRooms[j]);
-   //    }
-   // }
    int numCorridors = 0;
 
    for (int j = 0; j < 3; j++) {
@@ -412,7 +395,6 @@ bool Level::GenerateCorridors() {
             i--;
          }
          else {
-            printf("\n\tIn the else call");
             if (bypass || (rooms[dest].connections < rooms[dest].maxConnections)) {
                bool alreadyConnected = false;
                for (int k = 0; k < rooms[i].connections; k++) {
@@ -431,11 +413,9 @@ bool Level::GenerateCorridors() {
                   }
                }
 
-               printf("\n\tMade it to alreadyConnected");
                if (!alreadyConnected) {
                   //printf("\nCalling dig on %i, %i", i, dest);
                   if (DigCorridor(i, dest)) {
-                     printf("\n\tPast DigCorridor1");
                      numCorridors++;
                      rooms[i].connectedRooms[rooms[i].connections] = dest;
                      rooms[dest].connectedRooms[rooms[dest].connections] = i;
@@ -445,62 +425,16 @@ bool Level::GenerateCorridors() {
                      if (numCorridors == MAXCORRIDORS) {
                         j = 2;
                         i = roomCount;
-                        Log("Max corridor limit reached");
                      }
                   }
-                  printf("\n\tPast DigCorridor2");
                }
             }
          }
       }
    }
 
-   // Verify that all rooms have at least one connection
-   // for (int j = 0; j < 2; j++) {
-   //    for (int i = 0; i < roomCount; i++) {
-   //       // Find another room with an open connection slot
-   //       int partner = -1;
-   //       bool connectPartner = false;
-   //       if (rooms[i].connections == 0) {
-   //          for (int j = i + 1; j < roomCount; j++) {
-   //             if (rooms[j].connections == 0) {
-   //                partner = j;
-   //                connectPartner = true;
-   //                break;
-   //             }
-   //          }
-   //
-   //          // If there are no other rooms with no connections, just connect to a room
-   //          // with an availability
-   //          if (partner == -1) {
-   //             for (int j = 0; j < roomCount; j++) {
-   //                if (j == i) {
-   //                   continue;
-   //                }
-   //
-   //                if (rooms[j].connections < rooms[j].maxConnections) {
-   //                   partner = j;
-   //                   break;
-   //                }
-   //             }
-   //          }
-   //       }
-   //    }
-   // }
-   PrintRooms();
-   WriteOutWholeLevel();
-   Log("[Halfway through GenerateCorridors] Room connections matrix");
-   for (int i = 0; i < roomCount; i++) {
-      printf("\n\tRoom %i:", i);
-      for (int j = 0; j < rooms[i].connections; j++) {
-         printf(" %i,", rooms[i].connectedRooms[j]);
-      }
-   }
-
    bool verifyingConnections = true;
    while(verifyingConnections) {
-      Log("\n\nVerifying connections");
-
       // Verify that all rooms are reachable from the spawn room
       if (connectedToSpawn != NULL) { delete connectedToSpawn; }
       connectedToSpawn = new bool[roomCount];
@@ -512,7 +446,6 @@ bool Level::GenerateCorridors() {
       bool madeConnection = false;
       for (int i = 0; i < roomCount; i++) {
          if (!connectedToSpawn[i]) {
-            printf("\n\t%i not connected to spawn", i);
             madeConnection = false;
             // Give it 10 tries to make a connection naturally (nearby)
             for (int j = 0; j < 10; j++) {
@@ -538,7 +471,13 @@ bool Level::GenerateCorridors() {
       verifyingConnections = madeConnection;
    }
 
-   PrintRooms();
+   for (int i = 0; i < roomCount; i++) {
+      printf("\n\tRoom %i: \t{%i, %i, %i, %i}:    \t", i, rooms[i].x, rooms[i].y, rooms[i].w, rooms[i].h);
+      for (int j = 0; j < rooms[i].connections; j++) {
+         printf(" %i,", rooms[i].connectedRooms[j]);
+      }
+   }
+
    printf("\nNumber of corridors: %i", numCorridors);
    return true;
 }
@@ -565,8 +504,6 @@ void Level::CheckConnectionsToSpawn(int iter) {
 
 void Level::GenerateLevel() {
    int gridSize = floor(SCREEN_HEIGHT/groundSize);
-
-   //printf("\nRoom Count: %i\nDesired tiles: %i", roomCount, desiredRoomTiles);
 
    bool levelIsBigEnough = false;
    while (!levelIsBigEnough) {
@@ -606,15 +543,18 @@ void Level::GenerateLevel() {
    // Create corridors between rooms
    GenerateCorridors();
 
-   // Check and make sure that all rooms are connected. If they aren't, loop back to the start
+   // TODO: Come up with locale struct for dungeons, and later, caves
 
    // Plant secrets throughout the level
+
    // Set secrets in rooms
+
    // Block off secret corridors
 
    // Scan the floorplan and build locales
 
    // Build walls
+   // Give large rooms a chance to have big pits in them (no more than 60% of the room). This chance should be tied to the locale of the level
 
    printf("\nFinal tile count: %i", roomTileCount);
    printf("\nMax collisions: %i, total: %i", NUMROOMCOLLISIONSALLOWED, NUMROOMCOLLISIONS);

@@ -1,7 +1,6 @@
 #include "..\include\Actor.h"
 
 Actor::Actor(int numAnims, int numTextures) {
-   changingRender = false;
    zoom = GZOOM;
 
    hasAnimations = (numAnims > 0);
@@ -61,9 +60,9 @@ bool Actor::LoadAnimation(int phase, string path, int frames, float duration, in
 
 
 
-void Actor::SetActiveAnim(int phase, bool adoptDefaultDrawBox) {
-   changingRender = adoptDefaultDrawBox;
+void Actor::SetActiveAnim(int phase) {
    usingAnims = true;
+   // anims[phase].currentFrame = 0;
    activeAnim = phase;
 }
 
@@ -75,8 +74,7 @@ bool Actor::LoadTexture(int phase, string path) {
 
 
 
-void Actor::SetActiveTexture(int phase, bool adoptDefaultDrawBox) {
-   changingRender = adoptDefaultDrawBox;
+void Actor::SetActiveTexture(int phase) {
    usingAnims = false;
    activeTexture = phase;
 }
@@ -84,26 +82,13 @@ void Actor::SetActiveTexture(int phase, bool adoptDefaultDrawBox) {
 
 
 void Actor::Render(int screenFrame, int camX, int camY) {
-   drawBox.x = xPos - camX;
-   drawBox.y = yPos - camY;
+   drawBox.x = (xPos - camX);
+   drawBox.y = (yPos - camY);
 
    if (usingAnims) {
-      // Set the width and height of the draw box according to the size of the anim to be rendered
-      if (changingRender) {
-         SetDrawBoxSize(xPos, yPos, anims[activeAnim].GetFrameWidth(), anims[activeAnim].GetFrameHeight());
-
-         changingRender = false;
-      }
-
-      anims[activeAnim].Render(&drawBox, screenFrame);
+      anims[activeAnim].Render(GetDrawBox(), screenFrame);
    } else {
-      if (changingRender) {
-         SetDrawBoxSize(xPos, yPos, textures[activeTexture].GetWidth(), textures[activeTexture].GetHeight());
-
-         changingRender = false;
-      }
-
-      textures[activeTexture].Render(drawBox.x, drawBox.y, drawBox.w, drawBox.h);
+      textures[activeTexture].Render(GetDrawBox());
    }
 }
 

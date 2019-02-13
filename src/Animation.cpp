@@ -104,14 +104,10 @@ void Animation::IncrementCurrentFrame() {
 
 
 void Animation::Render(SDL_Rect* drawBox, int screenFrame) {
-   //printf("\ncurrentFrame: %i", currentFrame);
-   //printf("\nframe: %i, %i, %i, %i", frameClips[currentFrame].x, frameClips[currentFrame].y, frameClips[currentFrame].w, frameClips[currentFrame].h);
-   //printf("\ndrawBox: %i, %i, %i, %i", drawBox->x, drawBox->y, drawBox->w, drawBox->h);
-   //printf("\nscreenFrame: %i", screenFrame);
+   printf("\nRendering: %i, %i, %i, %i", drawBox->x,drawBox->y,drawBox->w,drawBox->h);
    SDL_RenderCopy(gRenderer, mTexture, &frameClips[currentFrame], drawBox);
 
    int animFrame = ((float)frameCount/animDuration) * ((float)screenFrame/(float)SCREEN_FPS);
-   //printf("currentFrame = %i, animFrame = %i --- (%i / %f) * (%i / %i)\n", currentFrame, animFrame, frameCount, animDuration, screenFrame, SCREEN_FPS);
 
    if (animFrameOfLastScreenFrame != animFrame) {
       IncrementCurrentFrame();
@@ -123,6 +119,5 @@ void Animation::Render(SDL_Rect* drawBox, int screenFrame) {
 
 
 Animation::~Animation() {
-   // Deallocate
    Free();
 }

@@ -3,13 +3,19 @@
 Collider::Collider() {
    hitBox = {0, 0, 0, 0};
    drawBox = {0, 0, 0, 0};
+
+   xPos = 0;
+   yPos = 0;
 }
 
 
 
-void Collider::SetPos(int x, int y) {
+void Collider::SetPos(double x, double y) {
    if (x != -1) { xPos = x; }
    if (y != -1) { yPos = y; }
+
+   drawBox.x = (int) xPos;
+   drawBox.y = (int) yPos;
 }
 
 
@@ -32,8 +38,18 @@ void Collider::SetDrawBox(int x, int y, int w, int h) {
 
 
 
-void HandleCollisions() {
-   
+SDL_Rect* Collider::GetHitBox() {
+   return &hitBox;
+}
+
+SDL_Rect* Collider::GetDrawBox() {
+   return &drawBox;
+}
+
+
+
+void Collider::HandleCollisions() {
+
 }
 
 
