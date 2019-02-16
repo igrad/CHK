@@ -88,7 +88,10 @@ class Level {
       void CheckConnectionsToSpawn(int iter);
 
 
-      void GenerateLevel();
+      void GenerateWalls();
+
+
+      void GenerateLevel(Locale* locale);
 
       bool LoadFromFile(string path, int width, int height);
 
@@ -96,7 +99,7 @@ class Level {
 
 
       SDL_Rect GetPlayerSpawn();
-      
+
 
       void WriteOutWholeLevel();
 
@@ -104,13 +107,15 @@ class Level {
 
       ~Level();
 
+      // General
       float zoom;
-
+      Locale* locale;
       StaticCollider* walls;
       Decal* decals;
 
+      // Floor generation variables
       const static int groundSize = 100;
-      bool ground[groundSize][groundSize];
+      uint8_t ground[groundSize][groundSize];
 
       Room* rooms;
 
@@ -131,6 +136,10 @@ class Level {
 
       int minRoomDim;
       int maxRoomDim;
+
+      // Texture variables
+      LTexture floorRender;
+      LTexture wallRender;
 };
 
 #endif

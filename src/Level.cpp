@@ -36,6 +36,12 @@ Level::Level() {
 
    zoom = 1.0;
 
+   for (int i = 0; i < groundSize; i++) {
+      for (int j = 0; j < groundSize; j++) {
+         ground[i][j] = 0;
+      }
+   }
+
    minRoomDim = 6;
    maxRoomDim = 32;
 
@@ -57,15 +63,20 @@ Level::Level() {
    NUMROOMCOLLISIONSALLOWED = ceil(roomCount / 2);
 
    MAXCORRIDORS = roomCount;
+
+
+
+   floorRender = LTexture();
+   wallRender = LTexture();
 }
 
 
 
 bool Level::CheckNewRoom(SDL_Rect* room) {
    // Check that it still fits on the board
-   if (room->x + room->w > groundSize - 1) {
+   if (room->x + room->w > groundSize - 3) {
       return false;
-   } else if (room->y + room->h > groundSize - 1) {
+   } else if (room->y + room->h > groundSize - 3) {
       return false;
    }
 
@@ -102,9 +113,9 @@ bool Level::CheckNewRoom(SDL_Rect* room) {
 void Level::GenerateRandomRoom(int roomNum) {
    bool buildingRoom = true;
    while (buildingRoom) {
-      // Use the generated coordinates to check if there is a room at that coordinate already, and if so, if there's
-      int x = (rand() % (groundSize - 1)) + 1;
-      int y = (rand() % (groundSize - 1)) + 1;
+      // Use the generated coordinates to check if there is a room at that coordinate already, and if so, if there's any permitted collisions remaining
+      int x = (rand() % (groundSize - 2)) + 2;
+      int y = (rand() % (groundSize - 2)) + 2;
 
       // Give it 5 tries to try to make a room out of this chosen coordinate. If it can't create a room after 5 tries, it's probably too tight anyways
       for (int i = 0; i < 5; i++) {
@@ -116,7 +127,7 @@ void Level::GenerateRandomRoom(int roomNum) {
          if (CheckNewRoom(&room)) {
             for (int yi = y; yi < y + h; yi++) {
                for (int xi = x; xi < x + w; xi++) {
-                  ground[yi][xi] = true;
+                  ground[yi][xi] = 1;
                }
             }
 
@@ -271,7 +282,7 @@ bool Level::DigCorridor(int a, int b) {
             lastDirSet = true;
          }
 
-         ground[cY][cX] = true;
+         ground[cY][cX] = 1;
          for (int i = 0; i < segmentLength; i++) {
             switch(dir) {
                case NORTH:
@@ -358,7 +369,7 @@ bool Level::DigCorridor(int a, int b) {
                   }
                }
             } else {
-               ground[cY][cX] = true;
+               ground[cY][cX] = 1;
             }
 
             if ((cX == cBX) && (cY == cBY)) {
@@ -508,7 +519,29 @@ void Level::CheckConnectionsToSpawn(int iter) {
 
 
 
-void Level::GenerateLevel() {
+void Level::GenerateWalls() {
+   for (int cY = 1; cY < groundSize - 1; cY++) {
+      for (int cX = 1; cX < groundSize - 1; cX++) {
+         if (ground[cY][cX] != 1) {
+            bool isWall = false;
+            if (ground[cY - 1][cX] == 1) { isWall = true; }
+            else if (ground[cY][cX - 1] == 1) { isWall = true; }
+            else if (ground[cY - 1][cX - 1] == 1) { isWall = true; }
+            else if (ground[cY - 1][cX + 1] == 1) { isWall = true; }
+            else if (ground[cY + 1][cX - 1] == 1) { isWall = true; }
+            else if (ground[cY + 1][cX] == 1) { isWall = true; }
+            else if (ground[cY][cX + 1] == 1) { isWall = true; }
+            else if (ground[cY + 1][cX + 1] == 1) { isWall = true; }
+
+            if (isWall) { ground[cY][cX] = 2; }
+         }
+      }
+   }
+}
+
+
+void Level::GenerateLevel(Locale* locale) {
+   this->locale = locale;
    int gridSize = floor(SCREEN_HEIGHT/groundSize);
 
    bool levelIsBigEnough = false;
@@ -537,7 +570,7 @@ void Level::GenerateLevel() {
          rooms = new Room[roomCount];
          for (int i = 0; i < groundSize; i++) {
             for (int j = 0; j < groundSize; j++) {
-               ground[i][j] = false;
+               ground[i][j] = 0;
             }
          }
       }
@@ -560,6 +593,7 @@ void Level::GenerateLevel() {
    // Scan the floorplan and build locales
 
    // Build walls
+   GenerateWalls();
    // Give large rooms a chance to have big pits in them (no more than 60% of the room). This chance should be tied to the locale of the level
 
    printf("\nFinal tile count: %i", roomTileCount);
@@ -608,26 +642,16 @@ void Level::WriteOutWholeLevel() {
 
    for (int yi = 0; yi < groundSize; yi++) {
       for (int xi = 0; xi < groundSize; xi++) {
-         if (ground[yi][xi]) {
-            bool inRect = false;
-            for (int r = 0; r < roomCount; r++) {
-               if (PointInRect(xi, yi, &rooms[r].rect)) {
-                  myFile << hex << r;
-                  inRect = true;
-               }
-            }
-
-            if (!inRect) {
-               myFile << "#";
-               //cout << "#";
-            }
-         } else {
-            myFile << " ";
-            //cout << " ";
+         char o = ' ';
+         switch (ground[yi][xi]) {
+            case 1: o = ':'; break;
+            case 2: o = '#'; break;
+            default: o = ' ';
          }
+
+         myFile << o;
       }
       myFile << "\n";
-      //cout << "\n";
    }
 
    myFile.close();
@@ -652,14 +676,23 @@ void Level::Render(int camX, int camY) {
    // Render to screen
    for (int yi = 0; yi < groundSize; yi++) {
       for (int xi = 0; xi < groundSize; xi++) {
-         if (ground[yi][xi]) {
-            int x = (zoom * tileW * xi) - camX;
-            int y = (zoom * tileW * yi) - camY;
-            int w = tileW * zoom;
-            int h = tileW * zoom;
-            //printf("\nRendering level rect: %i, %i, %i, %i", x, y, w, h);
-            SDL_Rect r = {x, y, w, h};
-            SDL_RenderFillRect(gRenderer, &r);
+         int x = (zoom * tileW * xi) - camX;
+         int y = (zoom * tileW * yi) - camY;
+         int w = tileW * zoom;
+         int h = tileW * zoom;
+         SDL_Rect r = {x, y, w, h};
+         if (ground[yi][xi] == 1) {
+            SDL_SetRenderTarget(gRenderer, floorRender.mTexture);
+            locale->floorTexture.Render(&r);
+            SDL_SetRenderTarget(gRenderer, NULL);
+
+            floorRender.Render(NULL);
+         } else if (ground[yi][xi] == 2) {
+            SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
+            locale->wallTexture.Render(&r);
+            SDL_SetRenderTarget(gRenderer, NULL);
+
+            wallRender.Render(NULL);
          }
       }
    }

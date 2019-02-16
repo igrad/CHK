@@ -123,7 +123,10 @@ bool LoadMedia() {
 	player.SetActiveAnim(ANIM_IDLE_IV);
 	//player.SetPosition((SCREEN_WIDTH - CAMX - player.drawBox.w) / 2, (SCREEN_HEIGHT - CAMY - player.drawBox.h) / 2);
 
-	randomLevel.GenerateLevel();
+	dungeon.floorTexture.LoadFromFile("media\\images\\floor1.jpg");
+	dungeon.wallTexture.LoadFromFile("media\\images\\wall1.jpg");
+
+	randomLevel.GenerateLevel(&dungeon);
 
 	// TODO: We can't use this yet because we haven't set up the Camera class yet
 	// The SetSpawnPoint function uses the SetPosition function. We're currently locking the player's position in the center of the camera, rather than using the player's position as it should be used.
