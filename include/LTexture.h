@@ -14,20 +14,25 @@ class LTexture {
    public:
       // Initializes variables
       LTexture();
+      LTexture(string path);
       ~LTexture();
 
       // Loads image at specified path
       bool LoadFromFile(string path);
 
-      // Deallocates texture
-      void Free();
+      // Creates a blank image that we can use as a renderer
+      bool CreateBlank(int width, int height, SDL_TextureAccess access = SDL_TEXTUREACCESS_TARGET);
 
       // Renders texture at given point
       void Render(SDL_Rect* drawBox, SDL_Rect* clip = NULL);
+      void Render(int x, int y, SDL_Rect* clip = NULL);
 
       // Gets image dimensions
       int GetWidth();
       int GetHeight();
+
+      // Deallocates texture
+      void Free();
 
       // The actual hardware texture
       SDL_Texture* mTexture;

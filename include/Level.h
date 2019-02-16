@@ -103,6 +103,8 @@ class Level {
 
       void WriteOutWholeLevel();
 
+      void CompileRenderTargets();
+
       void Render(int camX, int camY);
 
       ~Level();
@@ -138,6 +140,7 @@ class Level {
       int maxRoomDim;
 
       // Texture variables
+      bool renderTargetsCompiled;
       LTexture floorRender;
       LTexture wallRender;
 };

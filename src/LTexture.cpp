@@ -11,32 +11,9 @@ LTexture::LTexture() {
 
 
 
-void LTexture::Free() {
-   // Free texture if it exists
-   if (mTexture != NULL) {
-      SDL_DestroyTexture(mTexture);
-      mTexture = NULL;
-      mWidth = 0;
-      mHeight = 0;
-   }
-}
-
-
-
-void LTexture::Render(SDL_Rect* drawBox, SDL_Rect* clip) {
-   SDL_RenderCopy(gRenderer, mTexture, clip, drawBox);
-}
-
-
-
-int LTexture::GetWidth() {
-   return mWidth;
-}
-
-
-
-int LTexture::GetHeight() {
-   return mHeight;
+LTexture::LTexture(string path) {
+   LTexture();
+   LoadFromFile(path);
 }
 
 
@@ -73,6 +50,60 @@ bool LTexture::LoadFromFile(string path) {
    // Return success
    mTexture = newTexture;
    return mTexture != NULL;
+}
+
+
+
+bool LTexture::CreateBlank(int width, int height, SDL_TextureAccess access) {
+   mTexture = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_RGBA8888, access, width, height);
+
+   SDL_SetTextureBlendMode(mTexture, SDL_BLENDMODE_BLEND);
+
+   if (mTexture == NULL) {
+      Fatal("Unable to create blank texture!");
+      printf("\nSDL ERROR: %s", SDL_GetError());
+   }
+   mWidth = width;
+   mHeight = height;
+
+   return mTexture != NULL;
+}
+
+
+
+void LTexture::Render(SDL_Rect* drawBox, SDL_Rect* clip) {
+   SDL_RenderCopy(gRenderer, mTexture, clip, drawBox);
+}
+
+
+
+void LTexture::Render(int x, int y, SDL_Rect* clip)  {
+   SDL_Rect r = {x, y, mWidth, mHeight};
+   SDL_RenderCopy(gRenderer, mTexture, clip, &r);
+}
+
+
+
+int LTexture::GetWidth() {
+   return mWidth;
+}
+
+
+
+int LTexture::GetHeight() {
+   return mHeight;
+}
+
+
+
+void LTexture::Free() {
+   // Free texture if it exists
+   if (mTexture != NULL) {
+      SDL_DestroyTexture(mTexture);
+      mTexture = NULL;
+      mWidth = 0;
+      mHeight = 0;
+   }
 }
 
 

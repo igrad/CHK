@@ -24,7 +24,8 @@ const int SCREEN_HEIGHT = 960;
 SDL_Rect SCREEN_RECT = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
 // Global zoom
-const float GZOOM = 2;
+const float GZOOM = 2.0;
+const float GMAXZOOM = 2.0;
 
 // Unscaled level size constants
 const int LEVEL_HEIGHT = 100;

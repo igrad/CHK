@@ -29,6 +29,7 @@ extern const int SCREEN_HEIGHT;
 extern const int SCREEN_FPS;
 
 extern const float GZOOM;
+extern const float GMAXZOOM;
 
 extern const int LEVEL_WIDTH;
 extern const int LEVEL_HEIGHT;

@@ -34,7 +34,7 @@ Level::Level() {
    walls = NULL;
    decals = NULL;
 
-   zoom = 1.0;
+   zoom = 1.0 * GZOOM;
 
    for (int i = 0; i < groundSize; i++) {
       for (int j = 0; j < groundSize; j++) {
@@ -66,8 +66,7 @@ Level::Level() {
 
 
 
-   floorRender = LTexture();
-   wallRender = LTexture();
+   renderTargetsCompiled = false;
 }
 
 
@@ -142,7 +141,7 @@ void Level::GenerateRandomRoom(int roomNum) {
             // Go through all existing rooms and check if this room collides with any. If it does, we need to increase the connection counter
             for (int j = 0; j < roomsBuilt; j++) {
                if (IsRectCollision(&room, &rooms[j].rect)) {
-                  printf("\n[Room collision during generation] Adding connection from %i to %i", roomNum, j);
+                  //printf("\n[Room collision during generation] Adding connection from %i to %i", roomNum, j);
                   rooms[roomNum].connectedRooms[rooms[roomNum].connections] = j;
                   rooms[roomNum].connections++;
 
@@ -185,24 +184,12 @@ bool Level::DigCorridor(int a, int b) {
    else if (aEWb > 0) { dir = WEST; }
    else if (bEWa > 0) { dir = EAST; }
 
-   printf("\n[DigCorridor] Set dir between %i and %i with the following\n\taNSb: %i\n\tbNSa: %i\n\taEWb: %i\n\tbEWa: %i", a, b, aNSb, bNSa, aEWb, bEWa);
+   //printf("\n[DigCorridor] Set dir between %i and %i with the following\n\taNSb: %i\n\tbNSa: %i\n\taEWb: %i\n\tbEWa: %i", a, b, aNSb, bNSa, aEWb, bEWa);
 
    int cAX = 0;
    int cAY = 0;
    int cBX = 0;
    int cBY = 0;
-
-   //
-   //
-   // if (dX > dY) {
-   //    if (ax > bx) { dir = WEST; }
-   //    else { dir = EAST; }
-   // } else {
-   //    if (ay > by) { dir = NORTH; }
-   //    else { dir = SOUTH; }
-   // }
-
-
 
    switch (dir) {
       case 0: {
@@ -321,7 +308,7 @@ bool Level::DigCorridor(int a, int b) {
                         }
 
                         if (!skipAConnection) {
-                           printf("\n[Accidental connection via corridor A] Adding connection from %i to %i. a.connections", a, j);
+                           //printf("\n[Accidental connection via corridor A] Adding connection from %i to %i. a.connections", a, j);
                            // for (int k = 0; k < rooms[a].connections; k++) {
                            //    printf(", %i", rooms[a].connectedRooms[k]);
                            // }
@@ -348,7 +335,7 @@ bool Level::DigCorridor(int a, int b) {
                         }
 
                         if (!skipBConnection) {
-                           printf("\n[Accidental connection via corridor B] Adding connection from %i to %i. b.connections", b, j);
+                           //printf("\n[Accidental connection via corridor B] Adding connection from %i to %i. b.connections", b, j);
                            // for (int k = 0; k < rooms[b].connections; k++) {
                            //    printf(", %i", rooms[b].connectedRooms[k]);
                            // }
@@ -488,12 +475,12 @@ bool Level::GenerateCorridors() {
    }
 
    // Simple logging to print out the room dimensions and connections to the console
-   for (int i = 0; i < roomCount; i++) {
-      printf("\n\tRoom %i: \t{%i, %i, %i, %i}:    \t", i, rooms[i].x, rooms[i].y, rooms[i].w, rooms[i].h);
-      for (int j = 0; j < rooms[i].connections; j++) {
-         printf(" %i,", rooms[i].connectedRooms[j]);
-      }
-   }
+   // for (int i = 0; i < roomCount; i++) {
+   //    printf("\n\tRoom %i: \t{%i, %i, %i, %i}:    \t", i, rooms[i].x, rooms[i].y, rooms[i].w, rooms[i].h);
+   //    for (int j = 0; j < rooms[i].connections; j++) {
+   //       printf(" %i,", rooms[i].connectedRooms[j]);
+   //    }
+   // }
 
    printf("\nNumber of corridors: %i", numCorridors);
    return true;
@@ -502,10 +489,10 @@ bool Level::GenerateCorridors() {
 
 
 void Level::CheckConnectionsToSpawn(int iter) {
-   printf("\nconnectedToSpawn status: %s", connectedToSpawn[0]?"T":"FALSE");
-   for (int i = 1; i < roomCount; i++) {
-      printf(", %i:%s", i, connectedToSpawn[i]?"T":"FALSE");
-   }
+   //printf("\nconnectedToSpawn status: %s", connectedToSpawn[0]?"T":"FALSE");
+   // for (int i = 1; i < roomCount; i++) {
+   //    printf(", %i:%s", i, connectedToSpawn[i]?"T":"FALSE");
+   // }
 
    int conns = rooms[iter].connections; // number of connections to iter
    for (int i = 0; i < conns; i++) {
@@ -540,8 +527,11 @@ void Level::GenerateWalls() {
 }
 
 
+
 void Level::GenerateLevel(Locale* locale) {
    this->locale = locale;
+   floorRender.CreateBlank(PIXELSPERFEET * 5 * groundSize * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
+   wallRender.CreateBlank(PIXELSPERFEET * 5 * groundSize * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
    int gridSize = floor(SCREEN_HEIGHT/groundSize);
 
    bool levelIsBigEnough = false;
@@ -610,6 +600,8 @@ bool Level::LoadFromFile(string path, int width, int height) {
 
 void Level::SetZoom(float newZoom) {
    zoom = newZoom * GZOOM;
+
+   renderTargetsCompiled = false;
 }
 
 
@@ -659,43 +651,38 @@ void Level::WriteOutWholeLevel() {
 
 
 
-void Level::Render(int camX, int camY) {
-   int tileW = PIXELSPERFEET * 5 * GZOOM;
-   int levelWidthPx = zoom * LEVEL_WIDTH * tileW;
-   int levelHeightPx = zoom * LEVEL_HEIGHT * tileW;
+void Level::CompileRenderTargets() {
+   int tileW = PIXELSPERFEET * 5 * zoom;
 
-   int minXTile = (camX / levelWidthPx) / (zoom * tileW) - 1;
-   minXTile = (minXTile < 0) ? 0 : minXTile;
-   int minYTile = (camY / levelHeightPx) / (zoom * tileW) - 1;
-   minYTile = (minYTile < 0) ? 0 : minYTile;
-   int maxXTile = ((camX + SCREEN_WIDTH) / levelWidthPx) / (zoom * tileW) + 1;
-   maxXTile = (maxXTile > LEVEL_WIDTH) ? LEVEL_WIDTH : maxXTile;
-   int maxYTile = ((camY + SCREEN_HEIGHT) / levelHeightPx) / (zoom * tileW) + 1;
-   maxYTile = (maxYTile < LEVEL_HEIGHT) ? LEVEL_HEIGHT : maxYTile;
-
-   // Render to screen
+   // Blit the repeating textures to the appropriate buffer textures so that we can render one large texture instead of 300 small textures every frame
    for (int yi = 0; yi < groundSize; yi++) {
       for (int xi = 0; xi < groundSize; xi++) {
-         int x = (zoom * tileW * xi) - camX;
-         int y = (zoom * tileW * yi) - camY;
-         int w = tileW * zoom;
-         int h = tileW * zoom;
+         int x = (tileW * xi);
+         int y = (tileW * yi);
+         int w = tileW;
+         int h = tileW;
          SDL_Rect r = {x, y, w, h};
          if (ground[yi][xi] == 1) {
             SDL_SetRenderTarget(gRenderer, floorRender.mTexture);
             locale->floorTexture.Render(&r);
-            SDL_SetRenderTarget(gRenderer, NULL);
-
-            floorRender.Render(NULL);
          } else if (ground[yi][xi] == 2) {
             SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
             locale->wallTexture.Render(&r);
-            SDL_SetRenderTarget(gRenderer, NULL);
-
-            wallRender.Render(NULL);
          }
       }
    }
+
+   SDL_SetRenderTarget(gRenderer, NULL);
+
+   renderTargetsCompiled = true;
+}
+
+
+
+void Level::Render(int camX, int camY) {
+   if (!renderTargetsCompiled) { CompileRenderTargets(); }
+   floorRender.Render(-camX, -camY);
+   wallRender.Render(-camX, -camY);
 }
 
 
