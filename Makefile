@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = src\main.cpp src\LTimer.cpp src\LTexture.cpp src\Animation.cpp src\Actor.cpp src\Collider.cpp src\StaticCollider.cpp src\essentials.cpp src\Decal.cpp src\Character.cpp src\CollisionDetection.cpp src\Level.cpp
+OBJS = src\main.cpp src\LTimer.cpp src\LTexture.cpp src\Animation.cpp src\Actor.cpp src\Collider.cpp src\StaticCollider.cpp src\essentials.cpp src\Decal.cpp src\Character.cpp src\CollisionDetection.cpp src\Level.cpp src\Camera.cpp
 
 #CC specifies which compiler we're using
 CC = g++

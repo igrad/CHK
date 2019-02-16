@@ -27,6 +27,9 @@ class Character: public Actor {
 
       void SetHPAndResourceToFull();
 
+
+      void SetSpawnPoint(SDL_Rect r);
+
       void SetPosition(int newX, int newY);
 
       void MoveTowards(int destX, int destY);
@@ -35,7 +38,9 @@ class Character: public Actor {
 
       void SetYVelocity(int multiplier);
 
+
       void Render(int screenFrame, int camX, int camY);
+
 
       void Free();
 

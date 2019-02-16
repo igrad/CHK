@@ -62,7 +62,7 @@ bool Actor::LoadAnimation(int phase, string path, int frames, float duration, in
 
 void Actor::SetActiveAnim(int phase) {
    usingAnims = true;
-   // anims[phase].currentFrame = 0;
+   anims[phase].currentFrame = 0;
    activeAnim = phase;
 }
 

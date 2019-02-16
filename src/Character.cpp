@@ -61,6 +61,14 @@ void Character::SetHPAndResourceToFull() {
 
 
 
+void Character::SetSpawnPoint(SDL_Rect r) {
+   int x = r.x - (drawBox.w/2);
+   int y = r.y - drawBox.h + (PIXELSPERFEET * 2.5);
+   SetPosition(x, y);
+}
+
+
+
 void Character::SetPosition(int newX, int newY) {
    xPos = newX;
    yPos = newY;
@@ -134,7 +142,7 @@ void Character::Render(int screenFrame, int camX, int camY) {
       }
    }
 
-   SetActiveAnim(phase);
+   if (activeAnim != phase) { SetActiveAnim(phase); }
 
    xVelocity = 0;
    yVelocity = 0;

@@ -1,6 +1,17 @@
 #include "..\include\Level.h"
 
 enum DIRECTION { NORTH, EAST, SOUTH, WEST };
+int NUMROOMCOLLISIONS = 0;
+int NUMROOMCOLLISIONSALLOWED = 0;
+int MAXCORRIDORS = 0;
+
+Locale::Locale() {
+   int mapSize = 100;
+   LTexture floorTexture = LTexture();
+   LTexture wallTexture = LTexture();
+}
+
+
 
 Room::Room() {
    x, y, w, h, cX, cY, connections, maxConnections = 0;
@@ -10,15 +21,13 @@ Room::Room() {
    maxConnections = (rand() % 2) + 1;
 }
 
+
+
 Room::~Room() {
    delete connectedRooms;
 }
 
 
-
-int NUMROOMCOLLISIONS = 0;
-int NUMROOMCOLLISIONSALLOWED = 0;
-int MAXCORRIDORS = 0;
 
 Level::Level() {
    srand(time(NULL));
@@ -48,18 +57,6 @@ Level::Level() {
    NUMROOMCOLLISIONSALLOWED = ceil(roomCount / 2);
 
    MAXCORRIDORS = roomCount;
-}
-
-
-
-int Level::GenerateRandomRoomDim() {
-   return (rand() % (maxRoomDim - minRoomDim + 1)) + minRoomDim;
-}
-
-
-
-int Level::GenerateRandomCoord() {
-   return (rand() % (groundSize - 1)) + 1;
 }
 
 
@@ -106,13 +103,13 @@ void Level::GenerateRandomRoom(int roomNum) {
    bool buildingRoom = true;
    while (buildingRoom) {
       // Use the generated coordinates to check if there is a room at that coordinate already, and if so, if there's
-      int x = GenerateRandomCoord();
-      int y = GenerateRandomCoord();
+      int x = (rand() % (groundSize - 1)) + 1;
+      int y = (rand() % (groundSize - 1)) + 1;
 
       // Give it 5 tries to try to make a room out of this chosen coordinate. If it can't create a room after 5 tries, it's probably too tight anyways
       for (int i = 0; i < 5; i++) {
-         int w = GenerateRandomRoomDim();
-         int h = GenerateRandomRoomDim();
+         int w = (rand() % (maxRoomDim - minRoomDim + 1)) + minRoomDim;
+         int h = (rand() % (maxRoomDim - minRoomDim + 1)) + minRoomDim;
 
          // If it passes the check, fill in the ground with this room's dimensions
          SDL_Rect room = {x, y, w, h};
@@ -386,16 +383,23 @@ bool Level::GenerateCorridors() {
          bool bypass = false;
 
          if ((j == 2) && (rooms[i].connections == 0)) {
+            // If we're on our last try, and this room has no connections, we override everything so that a connection can be made no matter what
             bypass = true;
          }
 
-         if (!bypass && (rooms[i].connections >= rooms[i].maxConnections)) { continue; }
+         if (!bypass && (rooms[i].connections >= rooms[i].maxConnections)) {
+            // If we aren't bypassing requirements, and our destination is already at max connections, we can skip it and try another one.
+            continue;
+         }
          else if ((dest == i)) { i--; }
          else if (!bypass && (FindDistance(rooms[i].x, rooms[i].y, rooms[dest].x, rooms[dest].y) > (groundSize/2))) {
+            // If the room is more than half the map away, then we need to try again. Super long corridors make everything messier.
             i--;
          }
          else {
             if (bypass || (rooms[dest].connections < rooms[dest].maxConnections)) {
+               // We have a solid connection ready to be made, potentially
+               // First, we check and see if these two rooms are already connected
                bool alreadyConnected = false;
                for (int k = 0; k < rooms[i].connections; k++) {
 
@@ -413,6 +417,7 @@ bool Level::GenerateCorridors() {
                   }
                }
 
+               // If they aren't connected already, we can try to build the corridor between the two
                if (!alreadyConnected) {
                   //printf("\nCalling dig on %i, %i", i, dest);
                   if (DigCorridor(i, dest)) {
@@ -441,7 +446,6 @@ bool Level::GenerateCorridors() {
       connectedToSpawn[0] = true;
       CheckConnectionsToSpawn(0);
 
-
       // If a room isn't connected, then we need to force a connection to a room that is
       bool madeConnection = false;
       for (int i = 0; i < roomCount; i++) {
@@ -451,8 +455,9 @@ bool Level::GenerateCorridors() {
             for (int j = 0; j < 10; j++) {
                int dest = rand() % roomCount;
 
-               if (dest == i) { continue; }
-               if (FindDistance(rooms[i].x, rooms[i].y, rooms[dest].x, rooms[dest].y) <= (groundSize/2)) {
+               if (!connectedToSpawn[dest]) { continue; }
+               else if (dest == i) { continue; }
+               else if (FindDistance(rooms[i].x, rooms[i].y, rooms[dest].x, rooms[dest].y) <= (groundSize/2)) {
                   if (DigCorridor(i, dest)) {
                      madeConnection = true;
                      i = roomCount;
@@ -471,6 +476,7 @@ bool Level::GenerateCorridors() {
       verifyingConnections = madeConnection;
    }
 
+   // Simple logging to print out the room dimensions and connections to the console
    for (int i = 0; i < roomCount; i++) {
       printf("\n\tRoom %i: \t{%i, %i, %i, %i}:    \t", i, rooms[i].x, rooms[i].y, rooms[i].w, rooms[i].h);
       for (int j = 0; j < rooms[i].connections; j++) {
@@ -574,6 +580,20 @@ void Level::SetZoom(float newZoom) {
 
 
 
+SDL_Rect Level::GetPlayerSpawn() {
+   int gx = (rooms[0].x + (rand() % rooms[0].w));
+   int gy = (rooms[0].y + (rand() % rooms[0].h));
+   int x = gx * PIXELSPERFEET * 5 * GZOOM;
+   int y = gy * PIXELSPERFEET * 5 * GZOOM;
+
+   printf("\nSet spawn point: %i %i -> %i %i", gx, gy, x, y);
+
+   SDL_Rect r = {x, y, 0, 0};
+   return r;
+}
+
+
+
 void Level::WriteOutWholeLevel() {
    ofstream myFile;
    myFile.open("output.txt");
@@ -588,10 +608,10 @@ void Level::WriteOutWholeLevel() {
 
    for (int yi = 0; yi < groundSize; yi++) {
       for (int xi = 0; xi < groundSize; xi++) {
-         if (ground[xi][yi]) {
+         if (ground[yi][xi]) {
             bool inRect = false;
             for (int r = 0; r < roomCount; r++) {
-               if (PointInRect(yi, xi, &rooms[r].rect)) {
+               if (PointInRect(xi, yi, &rooms[r].rect)) {
                   myFile << hex << r;
                   inRect = true;
                }
@@ -632,7 +652,7 @@ void Level::Render(int camX, int camY) {
    // Render to screen
    for (int yi = 0; yi < groundSize; yi++) {
       for (int xi = 0; xi < groundSize; xi++) {
-         if (ground[xi][yi]) {
+         if (ground[yi][xi]) {
             int x = (zoom * tileW * xi) - camX;
             int y = (zoom * tileW * yi) - camY;
             int w = tileW * zoom;

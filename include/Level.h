@@ -19,6 +19,40 @@ enum CORNER_TYPE {
    CORNER_SHARP
 };
 
+
+
+struct Locale {
+   int mapSize;
+   LTexture floorTexture;
+   LTexture wallTexture;
+   // Might want to add secondary/tertiary floor and wall textures here later in development
+   // food object 1
+   // food object 1
+   // food object 1
+   // Random item grade range
+
+   // grunt enemy 1
+   // grunt enemy 2
+   // grunt enemy 3
+   // grunt enemy 4
+   // grunt enemy 5
+   // bruiser enemy 1
+   // bruiser enemy 2
+   // bruiser enemy 3
+   // artillery enemy 1
+   // artillery enemy 2
+   // artillery enemy 3
+   // miniboss enemy 1
+   // miniboss enemy 2
+   // miniboss enemy 3
+   // boss enemy 1
+   // boss enemy 2
+
+   Locale();
+};
+
+
+
 class Room {
    public:
       Room();
@@ -42,13 +76,10 @@ class Level {
    public:
       Level();
 
-      int GenerateRandomRoomDim();
-
-      int GenerateRandomCoord();
-
       bool CheckNewRoom(SDL_Rect* room);
 
       void GenerateRandomRoom(int roomNum);
+
 
       bool DigCorridor(int a, int b);
 
@@ -56,11 +87,16 @@ class Level {
 
       void CheckConnectionsToSpawn(int iter);
 
+
       void GenerateLevel();
 
       bool LoadFromFile(string path, int width, int height);
 
       void SetZoom(float newZoom);
+
+
+      SDL_Rect GetPlayerSpawn();
+      
 
       void WriteOutWholeLevel();
 

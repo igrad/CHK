@@ -104,7 +104,7 @@ void Animation::IncrementCurrentFrame() {
 
 
 void Animation::Render(SDL_Rect* drawBox, int screenFrame) {
-   printf("\nRendering: %i, %i, %i, %i", drawBox->x,drawBox->y,drawBox->w,drawBox->h);
+   //printf("\nRendering: %i, %i, %i, %i", drawBox->x,drawBox->y,drawBox->w,drawBox->h);
    SDL_RenderCopy(gRenderer, mTexture, &frameClips[currentFrame], drawBox);
 
    int animFrame = ((float)frameCount/animDuration) * ((float)screenFrame/(float)SCREEN_FPS);

@@ -12,6 +12,7 @@
 #include "..\include\Collider.h"
 #include "..\include\StaticCollider.h"
 #include "..\include\LTexture.h"
+#include "..\include\Camera.h"
 #include "..\include\Animation.h"
 #include "..\include\Actor.h"
 #include "..\include\Character.h"
@@ -33,10 +34,6 @@ const int LEVEL_WIDTH = 100;
 const int SCREEN_FPS = 60;
 const int SCREEN_TICKS_PER_FRAME = 1000/SCREEN_FPS;
 
-// Camera position
-int CAMX = 0;
-int CAMY = 0;
-
 
 const float PIXELSPERFEET = 8.0; // This is preliminary and only used for testing. Once we have a proper camera class up and running, the zoom attribute of the camera will determine this value
 
@@ -51,10 +48,13 @@ SDL_Renderer* gRenderer = NULL;
 // The currently displayed texture
 LTexture gTexture;
 
-Character player(1, 10, 12, 16, 0);
+Character player(1, 10, 13, 16, 0);
 
 Level randomLevel;
 
+
+// Declare all locales
+Locale dungeon = Locale();
 
 
 // Starts up SDL and creates window
@@ -121,9 +121,15 @@ bool LoadMedia() {
 	player.LoadAnimation(ANIM_WALK_III, "media\\images\\Walking_III.png", 8, 1.2, 20, 40);
 	player.LoadAnimation(ANIM_WALK_IV, "media\\images\\Walking_IV.png", 8, 1.2, 20, 40);
 	player.SetActiveAnim(ANIM_IDLE_IV);
-	player.SetPosition((SCREEN_WIDTH - CAMX - player.drawBox.w) / 2, (SCREEN_HEIGHT - CAMY - player.drawBox.h) / 2);
+	//player.SetPosition((SCREEN_WIDTH - CAMX - player.drawBox.w) / 2, (SCREEN_HEIGHT - CAMY - player.drawBox.h) / 2);
 
 	randomLevel.GenerateLevel();
+
+	// TODO: We can't use this yet because we haven't set up the Camera class yet
+	// The SetSpawnPoint function uses the SetPosition function. We're currently locking the player's position in the center of the camera, rather than using the player's position as it should be used.
+	player.SetSpawnPoint(randomLevel.GetPlayerSpawn());
+
+	randomLevel.WriteOutWholeLevel();
 
 	return success;
 }
@@ -179,8 +185,6 @@ int main(int argc, char* args[]) {
 
 			Log("Starting main event loop");
 
-			randomLevel.WriteOutWholeLevel();
-
          // While the application is running
          while(!quit) {
 				// Start the cap timer
@@ -193,6 +197,12 @@ int main(int argc, char* args[]) {
                }
             }
 
+				// Calculate and lock the FPS
+				float avgFPS = countedFrames/(fpsTimer.getTicks()/1000.f);
+				if (avgFPS > 2000000) {
+					avgFPS = 0;
+				}
+
 				// Handle keyboard input
 				const Uint8* keyStates = SDL_GetKeyboardState(NULL);
 
@@ -204,35 +214,25 @@ int main(int argc, char* args[]) {
 
 				if (W && S) {
 					player.SetYVelocity(0);
-					CAMY += player.yVelocity;
 				} else if (W) {
 					player.yDirection = false;
 					player.SetYVelocity(-1);
-					CAMY += player.yVelocity;
 				} else if (S) {
 					player.yDirection = true;
 					player.SetYVelocity(1);
-					CAMY += player.yVelocity;
 				}
 
 				if (A && D) {
 					player.SetXVelocity(0);
-					CAMX += player.xVelocity;
 				} else if (A) {
 					player.xDirection = false;
 					player.SetXVelocity(-1);
-					CAMX += player.xVelocity;
 				} else if (D) {
 					player.xDirection = true;
 					player.SetXVelocity(1);
-					CAMX += player.xVelocity;
 				}
 
-				// Calculate and lock the FPS
-				float avgFPS = countedFrames/(fpsTimer.getTicks()/1000.f);
-				if (avgFPS > 2000000) {
-					avgFPS = 0;
-				}
+				// Handle collision
 
             // Clear screen
             SDL_RenderClear(gRenderer);
@@ -241,10 +241,13 @@ int main(int argc, char* args[]) {
             // Render texture to screen
 				gTexture.Render(&SCREEN_RECT);
 
-				randomLevel.Render(CAMX, CAMY);
+				if (Camera::focusMode == FOCUS_PLAYER) {
+					Camera::SetFocusOnActor(&player);
+				}
 
-				//myDummy.Render(screenFrame);
-				player.Render(screenFrame, CAMX, CAMY);
+				randomLevel.Render(Camera::x, Camera::y);
+
+				player.Render(screenFrame, Camera::x, Camera::y);
 
             // Update screen
             SDL_RenderPresent(gRenderer);
