@@ -12,7 +12,15 @@
 class Collider {
    public:
       Collider();
-      ~Collider();
+
+
+      Collider* operator=(const Collider* o);
+
+
+      SDL_Rect* GetHitBox();
+
+      SDL_Rect* GetDrawBox();
+
 
       void SetPos(double x = -1, double y = -1);
 
@@ -20,11 +28,12 @@ class Collider {
 
       void SetDrawBox(int x = -1, int y = -1, int w = -1, int h = -1);
 
-      SDL_Rect* GetHitBox();
-
-      SDL_Rect* GetDrawBox();
 
       void HandleCollisions();
+
+
+      ~Collider();
+
 
       // Origin and point of reference for the hitBox and drawBox
       double xPos;

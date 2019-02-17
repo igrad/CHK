@@ -30,8 +30,16 @@ Room::~Room() {
 
 
 Level::Level() {
+
+}
+
+
+
+Level::Level(Locale* locale) {
+   this->locale = locale;
+
    srand(time(NULL));
-   walls = NULL;
+
    decals = NULL;
 
    zoom = 1.0 * GZOOM;
@@ -67,6 +75,8 @@ Level::Level() {
 
 
    renderTargetsCompiled = false;
+
+   Log("Completed level constructor");
 }
 
 
@@ -520,7 +530,93 @@ void Level::GenerateWalls() {
             else if (ground[cY][cX + 1] == 1) { isWall = true; }
             else if (ground[cY + 1][cX + 1] == 1) { isWall = true; }
 
-            if (isWall) { ground[cY][cX] = 2; }
+            if (isWall) {
+               int blockSize = PIXELSPERFEET * zoom * 5;
+               ground[cY][cX] = 2;
+
+               int key = (cX * 100) + cY;
+               int lKey = ((cX - 1) * 100) + cY;
+               int uKey = (cX * 100) + cY - 1;
+
+               bool isWallAbove = (walls.find(uKey) != walls.end());
+               bool isWallLeft = (walls.find(lKey) != walls.end());
+
+
+               bool wallEdited = false;
+               // First, we check and see if there's a wall above AND to the left of this wall piece. If there is, then it's safe to assume that the two can be combined as long as neither of them are only one unit wide/tall (respectively)
+               if (isWallLeft && isWallAbove) {
+                  SDL_Rect* lC = &walls[lKey].hitBox;
+                  SDL_Rect* uC = &walls[uKey].hitBox;
+                  SDL_Rect* lD = &walls[lKey].drawBox;
+                  SDL_Rect* uD = &walls[uKey].drawBox;
+                  if (lC->h != blockSize || uC->w != blockSize) {
+                     if ((lC->x == uC->x) && ((lC->w + blockSize) == uC->w)) {
+                        walls.erase(lKey);
+
+                        uC->h += blockSize;
+                        uD->h += blockSize;
+
+                        Collider dC = walls[uKey];
+                        walls.erase(uKey);
+                        walls.insert(pair<int, Collider>(key, dC));
+
+                        wallEdited = true;
+                     } else if ((lC->y == uC->y) && (lC->h == (uC->h + blockSize))) {
+                        walls.erase(uKey);
+
+                        lC->w += blockSize;
+                        lD->w += blockSize;
+
+                        Collider dC = walls[lKey];
+                        walls.erase(lKey);
+                        walls.insert(pair<int, Collider>(key, dC));
+
+                        wallEdited = true;
+                     }
+                  }
+               }
+
+               if (!wallEdited) {
+                  // Check if there's an existing wall to the left of this wall
+                  if (isWallLeft) {
+                     // When the height of the wall to the left is more than 1 block tall, and there isn't a wall tile above, then we need to start a new wall instead of continuing the wall to the left
+                     Collider dC = walls[lKey];
+
+                     if (!((ground[cY - 1][cX] != 2) && (dC.hitBox.h != blockSize))) {
+                        walls.erase(lKey);
+
+                        dC.hitBox.w += blockSize;
+                        dC.drawBox.w += blockSize;
+                        walls.insert(pair<int, Collider>(key, dC));
+
+                        wallEdited = true;
+                     }
+                  } else if (isWallAbove) {
+                     // When the width of the wall above is more than 1 block wide, and there isn't a wall to the left, we need to start a new wall instead of continuing the wall above
+                     Collider dC = walls[uKey];
+
+                     if (!((ground[cY][cX - 1] != 2) && (dC.hitBox.w != blockSize))) {
+                        walls.erase(uKey);
+
+                        dC.hitBox.h += blockSize;
+                        dC.drawBox.h += blockSize;
+                        walls.insert(pair<int, Collider>(key, dC));
+
+                        wallEdited = true;
+                     }
+                  }
+               }
+
+               if (!wallEdited) {
+                  Collider dC = Collider();
+
+                  dC.SetPos(cX * blockSize, cY * blockSize);
+                  dC.SetHitBox(cX * blockSize, cY * blockSize, blockSize, blockSize);
+                  dC.SetDrawBox(cX * blockSize, cY * blockSize, blockSize, blockSize);
+
+                  walls.insert(pair<int, Collider>(key, dC));
+               }
+            }
          }
       }
    }
@@ -528,8 +624,7 @@ void Level::GenerateWalls() {
 
 
 
-void Level::GenerateLevel(Locale* locale) {
-   this->locale = locale;
+void Level::GenerateLevel() {
    floorRender.CreateBlank(PIXELSPERFEET * 5 * groundSize * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
    wallRender.CreateBlank(PIXELSPERFEET * 5 * groundSize * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
    int gridSize = floor(SCREEN_HEIGHT/groundSize);
@@ -588,6 +683,15 @@ void Level::GenerateLevel(Locale* locale) {
 
    printf("\nFinal tile count: %i", roomTileCount);
    printf("\nMax collisions: %i, total: %i", NUMROOMCOLLISIONSALLOWED, NUMROOMCOLLISIONS);
+
+   printf("\n\nPrinting walls:");
+   for (auto i=walls.begin(); i != walls.end(); i++) {
+      int x = i->second.hitBox.x / (PIXELSPERFEET * zoom * 5);
+      int y = i->second.hitBox.y / (PIXELSPERFEET * zoom * 5);
+      int w = i->second.hitBox.w / (PIXELSPERFEET * zoom * 5);
+      int h = i->second.hitBox.h / (PIXELSPERFEET * zoom * 5);
+      printf("\n\tWall: {%i, %i, %i, %i}", x, y, w, h);
+   }
 }
 
 
@@ -623,22 +727,13 @@ SDL_Rect Level::GetPlayerSpawn() {
 void Level::WriteOutWholeLevel() {
    ofstream myFile;
    myFile.open("output.txt");
-
-   for (int i = 0; i < roomCount; i++) {
-      for (int y = rooms[i].y; y < rooms[i].y; y++) {
-         for (int x = rooms[i].x; x < rooms[i].w; x++) {
-            myFile << i;
-         }
-      }
-   }
-
    for (int yi = 0; yi < groundSize; yi++) {
       for (int xi = 0; xi < groundSize; xi++) {
-         char o = ' ';
+         string o = "  ";
          switch (ground[yi][xi]) {
-            case 1: o = ':'; break;
-            case 2: o = '#'; break;
-            default: o = ' ';
+            case 1: o = "::"; break;
+            case 2: o = "##"; break;
+            default: o = "  ";
          }
 
          myFile << o;
@@ -683,6 +778,20 @@ void Level::Render(int camX, int camY) {
    if (!renderTargetsCompiled) { CompileRenderTargets(); }
    floorRender.Render(-camX, -camY);
    wallRender.Render(-camX, -camY);
+
+   // Paint collided walls
+   for (auto i=walls.begin(); i != walls.end(); i++) {
+      int x = (i->second.hitBox.x) + 20;
+      int y = (i->second.hitBox.y) + 20;
+      int w = (i->second.hitBox.w) - 40;
+      int h = (i->second.hitBox.h) - 40;
+
+      SDL_Rect r = {x, y, w, h};
+      SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
+      SDL_RenderFillRect(gRenderer, &r);
+   }
+
+   SDL_SetRenderTarget(gRenderer, NULL);
 }
 
 

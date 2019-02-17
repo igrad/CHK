@@ -10,6 +10,19 @@ Collider::Collider() {
 
 
 
+Collider* Collider::operator=(const Collider* o) {
+   if (this != o) {
+      xPos = o->xPos;
+      yPos = o->yPos;
+      hitBox = o->hitBox;
+      drawBox = o->drawBox;
+   }
+
+   return this;
+}
+
+
+
 void Collider::SetPos(double x, double y) {
    if (x != -1) { xPos = x; }
    if (y != -1) { yPos = y; }

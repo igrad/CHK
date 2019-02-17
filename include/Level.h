@@ -2,7 +2,7 @@
 #define LEVEL_LOADED
 
 #include "essentials.h"
-#include "StaticCollider.h"
+#include "Collider.h"
 #include "Decal.h"
 #include "CollisionDetection.h"
 
@@ -23,6 +23,10 @@ enum CORNER_TYPE {
 
 struct Locale {
    int mapSize;
+   int minRoomDim;
+   int maxRoomDim;
+   int minRoomCount;
+   int maxRoomCount;
    LTexture floorTexture;
    LTexture wallTexture;
    // Might want to add secondary/tertiary floor and wall textures here later in development
@@ -75,6 +79,7 @@ class Room {
 class Level {
    public:
       Level();
+      Level(Locale* locale);
 
       bool CheckNewRoom(SDL_Rect* room);
 
@@ -91,7 +96,7 @@ class Level {
       void GenerateWalls();
 
 
-      void GenerateLevel(Locale* locale);
+      void GenerateLevel();
 
       bool LoadFromFile(string path, int width, int height);
 
@@ -112,7 +117,12 @@ class Level {
       // General
       float zoom;
       Locale* locale;
-      StaticCollider* walls;
+
+      // Wall generation variables
+      map<int, Collider> walls;
+      int wallCount;
+
+      // Decal variables
       Decal* decals;
 
       // Floor generation variables

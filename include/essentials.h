@@ -11,6 +11,8 @@
 #include <math.h>
 #include <time.h>
 #include <algorithm>
+#include <vector>
+#include <map>
 
 using namespace std;
 

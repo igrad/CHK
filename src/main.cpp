@@ -10,7 +10,6 @@
 #include "..\include\CollisionDetection.h"
 #include "..\include\LTimer.h"
 #include "..\include\Collider.h"
-#include "..\include\StaticCollider.h"
 #include "..\include\LTexture.h"
 #include "..\include\Camera.h"
 #include "..\include\Animation.h"
@@ -49,7 +48,7 @@ SDL_Renderer* gRenderer = NULL;
 // The currently displayed texture
 LTexture gTexture;
 
-Character player(1, 10, 13, 16, 0);
+Character player(1, 10, 30, 16, 0);
 
 Level randomLevel;
 
@@ -127,10 +126,13 @@ bool LoadMedia() {
 	dungeon.floorTexture.LoadFromFile("media\\images\\floor1.jpg");
 	dungeon.wallTexture.LoadFromFile("media\\images\\wall1.jpg");
 
-	randomLevel.GenerateLevel(&dungeon);
+	randomLevel = Level(&dungeon);
+	Log("Generating level");
+	randomLevel.GenerateLevel();
 
 	// TODO: We can't use this yet because we haven't set up the Camera class yet
 	// The SetSpawnPoint function uses the SetPosition function. We're currently locking the player's position in the center of the camera, rather than using the player's position as it should be used.
+	Log("Setting spawn point");
 	player.SetSpawnPoint(randomLevel.GetPlayerSpawn());
 
 	randomLevel.WriteOutWholeLevel();
@@ -162,11 +164,13 @@ void Close() {
 
 int main(int argc, char* args[]) {
    // Start up SDL and create window
+	Log("Initializing");
 	if (!Init()) {
 		Fatal("Failed to initialize!");
 	}
 	else {
 		//Load media
+		Log("Loading media");
 		if (!LoadMedia()) {
 			Fatal("Failed to load media!");
 		}
