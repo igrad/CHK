@@ -96,6 +96,8 @@ void Character::MoveTowards(int destX, int destY) {
 void Character::SetXVelocity(int multiplier) {
    xVelocity = pixelsPerFrame * multiplier;
    xVelocity = (multiplier < 1) ? ceil(xVelocity) : floor (xVelocity);
+
+   queueCollisions = true;
 }
 
 
@@ -103,17 +105,13 @@ void Character::SetXVelocity(int multiplier) {
 void Character::SetYVelocity(int multiplier) {
    yVelocity = pixelsPerFrame * multiplier;
    yVelocity = (multiplier < 1) ? ceil(yVelocity) : floor (yVelocity);
+
+   queueCollisions = true;
 }
 
 
 
 void Character::Render(int screenFrame, int camX, int camY) {
-   // Position the character on screen
-   // TODO: This little bit here needs to be put in a collision handling method instead of the render method
-   xPos += xVelocity;
-   yPos += yVelocity;
-
-
    // Player animations
    bool movingUp = (yVelocity < 0);
    bool movingDown = (yVelocity > 0);

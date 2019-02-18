@@ -55,9 +55,6 @@ class Character: public Actor {
 
       int moveSpeed;
 
-      bool xDirection;
-      bool yDirection;
-
       int currentHP;
       int maxHP;
       float HPRegenRate;
@@ -66,9 +63,6 @@ class Character: public Actor {
       int maxResource;
       int ResourceBonus;
       float ResourceRegenRate;
-
-      float xVelocity;
-      float yVelocity;
 
       float pixelVelocity;
       float pixelsPerFrame;

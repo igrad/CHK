@@ -48,3 +48,42 @@ bool IsRectCollision(SDL_Rect* a, SDL_Rect* b) {
 
    return flag;
 }
+
+
+
+void CheckCollisions(Actor* actor, map<int, Collider>* others) {
+   for (auto i = others->end(); i != others->begin(); i--) {
+      if (IsRectCollision(&actor->hitBox, &i->second.hitBox)) {
+         SDL_Rect* a = &actor->hitBox;
+         SDL_Rect* b = &i->second.hitBox;
+         int xPosOverlap = (a->x + a->w) - b->x;
+         int xNegOverlap = a->x - (b->x + b->w);
+         int yPosOverlap = (a->y + a->h) - b->y;
+         int yNegOverlap = a->y - (b->y + b->h);
+
+         int minOverlap = min(min(min(abs(xPosOverlap), abs(xNegOverlap)), abs(yPosOverlap)), abs(yNegOverlap));
+
+         if (actor->yVelocity < 0 && actor->xVelocity > 0) {
+            if (abs(yPosOverlap) == minOverlap) {
+               actor->SetYPos(actor->yPos - yPosOverlap);
+            } else if (abs(yNegOverlap) == minOverlap) {
+               actor->SetYPos(actor->yPos - yNegOverlap);
+            } else if (abs(xPosOverlap) == minOverlap) {
+               actor->SetXPos(actor->xPos - xPosOverlap);
+            } else if (abs(xNegOverlap) == minOverlap) {
+               actor->SetXPos(actor->xPos - xNegOverlap);
+            }
+         } else {
+            if (abs(xPosOverlap) == minOverlap) {
+               actor->SetXPos(actor->xPos - xPosOverlap);
+            } else if (abs(xNegOverlap) == minOverlap) {
+               actor->SetXPos(actor->xPos - xNegOverlap);
+            } else if (abs(yPosOverlap) == minOverlap) {
+               actor->SetYPos(actor->yPos - yPosOverlap);
+            } else if (abs(yNegOverlap) == minOverlap) {
+               actor->SetYPos(actor->yPos - yNegOverlap);
+            }
+         }
+      }
+   }
+}

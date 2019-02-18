@@ -534,9 +534,9 @@ void Level::GenerateWalls() {
                int blockSize = PIXELSPERFEET * zoom * 5;
                ground[cY][cX] = 2;
 
-               int key = (cX * 100) + cY;
-               int lKey = ((cX - 1) * 100) + cY;
-               int uKey = (cX * 100) + cY - 1;
+               int key = (cY * 100) + cX;
+               int lKey = (cY * 100) + cX - 1;
+               int uKey = ((cY - 1) * 100) + cX;
 
                bool isWallAbove = (walls.find(uKey) != walls.end());
                bool isWallLeft = (walls.find(lKey) != walls.end());

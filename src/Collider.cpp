@@ -61,12 +61,6 @@ SDL_Rect* Collider::GetDrawBox() {
 
 
 
-void Collider::HandleCollisions() {
-
-}
-
-
-
 Collider::~Collider() {
 
 }

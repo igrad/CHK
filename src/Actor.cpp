@@ -29,8 +29,35 @@ Actor::Actor(int numAnims, int numTextures) {
 
 
 
-void Actor::SetHitBoxSize(int x, int y, int w, int h) {
+void Actor::SetXPos(double x) {
+   if (x != -0.1) { xPos = x; }
+   hitBox.x = xPos + hitBoxXOffset;
+}
 
+
+
+void Actor::SetYPos(double y) {
+   if (y != -0.1) { yPos = y; }
+   hitBox.y = yPos + hitBoxYOffset;
+}
+
+
+
+void Actor::SetPos(double x, double y) {
+   SetXPos(x);
+   SetYPos(y);
+}
+
+
+
+void Actor::SetHitBoxSize(int x, int y, int w, int h) {
+   hitBox.x = x * zoom;
+   hitBox.y = y * zoom;
+   hitBox.w = w * zoom;
+   hitBox.h = h * zoom;
+
+   hitBoxXOffset = x * zoom;
+   hitBoxYOffset = y * zoom;
 }
 
 
@@ -81,7 +108,23 @@ void Actor::SetActiveTexture(int phase) {
 
 
 
+void Actor::HandleMovement(int camX, int camY) {
+   xPos += xVelocity;
+   yPos += yVelocity;
+
+   hitBox.x = xPos + hitBoxXOffset;
+   hitBox.y = yPos + hitBoxYOffset;
+
+   drawBox.x = (xPos - camX);
+   drawBox.y = (yPos - camY);
+}
+
+
+
 void Actor::Render(int screenFrame, int camX, int camY) {
+   hitBox.x = xPos + hitBoxXOffset;
+   hitBox.y = yPos + hitBoxYOffset;
+
    drawBox.x = (xPos - camX);
    drawBox.y = (yPos - camY);
 
@@ -90,6 +133,8 @@ void Actor::Render(int screenFrame, int camX, int camY) {
    } else {
       textures[activeTexture].Render(GetDrawBox());
    }
+
+   queueCollisions = false;
 }
 
 

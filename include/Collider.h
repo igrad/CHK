@@ -29,10 +29,10 @@ class Collider {
       void SetDrawBox(int x = -1, int y = -1, int w = -1, int h = -1);
 
 
-      void HandleCollisions();
-
-
       ~Collider();
+
+
+      bool queueCollisions;
 
 
       // Origin and point of reference for the hitBox and drawBox
@@ -42,6 +42,9 @@ class Collider {
       // Because the collider's hitbox may not necessary correspond with their origin on screen, we separate the two values.
       SDL_Rect hitBox;
       SDL_Rect drawBox;
+
+      int hitBoxXOffset;
+      int hitBoxYOffset;
 };
 
 #endif

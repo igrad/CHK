@@ -112,6 +112,7 @@ bool LoadMedia() {
    }
 
 	player.SetDrawBoxSize(0, 0, 20, 40);
+	player.SetHitBoxSize(0, 20, 20, 20);
 	player.LoadAnimation(ANIM_IDLE_I, "media\\images\\Idle_I.png", 8, 2.0, 20, 40);
 	player.LoadAnimation(ANIM_IDLE_II, "media\\images\\Idle_II.png", 8, 2.0, 20, 40);
 	player.LoadAnimation(ANIM_IDLE_III, "media\\images\\Idle_III.png", 8, 2.0, 20, 40);
@@ -121,7 +122,6 @@ bool LoadMedia() {
 	player.LoadAnimation(ANIM_WALK_III, "media\\images\\Walking_III.png", 8, 1.2, 20, 40);
 	player.LoadAnimation(ANIM_WALK_IV, "media\\images\\Walking_IV.png", 8, 1.2, 20, 40);
 	player.SetActiveAnim(ANIM_IDLE_IV);
-	//player.SetPosition((SCREEN_WIDTH - CAMX - player.drawBox.w) / 2, (SCREEN_HEIGHT - CAMY - player.drawBox.h) / 2);
 
 	dungeon.floorTexture.LoadFromFile("media\\images\\floor1.jpg");
 	dungeon.wallTexture.LoadFromFile("media\\images\\wall1.jpg");
@@ -240,7 +240,19 @@ int main(int argc, char* args[]) {
 					player.SetXVelocity(1);
 				}
 
-				// Handle collision
+				// Handle character movements
+				player.HandleMovement(Camera::x, Camera::y);
+
+				// Handle collisions
+				// First, players
+				if (player.queueCollisions) {
+					// Check collisions with other characters, and then walls
+					CheckCollisions(&player, &randomLevel.walls);
+				}
+
+				// Next, other characters
+				// Next, projectiles
+				// Finally, items
 
             // Clear screen
             SDL_RenderClear(gRenderer);
