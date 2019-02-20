@@ -22,11 +22,15 @@ enum CORNER_TYPE {
 
 
 struct Locale {
-   int mapSize;
-   int minRoomDim;
-   int maxRoomDim;
-   int minRoomCount;
-   int maxRoomCount;
+   int mapSize = 100;
+   int minRoomDim = 4;
+   int maxRoomDim = 20;
+   int minRoomCount = 10;
+   int maxRoomCount = 16;
+   CORNER_TYPE cornerType = CORNER_SHARP;
+   int cornerSize = 1;
+   CORRIDOR_TYPE corridorType = CORRIDOR_CORNERS;
+   int corridorSize = 1;
    LTexture floorTexture;
    LTexture wallTexture;
    // Might want to add secondary/tertiary floor and wall textures here later in development
@@ -126,8 +130,9 @@ class Level {
       Decal* decals;
 
       // Floor generation variables
-      const static int groundSize = 100;
-      uint8_t ground[groundSize][groundSize];
+      const static int maxGroundSize = 100;
+      int groundSize;
+      uint8_t ground[maxGroundSize][maxGroundSize];
 
       Room* rooms;
 
@@ -142,9 +147,9 @@ class Level {
       SDL_Rect exitRoom;
 
       CORRIDOR_TYPE corridorType;
-      CORNER_TYPE cornerType;
       int corridorSize;
-      int roomCornerSize;
+      CORNER_TYPE cornerType;
+      int cornerSize;
 
       int minRoomDim;
       int maxRoomDim;

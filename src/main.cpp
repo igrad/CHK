@@ -50,11 +50,10 @@ LTexture gTexture;
 
 Character player(1, 10, 30, 16, 0);
 
-Level randomLevel;
-
 
 // Declare all locales
-Locale dungeon = Locale();
+Locale dungeon;
+
 
 
 // Starts up SDL and creates window
@@ -123,20 +122,6 @@ bool LoadMedia() {
 	player.LoadAnimation(ANIM_WALK_IV, "media\\images\\Walking_IV.png", 8, 1.2, 20, 40);
 	player.SetActiveAnim(ANIM_IDLE_IV);
 
-	dungeon.floorTexture.LoadFromFile("media\\images\\floor1.jpg");
-	dungeon.wallTexture.LoadFromFile("media\\images\\wall1.jpg");
-
-	randomLevel = Level(&dungeon);
-	Log("Generating level");
-	randomLevel.GenerateLevel();
-
-	// TODO: We can't use this yet because we haven't set up the Camera class yet
-	// The SetSpawnPoint function uses the SetPosition function. We're currently locking the player's position in the center of the camera, rather than using the player's position as it should be used.
-	Log("Setting spawn point");
-	player.SetSpawnPoint(randomLevel.GetPlayerSpawn());
-
-	randomLevel.WriteOutWholeLevel();
-
 	return success;
 }
 
@@ -169,12 +154,32 @@ int main(int argc, char* args[]) {
 		Fatal("Failed to initialize!");
 	}
 	else {
-		//Load media
+		// Load media
 		Log("Loading media");
 		if (!LoadMedia()) {
 			Fatal("Failed to load media!");
 		}
 		else {
+			// Initialize all locales
+			dungeon.mapSize = 100;
+			dungeon.minRoomDim = 5;
+			dungeon.maxRoomDim = 20;
+			dungeon.minRoomCount = 10;
+			dungeon.maxRoomCount = 20;
+			dungeon.cornerType = CORNER_SHARP;
+			dungeon.cornerSize = 1;
+			dungeon.corridorType = CORRIDOR_CORNERS;
+			dungeon.corridorSize = 1;
+			dungeon.floorTexture.LoadFromFile("media\\images\\floor1.jpg");
+			dungeon.wallTexture.LoadFromFile("media\\images\\wall1.jpg");
+
+			// Generate level
+			Level randomLevel = Level(&dungeon);
+			randomLevel.GenerateLevel();
+			randomLevel.WriteOutWholeLevel();
+
+			player.SetSpawnPoint(randomLevel.GetPlayerSpawn());
+
          // Main loop flag
          bool quit = false;
 
