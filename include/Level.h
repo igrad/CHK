@@ -32,8 +32,15 @@ struct Locale {
    CORRIDOR_TYPE corridorType = CORRIDOR_CORNERS;
    int corridorSize = 1;
    LTexture floorTexture;
+   int floorTextureSize; // The floor is not a single repeating tile, but one vast
    LTexture wallTexture;
+   int wallHeight; // Height of the wall in the file, so that we can account for overlapping
+   LTexture wallTexture_LEdge;
+   LTexture wallTexture_REdge;
+   LTexture wallTexture_TEdge;
    // Might want to add secondary/tertiary floor and wall textures here later in development
+   LTexture voidTexture;
+   int voidTextureSize;
    // food object 1
    // food object 1
    // food object 1
@@ -112,7 +119,7 @@ class Level {
 
       void WriteOutWholeLevel();
 
-      void CompileRenderTargets();
+      void CompileRenderTargets(int xQ = -1, int yQ = -1);
 
       void Render(int camX, int camY);
 

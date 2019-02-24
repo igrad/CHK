@@ -48,7 +48,7 @@ SDL_Renderer* gRenderer = NULL;
 // The currently displayed texture
 LTexture gTexture;
 
-Character player(1, 10, 30, 16, 0);
+Character player(1, 10, 15, 16, 0);
 
 
 // Declare all locales
@@ -111,7 +111,7 @@ bool LoadMedia() {
    }
 
 	player.SetDrawBoxSize(0, 0, 20, 40);
-	player.SetHitBoxSize(0, 20, 20, 20);
+	player.SetHitBoxSize(5, 35, 10, 5);
 	player.LoadAnimation(ANIM_IDLE_I, "media\\images\\Idle_I.png", 8, 2.0, 20, 40);
 	player.LoadAnimation(ANIM_IDLE_II, "media\\images\\Idle_II.png", 8, 2.0, 20, 40);
 	player.LoadAnimation(ANIM_IDLE_III, "media\\images\\Idle_III.png", 8, 2.0, 20, 40);
@@ -163,15 +163,22 @@ int main(int argc, char* args[]) {
 			// Initialize all locales
 			dungeon.mapSize = 100;
 			dungeon.minRoomDim = 5;
-			dungeon.maxRoomDim = 20;
-			dungeon.minRoomCount = 10;
-			dungeon.maxRoomCount = 20;
+			dungeon.maxRoomDim = 18;
+			dungeon.minRoomCount = 8;
+			dungeon.maxRoomCount = 18;
 			dungeon.cornerType = CORNER_SHARP;
 			dungeon.cornerSize = 1;
 			dungeon.corridorType = CORRIDOR_CORNERS;
 			dungeon.corridorSize = 1;
-			dungeon.floorTexture.LoadFromFile("media\\images\\floor1.jpg");
-			dungeon.wallTexture.LoadFromFile("media\\images\\wall1.jpg");
+			dungeon.floorTexture.LoadFromFile("media\\images\\dungeon\\floor1.png");
+			dungeon.floorTextureSize = 320;
+			dungeon.wallTexture.LoadFromFile("media\\images\\dungeon\\wall1.png");
+			dungeon.wallHeight = 43;
+			dungeon.voidTexture.LoadFromFile("media\\images\\dungeon\\void.png");
+			dungeon.wallTexture_LEdge.LoadFromFile("media\\images\\dungeon\\wall_edge_l.png");
+			dungeon.wallTexture_REdge.LoadFromFile("media\\images\\dungeon\\wall_edge_r.png");
+			dungeon.wallTexture_TEdge.LoadFromFile("media\\images\\dungeon\\wall_edge_t.png");
+			dungeon.voidTextureSize = 640;
 
 			// Generate level
 			Level randomLevel = Level(&dungeon);

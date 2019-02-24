@@ -593,10 +593,9 @@ void Level::GenerateWalls() {
 
 
 void Level::GenerateLevel() {
-   floorRender.CreateBlank(PIXELSPERFEET * 5 * groundSize * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
-   wallRender.CreateBlank(PIXELSPERFEET * 5 * groundSize * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
+   floorRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
+   wallRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
 
-   Log("Blanked render targets. Beginning level");
    printf("\ngroundSize = %i", groundSize);
    bool levelIsBigEnough = false;
    while (!levelIsBigEnough) {
@@ -656,15 +655,6 @@ void Level::GenerateLevel() {
 
    printf("\nFinal tile count: %i", roomTileCount);
    printf("\nMax collisions: %i, total: %i", NUMROOMCOLLISIONSALLOWED, NUMROOMCOLLISIONS);
-
-   printf("\n\nPrinting walls:");
-   for (auto i=walls.begin(); i != walls.end(); i++) {
-      int x = i->second.hitBox.x / (PIXELSPERFEET * zoom * 5);
-      int y = i->second.hitBox.y / (PIXELSPERFEET * zoom * 5);
-      int w = i->second.hitBox.w / (PIXELSPERFEET * zoom * 5);
-      int h = i->second.hitBox.h / (PIXELSPERFEET * zoom * 5);
-      printf("\n\tWall: {%i, %i, %i, %i}", x, y, w, h);
-   }
 }
 
 
@@ -719,23 +709,126 @@ void Level::WriteOutWholeLevel() {
 
 
 
-void Level::CompileRenderTargets() {
+void Level::CompileRenderTargets(int xQ, int yQ) {
+   // Accepts args x and y if we want to only render out a specific tile
+   int iterYStart = 0;
+   int iterXStart = 0;
+   int iterYMax = groundSize;
+   int iterXMax = groundSize;
+   if (xQ > 0 || yQ > 0) {
+      iterYStart = yQ;
+      iterXStart = xQ;
+      iterYMax = yQ + 1;
+      iterXMax = xQ + 1;
+   }
+
+   int floorTextureSize = locale->floorTextureSize * zoom;
+   int voidTextureSize = locale->voidTextureSize * zoom;
    int tileW = PIXELSPERFEET * 5 * zoom;
+   int wallHeight = locale->wallHeight * zoom;
+
+   // First, we paint the repeating texture of the floor everywhere
+   SDL_SetRenderTarget(gRenderer, floorRender.mTexture);
+   for (int yi = 0; yi < ceil(floorRender.GetHeight()/floorTextureSize); yi++) {
+      for (int xi = 0; xi < ceil(floorRender.GetWidth()/floorTextureSize); xi++) {
+         SDL_Rect r = {
+            floorTextureSize * xi,
+            floorTextureSize * yi,
+            min(floorTextureSize, abs((floorTextureSize * (xi)) - floorRender.GetWidth())),
+            min(floorTextureSize, abs((floorTextureSize * (yi)) - floorRender.GetHeight()))
+         };
+         locale->floorTexture.Render(&r);
+      }
+   }
+
+   // Next, we initialize the void texture (OOB), and render the void onto the floor
+   for (int yi = iterYStart; yi < iterYMax; yi++) {
+      for (int xi = iterXStart; xi < iterXMax; xi++) {
+         if ((ground[yi][xi] == 0) || (ground[yi][xi] == 2)) {
+            SDL_Rect r = {
+               tileW * xi,
+               tileW * yi,
+               tileW,
+               tileW
+            };
+
+            SDL_Rect c = {
+               (int) (((xi * tileW) % voidTextureSize)/zoom),
+               (int) (((yi * tileW) % voidTextureSize)/zoom),
+               (int) (tileW/zoom),
+               (int) (tileW/zoom)
+            };
+
+            locale->voidTexture.Render(&r, &c);
+         }
+      }
+   }
 
    // Blit the repeating textures to the appropriate buffer textures so that we can render one large texture instead of 300 small textures every frame
-   for (int yi = 0; yi < groundSize; yi++) {
-      for (int xi = 0; xi < groundSize; xi++) {
-         int x = (tileW * xi);
-         int y = (tileW * yi);
-         int w = tileW;
-         int h = tileW;
-         SDL_Rect r = {x, y, w, h};
-         if (ground[yi][xi] == 1) {
-            SDL_SetRenderTarget(gRenderer, floorRender.mTexture);
-            locale->floorTexture.Render(&r);
-         } else if (ground[yi][xi] == 2) {
-            SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
-            locale->wallTexture.Render(&r);
+   SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
+   for (int yi = iterYStart; yi < iterYMax; yi++) {
+      for (int xi = iterXStart; xi < iterXMax; xi++) {
+         if (ground[yi][xi] == 2) {
+            SDL_Rect r = {
+               tileW * xi,
+               tileW * yi,
+               tileW,
+               tileW
+            };
+
+            SDL_Rect rF = {
+               tileW * xi,
+               (tileW * yi) - (wallHeight - tileW),
+               tileW,
+               wallHeight
+            };
+
+            SDL_Rect c = {
+               0,
+               wallHeight - tileW,
+               tileW,
+               wallHeight
+            };
+
+            // If the tile beneath this tile is floor, then we render this tile as the "face" of the wall
+            if (ground[yi + 1][xi] == 1) {
+               // render the face wall
+               locale->wallTexture.Render(&rF, &c);
+            } else {
+               // If the tile to our left is a floor tile, then this tile has the left edge of a wall
+               if (ground[yi][xi - 1] == 1) {
+                  // Render the left edge
+                  locale->wallTexture_LEdge.Render(&r);
+               }
+
+               // If the tile to our right is a floor tile, then this tile has the right edge of a wall
+               if (ground[yi][xi + 1] == 1) {
+                  // Render the right edge
+                  locale->wallTexture_REdge.Render(&r);
+               }
+
+               // If the tile above this tile is a floor tile, then this tile has the back edge of a wall
+               if (ground[yi - 1][xi] == 1) {
+                  // render the back edge of wall
+                  locale->wallTexture_TEdge.Render(&r);
+               }
+
+
+
+               // If the tile to our diagonal is a floor tile, then we need to provide a corner piece to its surrounding walls
+               if (ground[yi-1][xi-1] == 1) {
+                  // Render top-left corner
+               }
+               if (ground[yi-1][xi+1] == 1) {
+                  // Render top-right corner
+               }
+               if (ground[yi+1][xi+1] == 1) {
+                  // Render bottom-right corner
+               }
+               if (ground[yi+1][xi-1] == 1) {
+                  // Render bottom-left corner
+               }
+            }
          }
       }
    }
@@ -753,16 +846,16 @@ void Level::Render(int camX, int camY) {
    wallRender.Render(-camX, -camY);
 
    // Paint collided walls
-   for (auto i=walls.begin(); i != walls.end(); i++) {
-      int x = (i->second.hitBox.x) + 20;
-      int y = (i->second.hitBox.y) + 20;
-      int w = (i->second.hitBox.w) - 40;
-      int h = (i->second.hitBox.h) - 40;
-
-      SDL_Rect r = {x, y, w, h};
-      SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
-      SDL_RenderFillRect(gRenderer, &r);
-   }
+   // for (auto i=walls.begin(); i != walls.end(); i++) {
+   //    int x = (i->second.hitBox.x) + 20;
+   //    int y = (i->second.hitBox.y) + 20;
+   //    int w = (i->second.hitBox.w) - 40;
+   //    int h = (i->second.hitBox.h) - 40;
+   //
+   //    SDL_Rect r = {x, y, w, h};
+   //    SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
+   //    SDL_RenderFillRect(gRenderer, &r);
+   // }
 
    SDL_SetRenderTarget(gRenderer, NULL);
 }
