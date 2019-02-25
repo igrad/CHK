@@ -2,6 +2,7 @@
 #define LEVEL_LOADED
 
 #include "essentials.h"
+#include "Camera.h"
 #include "Collider.h"
 #include "Decal.h"
 #include "CollisionDetection.h"
@@ -121,7 +122,9 @@ class Level {
 
       void CompileRenderTargets(int xQ = -1, int yQ = -1);
 
-      void Render(int camX, int camY);
+      void RenderFloor(int camX, int camY);
+
+      void RenderWalls(int yO, int yF, int camX, int camY);
 
       ~Level();
 

@@ -277,9 +277,21 @@ int main(int argc, char* args[]) {
 					Camera::SetFocusOnActor(&player);
 				}
 
-				randomLevel.Render(Camera::x, Camera::y);
+				// Iterate through the list of actors here, but until we have more than one actor, we can do this without iterations
+				// We need a vector of actors, sorted by their Y position. If two of them tie, it doesn't matter
+				// We iterate through this vector, and get the Y tile of the current actor so that we can chop up the walls
+				//vector sortedActors
+
+				int currentY = 0;
+
+				randomLevel.RenderFloor(Camera::x, Camera::y);
+
+				randomLevel.RenderWalls(currentY, player.hitBox.y, Camera::x, Camera::y);
+				currentY = player.hitBox.y;
 
 				player.Render(screenFrame, Camera::x, Camera::y);
+
+				randomLevel.RenderWalls(currentY, -1, Camera::x, Camera::y);
 
             // Update screen
             SDL_RenderPresent(gRenderer);

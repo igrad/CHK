@@ -517,7 +517,16 @@ void Level::GenerateWalls() {
                   SDL_Rect* uC = &walls[uKey].hitBox;
                   SDL_Rect* lD = &walls[lKey].drawBox;
                   SDL_Rect* uD = &walls[uKey].drawBox;
-                  if (lC->h != blockSize || uC->w != blockSize) {
+                  if (lC->h < blockSize) {
+                     Collider dC = walls[uKey];
+                     walls.erase(uKey);
+
+                     dC.hitBox.h += blockSize;
+                     dC.drawBox.h += blockSize;
+                     walls.insert(pair<int, Collider>(key, dC));
+
+                     wallEdited = true;
+                  } else if (lC->h > blockSize || uC->w > blockSize) {
                      if ((lC->x == uC->x) && ((lC->w + blockSize) == uC->w)) {
                         walls.erase(lKey);
 
@@ -550,7 +559,7 @@ void Level::GenerateWalls() {
                      // When the height of the wall to the left is more than 1 block tall, and there isn't a wall tile above, then we need to start a new wall instead of continuing the wall to the left
                      Collider dC = walls[lKey];
 
-                     if (!((ground[cY - 1][cX] != 2) && (dC.hitBox.h != blockSize))) {
+                     if (!((ground[cY - 1][cX] != 2) && (dC.hitBox.h > blockSize))) {
                         walls.erase(lKey);
 
                         dC.hitBox.w += blockSize;
@@ -563,7 +572,7 @@ void Level::GenerateWalls() {
                      // When the width of the wall above is more than 1 block wide, and there isn't a wall to the left, we need to start a new wall instead of continuing the wall above
                      Collider dC = walls[uKey];
 
-                     if (!((ground[cY][cX - 1] != 2) && (dC.hitBox.w != blockSize))) {
+                     if (!((ground[cY][cX - 1] != 2) && (dC.hitBox.w > blockSize))) {
                         walls.erase(uKey);
 
                         dC.hitBox.h += blockSize;
@@ -578,8 +587,15 @@ void Level::GenerateWalls() {
                if (!wallEdited) {
                   Collider dC = Collider();
 
+                  int y = (cY * blockSize);
+                  int h = blockSize;
+                  if (ground[cY - 1][cX] == 1) {
+                     y += blockSize / 2;
+                     h = blockSize / 2;
+                  }
+
                   dC.SetPos(cX * blockSize, cY * blockSize);
-                  dC.SetHitBox(cX * blockSize, cY * blockSize, blockSize, blockSize);
+                  dC.SetHitBox(cX * blockSize, y, blockSize, h);
                   dC.SetDrawBox(cX * blockSize, cY * blockSize, blockSize, blockSize);
 
                   walls.insert(pair<int, Collider>(key, dC));
@@ -741,7 +757,8 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
       }
    }
 
-   // Next, we initialize the void texture (OOB), and render the void onto the floor
+   // Next, we initialize the void texture (OOB), and render the void onto the walls layer
+   SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
    for (int yi = iterYStart; yi < iterYMax; yi++) {
       for (int xi = iterXStart; xi < iterXMax; xi++) {
          if ((ground[yi][xi] == 0) || (ground[yi][xi] == 2)) {
@@ -765,7 +782,6 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
    }
 
    // Blit the repeating textures to the appropriate buffer textures so that we can render one large texture instead of 300 small textures every frame
-   SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
    for (int yi = iterYStart; yi < iterYMax; yi++) {
       for (int xi = iterXStart; xi < iterXMax; xi++) {
          if (ground[yi][xi] == 2) {
@@ -840,26 +856,57 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
 
 
 
-void Level::Render(int camX, int camY) {
+void Level::RenderFloor(int camX, int camY) {
    if (!renderTargetsCompiled) { CompileRenderTargets(); }
    floorRender.Render(-camX, -camY);
-   wallRender.Render(-camX, -camY);
-
-   // Paint collided walls
-   // for (auto i=walls.begin(); i != walls.end(); i++) {
-   //    int x = (i->second.hitBox.x) + 20;
-   //    int y = (i->second.hitBox.y) + 20;
-   //    int w = (i->second.hitBox.w) - 40;
-   //    int h = (i->second.hitBox.h) - 40;
-   //
-   //    SDL_Rect r = {x, y, w, h};
-   //    SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
-   //    SDL_RenderFillRect(gRenderer, &r);
-   // }
-
-   SDL_SetRenderTarget(gRenderer, NULL);
 }
 
+
+
+void Level::RenderWalls(int yO, int yF, int camX, int camY) {
+   // yO is the pixel Y position of our current actor
+   // yF, if positive, is the pixel Y position of the next actor
+   int tileW = PIXELSPERFEET * 5 * zoom;
+
+   int yOT = (int) floor(yO/tileW);
+   int yFT = (yF == -1) ? (groundSize - 1) : ((int) floor(yF/tileW));
+
+   if (yF == -1) {
+      yF = groundSize * tileW;
+   }
+
+   yO = yOT * tileW;
+   yF = yFT * tileW;
+
+   SDL_Rect wallChunk = {
+      0,
+      yOT * tileW,
+      wallRender.GetWidth(),
+      (yFT - yOT) * tileW
+   };
+
+   SDL_Rect drawBox = {
+      -camX,
+      yO - camY,
+      wallRender.GetWidth(),
+      yF - yO
+   };
+
+   wallRender.Render(&drawBox, &wallChunk);
+
+   //Paint collided walls
+   for (auto i=walls.begin(); i != walls.end(); i++) {
+      int x = (i->second.hitBox.x) + 5;
+      int y = (i->second.hitBox.y) + 5;
+      int w = (i->second.hitBox.w) - 10;
+      int h = (i->second.hitBox.h) - 10;
+
+      SDL_Rect r = {x, y, w, h};
+      SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
+      SDL_RenderFillRect(gRenderer, &r);
+   }
+   SDL_SetRenderTarget(gRenderer, NULL);
+}
 
 
 Level::~Level() {
