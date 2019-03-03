@@ -172,8 +172,10 @@ int main(int argc, char* args[]) {
 			dungeon.corridorSize = 1;
 			dungeon.floorTexture.LoadFromFile("media\\images\\dungeon\\floor1.png");
 			dungeon.floorTextureSize = 320;
-			dungeon.wallTexture.LoadFromFile("media\\images\\dungeon\\wall1.png");
 			dungeon.wallHeight = 43;
+			dungeon.wallTexture_Face1.LoadFromFile("media\\images\\dungeon\\wall1.png");
+			dungeon.wallTexture_Face2.LoadFromFile("media\\images\\dungeon\\wall2.png");
+			dungeon.wallTexture_Face3.LoadFromFile("media\\images\\dungeon\\wall3.png");
 			dungeon.voidTexture.LoadFromFile("media\\images\\dungeon\\void.png");
 			dungeon.wallTexture_LEdge.LoadFromFile("media\\images\\dungeon\\wall_edge_l.png");
 			dungeon.wallTexture_REdge.LoadFromFile("media\\images\\dungeon\\wall_edge_r.png");

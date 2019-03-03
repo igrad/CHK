@@ -34,7 +34,9 @@ struct Locale {
    int corridorSize = 1;
    LTexture floorTexture;
    int floorTextureSize; // The floor is not a single repeating tile, but one vast
-   LTexture wallTexture;
+   LTexture wallTexture_Face1;
+   LTexture wallTexture_Face2;
+   LTexture wallTexture_Face3;
    int wallHeight; // Height of the wall in the file, so that we can account for overlapping
    LTexture wallTexture_LEdge;
    LTexture wallTexture_REdge;
