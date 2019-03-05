@@ -580,8 +580,6 @@ void Level::GenerateWalls() {
                         // If the wall to the left isn't a half-wall, and the tile above us is ground, we want a brand new block
                         dC = Collider();
 
-                        printf("\nSet: %i %i", cY, cX);
-
                         int y = (cY * blockSize) + (blockSize / 2);
                         int h = blockSize / 2;
 
@@ -858,38 +856,51 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
                      break;
                }
             } else {
+               bool drewLeft = false;
+               bool drewRight = false;
+
                // If the tile to our left is a floor tile, then this tile has the left edge of a wall
-               if (ground[yi][xi - 1] == 1) {
+               if (ground[yi][xi - 1] == 1 ||
+               (ground[yi][xi-1] == 2 && ground[yi+1][xi-1] == 1)) {
                   // Render the left edge
                   locale->wallTexture_LEdge.Render(&r);
+                  drewLeft = true;
                }
 
                // If the tile to our right is a floor tile, then this tile has the right edge of a wall
-               if (ground[yi][xi + 1] == 1) {
+               if (ground[yi][xi + 1] == 1 ||
+               (ground[yi][xi+1] == 2 && ground[yi+1][xi+1] == 1)) {
                   // Render the right edge
                   locale->wallTexture_REdge.Render(&r);
+                  drewRight = true;
                }
 
                // If the tile above this tile is a floor tile, then this tile has the back edge of a wall
                if (ground[yi - 1][xi] == 1) {
                   // render the back edge of wall
                   locale->wallTexture_TEdge.Render(&r);
+                  drewLeft = true;
+                  drewRight = true;
                }
 
 
 
                // If the tile to our diagonal is a floor tile, then we need to provide a corner piece to its surrounding walls
-               if (ground[yi-1][xi-1] == 1) {
+               if (ground[yi-1][xi-1] == 1 && !drewLeft) {
                   // Render top-left corner
+                  locale->wallTexture_LCorner.Render(&r);
                }
-               if (ground[yi-1][xi+1] == 1) {
+               if (ground[yi-1][xi+1] == 1 && !drewRight) {
                   // Render top-right corner
+                  locale->wallTexture_RCorner.Render(&r);
                }
-               if (ground[yi+1][xi+1] == 1) {
+               if (ground[yi+1][xi+1] == 1 && !drewRight) {
                   // Render bottom-right corner
+                  locale->wallTexture_REdge.Render(&r);
                }
-               if (ground[yi+1][xi-1] == 1) {
+               if (ground[yi+1][xi-1] == 1 && !drewLeft) {
                   // Render bottom-left corner
+                  locale->wallTexture_LEdge.Render(&r);
                }
             }
          }
@@ -942,17 +953,17 @@ void Level::RenderWalls(int yO, int yF, int camX, int camY) {
    wallRender.Render(&drawBox, &wallChunk);
 
    // Paint collided walls
-   for (auto i=walls.begin(); i != walls.end(); i++) {
-      int x = (i->second.hitBox.x) + 5;
-      int y = (i->second.hitBox.y) + 5;
-      int w = (i->second.hitBox.w) - 10;
-      int h = (i->second.hitBox.h) - 10;
-
-      SDL_Rect r = {x, y, w, h};
-      SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
-      SDL_RenderFillRect(gRenderer, &r);
-   }
-   SDL_SetRenderTarget(gRenderer, NULL);
+   // for (auto i=walls.begin(); i != walls.end(); i++) {
+   //    int x = (i->second.hitBox.x) + 5;
+   //    int y = (i->second.hitBox.y) + 5;
+   //    int w = (i->second.hitBox.w) - 10;
+   //    int h = (i->second.hitBox.h) - 10;
+   //
+   //    SDL_Rect r = {x, y, w, h};
+   //    SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
+   //    SDL_RenderFillRect(gRenderer, &r);
+   // }
+   // SDL_SetRenderTarget(gRenderer, NULL);
 }
 
 

@@ -41,6 +41,8 @@ struct Locale {
    LTexture wallTexture_LEdge;
    LTexture wallTexture_REdge;
    LTexture wallTexture_TEdge;
+   LTexture wallTexture_LCorner;
+   LTexture wallTexture_RCorner;
    // Might want to add secondary/tertiary floor and wall textures here later in development
    LTexture voidTexture;
    int voidTextureSize;

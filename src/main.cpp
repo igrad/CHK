@@ -180,6 +180,8 @@ int main(int argc, char* args[]) {
 			dungeon.wallTexture_LEdge.LoadFromFile("media\\images\\dungeon\\wall_edge_l.png");
 			dungeon.wallTexture_REdge.LoadFromFile("media\\images\\dungeon\\wall_edge_r.png");
 			dungeon.wallTexture_TEdge.LoadFromFile("media\\images\\dungeon\\wall_edge_t.png");
+			dungeon.wallTexture_LCorner.LoadFromFile("media\\images\\dungeon\\wall_corner_l.png");
+			dungeon.wallTexture_RCorner.LoadFromFile("media\\images\\dungeon\\wall_corner_r.png");
 			dungeon.voidTextureSize = 640;
 
 			// Generate level
