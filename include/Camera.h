@@ -12,9 +12,7 @@ enum FOCUSMODE {
 class Camera {
    public:
       static void SetFocusOnRect(SDL_Rect r);
-
       static void SetFocusOnPoint(double x, double y);
-
       static void SetFocusOnActor(Actor* a);
 
       static FOCUSMODE focusMode;

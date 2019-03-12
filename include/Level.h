@@ -98,36 +98,25 @@ class Level {
       Level(Locale* locale);
 
       bool CheckNewRoom(SDL_Rect* room);
-
       void GenerateRandomRoom(int roomNum);
 
-
       bool DigCorridor(int a, int b);
-
       bool GenerateCorridors();
-
       void CheckConnectionsToSpawn(int iter);
 
-
       void GenerateWalls();
-
-
+      void GenerateDoors();
       void GenerateLevel();
-
       bool LoadFromFile(string path, int width, int height);
 
       void SetZoom(float newZoom);
 
-
       SDL_Rect GetPlayerSpawn();
-
 
       void WriteOutWholeLevel();
 
       void CompileRenderTargets(int xQ = -1, int yQ = -1);
-
       void RenderFloor(int camX, int camY);
-
       void RenderWalls(int yO, int yF, int camX, int camY);
 
       ~Level();

@@ -641,6 +641,41 @@ void Level::GenerateWalls() {
 
 
 
+void Level::GenerateDoors() {
+   // First, search for valid locations
+   for (cY = 2; cY < groundSize-2; cY++) {
+      for (cX = 2; cX < groundSize-2; cX++) {
+         if (ground[cY][cX] == 1) {
+            if (ground[cY+1][cX] == 1 && ground[cY-1][cX] == 1 &&
+            ground[cY][cX+1] == 1 && ground[cY][cX-1] == 1) {
+               // We've found a + shape of floor tiles. Time to check if we're actually at a door junction
+
+               int TL = ground[cY-1][cX-1];
+               int TR = ground[cY-1][cX+1];
+               int BL = ground[cY+1][cX-1];
+               int BR = ground[cY+1][cX+1];
+
+               // First, we check for simple T intersections, perhaps of halls
+               if (TL == TR == BL == BR == 2) {
+                  continue;
+               } else if (TL == TR == 2 && (BL == 1 || BR == 1)) {
+                  // Spot for a North-pointing door
+                  
+               } else if (TR == BR == 2 && (TL == 1 || BL == 1)) {
+                  // Spot for an East-pointing door
+               } else if (BL == BR == 2 && (TL == 1 || TR == 1)) {
+                  // Spot for a South-pointing door
+               } else if (TL == BL == 2 && (TR == 1 || BR == 1)) {
+                  // Spot for a West-pointing door
+               }
+            }
+         }
+      }
+   }
+}
+
+
+
 void Level::GenerateLevel() {
    floorRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
    wallRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);

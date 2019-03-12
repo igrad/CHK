@@ -56,27 +56,18 @@ class Actor: public Collider {
       Actor(int numAnims, int numTextures);
 
       void SetXPos(double x);
-
       void SetYPos(double y);
-
       void SetPos(double x = -0.1, double y = -0.1);
-
       void SetHitBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
-
       void SetDrawBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
-
       void SetZoom(float newZoom);
 
       bool LoadAnimation(int phase, string path, int frames, float duration, int frameW, int frameH);
-
       void SetActiveAnim(int anim);
-
       bool LoadTexture(int phase, string path);
-
       void SetActiveTexture(int phase);
 
       void HandleMovement(int camX, int camY);
-
       void Render(int screenFrame, int camX, int camY);
 
       void Free();

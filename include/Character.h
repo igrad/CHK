@@ -20,27 +20,17 @@ class Character: public Actor {
       Character(int level, int HP, int moveSpeed, int numAnims, int numTextures, bool collides = true);
 
       int GetStat(STATNAME stat);
-
       bool SetStat(STATNAME stat, int newVal, bool ignoreStatCap = false);
-
       bool SetStats(int STR, int DEX, int CON, int INT, int WIS, int CHA);
-
       void SetHPAndResourceToFull();
 
-
       void SetSpawnPoint(SDL_Rect r);
-
       void SetPosition(int newX, int newY);
-
       void MoveTowards(int destX, int destY);
-
       void SetXVelocity(int multiplier);
-
       void SetYVelocity(int multiplier);
 
-
       void Render(int screenFrame, int camX, int camY);
-
 
       void Free();
 
