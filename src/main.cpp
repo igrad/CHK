@@ -6,12 +6,14 @@
 // Huge credit to Lazy Foo Productions (http://lazyfoo.net/tutorials/SDL/index.php) for the stellar guide they've provided on SDL 2.0. Without it, this project would be DOA.
 
 #include "..\include\essentials.h"
-
 #include "..\include\CollisionDetection.h"
+
 #include "..\include\LTimer.h"
+#include "..\include\Camera.h"
+#include "..\include\MouseEvents.h"
+
 #include "..\include\Collider.h"
 #include "..\include\LTexture.h"
-#include "..\include\Camera.h"
 #include "..\include\Animation.h"
 #include "..\include\Actor.h"
 #include "..\include\Character.h"
@@ -36,6 +38,15 @@ const int SCREEN_TICKS_PER_FRAME = 1000/SCREEN_FPS;
 
 
 const float PIXELSPERFEET = 8.0; // This is preliminary and only used for testing. Once we have a proper camera class up and running, the zoom attribute of the camera will determine this value
+
+
+
+// Fonts
+TTF_Font* FONT_SCROLL = NULL;
+TTF_Font* FONT_HAND = NULL;
+TTF_Font* FONT_TYPED = NULL;
+TTF_Font* FONT_TYPED_BOLD = NULL;
+TTF_Font* FONT_TYPED_ITALIC = NULL;
 
 
 
@@ -91,6 +102,12 @@ bool Init() {
                Fatal("SDL_image could not initialize! SDL_image Error: " + string(IMG_GetError()));
                success = false;
             }
+
+				// Initialize TTF module
+				if (TTF_Init() == -1) {
+					Fatal("SDL_TTF failed to initialize!");
+					success = false;
+				}
          }
 		}
 	}
@@ -110,16 +127,31 @@ bool LoadMedia() {
       success = false;
    }
 
+	// Initialize fonts
+	FONT_SCROLL = TTF_OpenFont("fonts/BLKCHCRY.TTF", 24);
+	FONT_HAND = TTF_OpenFont("fonts/Quikhand.ttf", 24);
+	FONT_TYPED = TTF_OpenFont("fonts/BaskervaldADFStd.otf", 48);
+	FONT_TYPED_BOLD = TTF_OpenFont("fonts/BaskervaldADFStd-Bold.otf", 24);
+	FONT_TYPED_ITALIC = TTF_OpenFont("fonts/BaskervaldADFStd-Italic.otf", 24);
+
 	player.SetDrawBoxSize(0, 0, 20, 40);
 	player.SetHitBoxSize(5, 35, 10, 5);
-	player.LoadAnimation(ANIM_IDLE_I, "media\\images\\Idle_I.png", 8, 2.0, 20, 40);
-	player.LoadAnimation(ANIM_IDLE_II, "media\\images\\Idle_II.png", 8, 2.0, 20, 40);
-	player.LoadAnimation(ANIM_IDLE_III, "media\\images\\Idle_III.png", 8, 2.0, 20, 40);
-	player.LoadAnimation(ANIM_IDLE_IV, "media\\images\\Idle_IV.png", 8, 2.0, 20, 40);
-	player.LoadAnimation(ANIM_WALK_I, "media\\images\\Walking_I.png", 8, 1.2, 20, 40);
-	player.LoadAnimation(ANIM_WALK_II, "media\\images\\Walking_II.png", 8, 1.2, 20, 40);
-	player.LoadAnimation(ANIM_WALK_III, "media\\images\\Walking_III.png", 8, 1.2, 20, 40);
-	player.LoadAnimation(ANIM_WALK_IV, "media\\images\\Walking_IV.png", 8, 1.2, 20, 40);
+	player.LoadAnimation(ANIM_IDLE_I, "media\\images\\Idle_I.png",
+		8, 2.0, 20, 40);
+	player.LoadAnimation(ANIM_IDLE_II, "media\\images\\Idle_II.png",
+		8, 2.0, 20, 40);
+	player.LoadAnimation(ANIM_IDLE_III, "media\\images\\Idle_III.png",
+		8, 2.0, 20, 40);
+	player.LoadAnimation(ANIM_IDLE_IV, "media\\images\\Idle_IV.png",
+		8, 2.0, 20, 40);
+	player.LoadAnimation(ANIM_WALK_I, "media\\images\\Walking_I.png",
+		8, 1.2, 20, 40);
+	player.LoadAnimation(ANIM_WALK_II, "media\\images\\Walking_II.png",
+		8, 1.2, 20, 40);
+	player.LoadAnimation(ANIM_WALK_III, "media\\images\\Walking_III.png",
+		8, 1.2, 20, 40);
+	player.LoadAnimation(ANIM_WALK_IV, "media\\images\\Walking_IV.png",
+		8, 1.2, 20, 40);
 	player.SetActiveAnim(ANIM_IDLE_IV);
 
 	return success;
@@ -161,9 +193,9 @@ int main(int argc, char* args[]) {
 		}
 		else {
 			// Initialize all locales
-			dungeon.mapSize = 100;
-			dungeon.minRoomDim = 5;
-			dungeon.maxRoomDim = 18;
+			dungeon.mapSize = 50;
+			dungeon.minRoomDim = 3;
+			dungeon.maxRoomDim = 9;
 			dungeon.minRoomCount = 8;
 			dungeon.maxRoomCount = 18;
 			dungeon.cornerType = CORNER_SHARP;
@@ -202,6 +234,12 @@ int main(int argc, char* args[]) {
 
 			// The frames per second cap timer
 			LTimer capTimer;
+
+			// Test button
+			SDL_Rect r = {0, 0, 200, 50};
+			SDL_Color c = {.r=255, .g=255, .b=255};
+			ClickButton btn("media\\images\\hello_world.png",
+			"Test String", FONT_TYPED, &c, &r, CR_ABSOLUTE);
 
 			// Start counting frames per second
 			int countedFrames = 0;
@@ -296,6 +334,8 @@ int main(int argc, char* args[]) {
 				player.Render(screenFrame, Camera::x, Camera::y);
 
 				randomLevel.RenderWalls(currentY, -1, Camera::x, Camera::y);
+
+				btn.Render();
 
             // Update screen
             SDL_RenderPresent(gRenderer);

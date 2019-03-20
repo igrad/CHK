@@ -643,8 +643,8 @@ void Level::GenerateWalls() {
 
 void Level::GenerateDoors() {
    // First, search for valid locations
-   for (cY = 2; cY < groundSize-2; cY++) {
-      for (cX = 2; cX < groundSize-2; cX++) {
+   for (int cY = 2; cY < groundSize-2; cY++) {
+      for (int cX = 2; cX < groundSize-2; cX++) {
          if (ground[cY][cX] == 1) {
             if (ground[cY+1][cX] == 1 && ground[cY-1][cX] == 1 &&
             ground[cY][cX+1] == 1 && ground[cY][cX-1] == 1) {
@@ -660,7 +660,7 @@ void Level::GenerateDoors() {
                   continue;
                } else if (TL == TR == 2 && (BL == 1 || BR == 1)) {
                   // Spot for a North-pointing door
-                  
+
                } else if (TR == BR == 2 && (TL == 1 || BL == 1)) {
                   // Spot for an East-pointing door
                } else if (BL == BR == 2 && (TL == 1 || TR == 1)) {

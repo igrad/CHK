@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = src\main.cpp src\LTimer.cpp src\LTexture.cpp src\Animation.cpp src\Actor.cpp src\Collider.cpp src\essentials.cpp src\Decal.cpp src\Character.cpp src\CollisionDetection.cpp src\Level.cpp src\Camera.cpp
+OBJS = src/*.cpp
 
 #CC specifies which compiler we're using
 CC = g++
@@ -24,5 +24,3 @@ OBJ_NAME = CHK.exe
 #This is the target that compiles our executable
 all : $(OBJS)
 	$(CC) $(OBJS) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS) -o $(OBJ_NAME)
-#all : $(OBJS)
-#	$(CC) $(OBJS) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(COMPILER_FLAGS) $(LINKER_FLAGS) -o $(OBJ_NAME)

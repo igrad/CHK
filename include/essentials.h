@@ -38,6 +38,13 @@ extern const int LEVEL_HEIGHT;
 
 extern const float PIXELSPERFEET;
 
+// Fonts
+extern TTF_Font* FONT_SCROLL;
+extern TTF_Font* FONT_HAND;
+extern TTF_Font* FONT_TYPED;
+extern TTF_Font* FONT_TYPED_BOLD;
+extern TTF_Font* FONT_TYPED_ITALIC;
+
 
 
 // The window we'll be rendering to

@@ -20,6 +20,9 @@ class LTexture {
       // Loads image at specified path
       bool LoadFromFile(string path);
 
+      // Load in text
+      bool LoadFromRenderedText(string textureText, SDL_Color* textColor, TTF_Font* font);
+
       // Creates a blank image that we can use as a renderer
       bool CreateBlank(int width, int height, SDL_TextureAccess access = SDL_TEXTUREACCESS_TARGET);
 

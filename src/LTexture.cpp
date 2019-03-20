@@ -54,6 +54,34 @@ bool LTexture::LoadFromFile(string path) {
 
 
 
+bool LTexture::LoadFromRenderedText(string textureText, SDL_Color* textColor,
+   TTF_Font* font) {
+   Free();
+
+   SDL_Surface* textSurface = TTF_RenderText_Solid(font, textureText.c_str(),
+   *textColor);
+   if (textSurface == NULL) {
+      Warn("Failed to load texture from rendered text");
+   } else {
+      // Create texture from surface pixels
+      mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+      if (mTexture == NULL) {
+         Warn("Unable to create texture from textSurface!");
+      } else {
+         // Get image dimensions
+         mWidth = textSurface->w;
+         mHeight = textSurface->h;
+      }
+
+      // Delete old surface
+      SDL_FreeSurface(textSurface);
+   }
+
+   return mTexture != NULL;
+}
+
+
+
 bool LTexture::CreateBlank(int width, int height, SDL_TextureAccess access) {
    mTexture = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_RGBA8888, access, width, height);
 
