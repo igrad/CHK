@@ -236,10 +236,14 @@ int main(int argc, char* args[]) {
 			LTimer capTimer;
 
 			// Test button
+			vector<ClickRegion> buttons;
+
 			SDL_Rect r = {0, 0, 200, 50};
 			SDL_Color c = {.r=255, .g=255, .b=255};
-			ClickButton btn("media\\images\\hello_world.png",
+			ClickButton btn("test-button", "media\\images\\hello_world.png",
 			"Test String", FONT_TYPED, &c, &r, CR_ABSOLUTE);
+
+			buttons.push_back(btn);
 
 			// Start counting frames per second
 			int countedFrames = 0;
@@ -256,7 +260,36 @@ int main(int argc, char* args[]) {
                // User requests quit
                if (e.type == SDL_QUIT) {
                   quit = true;
-               }
+               } else if (e.type == SDL_MOUSEMOTION || // Handle mouse input
+						e.type == SDL_MOUSEBUTTONDOWN ||
+						e.type == SDL_MOUSEBUTTONUP) {
+						int mx, my;
+						SDL_PumpEvents();
+						SDL_GetMouseState(&mx, &my);
+
+						// Mouse position logging
+						// char outstr[50];
+						// snprintf(outstr, 50, "Mouse position: %i, %i", mx, my);
+						// Log(outstr);
+
+						// Iterate through all buttons and find if the mouse is currently
+						// hovering over them
+						for (int i = buttons.size() - 1; i >= 0; i--) {
+							// If the button isn't active, we don't need to bother
+							if (!buttons[i].active) continue;
+							if (PointInRect(mx, my, buttons[i].rect)) {
+								switch (e.type) {
+									case SDL_MOUSEBUTTONDOWN:
+										if (e.button.button == SDL_BUTTON_LEFT) {
+											buttons[i].OnClick();
+										}
+										break;
+									case SDL_MOUSEBUTTONUP:
+										break;
+								}
+							}
+						}
+					}
             }
 
 				// Calculate and lock the FPS

@@ -973,9 +973,9 @@ void Level::RenderWalls(int yO, int yF, int camX, int camY) {
 
    SDL_Rect wallChunk = {
       0,
-      yOT * tileW,
+      yO,
       wallRender.GetWidth(),
-      (yFT - yOT) * tileW
+      yF - yO
    };
 
    SDL_Rect drawBox = {

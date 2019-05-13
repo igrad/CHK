@@ -12,7 +12,8 @@ enum CLICKREGION_TYPE {
 
 class ClickRegion {
    public:
-      ClickRegion(SDL_Rect* area, CLICKREGION_TYPE ct);
+      ClickRegion();
+      ClickRegion(string id, SDL_Rect* area, CLICKREGION_TYPE ct);
 
       void SetPosition(int x, int y);
       void SetPosition(SDL_Rect* r);
@@ -20,17 +21,21 @@ class ClickRegion {
       void SetSize(int w, int h);
       void SetSize(SDL_Rect* r);
 
-      //virtual void OnClick();
+      void OnClick();
 
+      string id;
       SDL_Rect* rect;
       CLICKREGION_TYPE crType;
+
+      bool active;
+      bool displayed;
 };
 
 
 
 class ClickButton: public ClickRegion {
    public:
-      ClickButton(string bgPath, string textStr, TTF_Font* fontStyle,
+      ClickButton(string id, string bgPath, string textStr, TTF_Font* fontStyle,
          SDL_Color* fontColor, SDL_Rect* area, CLICKREGION_TYPE ct);
 
       void Render();
@@ -45,8 +50,8 @@ class ClickButton: public ClickRegion {
 
 class HintButton: public ClickRegion {
    public:
-      HintButton(string text, TTF_Font* font, SDL_Color* color, SDL_Rect* area,
-         CLICKREGION_TYPE crType);
+      HintButton(string id, string text, TTF_Font* font, SDL_Color* color,
+         SDL_Rect* area, CLICKREGION_TYPE crType);
 
       void Render();
 

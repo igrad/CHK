@@ -83,6 +83,7 @@ bool LTexture::LoadFromRenderedText(string textureText, SDL_Color* textColor,
 
 
 bool LTexture::CreateBlank(int width, int height, SDL_TextureAccess access) {
+   Free();
    mTexture = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_RGBA8888, access, width, height);
 
    SDL_SetTextureBlendMode(mTexture, SDL_BLENDMODE_BLEND);

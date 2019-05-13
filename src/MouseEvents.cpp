@@ -1,11 +1,23 @@
 #include "..\include\MouseEvents.h"
 
-ClickRegion::ClickRegion(SDL_Rect* area, CLICKREGION_TYPE ct) {
-   rect = area;
-   crType = ct;
+ClickRegion::ClickRegion() {
+   this->id = "";
+   SDL_Rect r = {0, 0, 0, 0};
+   rect = &r;
+   crType = CR_ABSOLUTE;
+
+   active = true;
+   displayed = true;
 }
 
+ClickRegion::ClickRegion(string id, SDL_Rect* area, CLICKREGION_TYPE ct) {
+   this->id = id;
+   rect = area;
+   crType = ct;
 
+   active = true;
+   displayed = true;
+}
 
 void ClickRegion::SetPosition(int x, int y) {
    rect->x = x;
@@ -27,10 +39,15 @@ void ClickRegion::SetSize(SDL_Rect* r) {
    rect->h = r->h;
 }
 
+void ClickRegion::OnClick() {
+   Log("We did it");
+}
 
 
-ClickButton::ClickButton(string bgPath, string textStr, TTF_Font* fontStyle, SDL_Color* fontColor, SDL_Rect* area, CLICKREGION_TYPE ct) :
-ClickRegion(area, ct) {
+ClickButton::ClickButton(string id, string bgPath, string textStr,
+   TTF_Font* fontStyle, SDL_Color* fontColor, SDL_Rect* area, CLICKREGION_TYPE ct) :
+ClickRegion(id, area, ct) {
+   texture = new LTexture();
    path = bgPath;
    text = textStr;
    font = fontStyle;
@@ -67,8 +84,8 @@ void ClickButton::Render() {
 
 
 
-HintButton::HintButton(string text, TTF_Font* font, SDL_Color* color,
-   SDL_Rect* area, CLICKREGION_TYPE crType) : ClickRegion(area, crType) {
+HintButton::HintButton(string id, string text, TTF_Font* font, SDL_Color* color,
+   SDL_Rect* area, CLICKREGION_TYPE crType) : ClickRegion(id, area, crType) {
    this->text = text;
    this->font = font;
 
