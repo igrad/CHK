@@ -642,6 +642,8 @@ void Level::GenerateWalls() {
 
 
 void Level::GenerateDoors() {
+   // Lambda function to generate a percentile chance
+   auto roll = [](){ return (rand() % 10) > 1; };
    // First, search for valid locations
    for (int cY = 2; cY < groundSize-2; cY++) {
       for (int cX = 2; cX < groundSize-2; cX++) {
@@ -660,17 +662,33 @@ void Level::GenerateDoors() {
                   continue;
                } else if (TL == TR == 2 && (BL == 1 || BR == 1)) {
                   // Spot for a North-pointing door
-
+                  if (roll()) {
+                     doors.push_back(new Door(cX, cY, 1, 1, 0, locale));
+                  }
                } else if (TR == BR == 2 && (TL == 1 || BL == 1)) {
                   // Spot for an East-pointing door
+                  if (roll()) {
+                     doors.push_back(new Door(cX, cY, 1, 1, 1, locale));
+                  }
                } else if (BL == BR == 2 && (TL == 1 || TR == 1)) {
                   // Spot for a South-pointing door
+                  if (roll()) {
+                     doors.push_back(new Door(cX, cY, 1, 1, 2, locale));
+                  }
                } else if (TL == BL == 2 && (TR == 1 || BR == 1)) {
                   // Spot for a West-pointing door
+                  if (roll()) {
+                     doors.push_back(new Door(cX, cY, 1, 1, 3, locale));
+                  }
                }
             }
          }
       }
+   }
+
+   // Be sure we tell the doors to load up their textures and animations
+   for (int i = 0; i < doors.size(); i++) {
+      doors[i]->LoadArt();
    }
 }
 

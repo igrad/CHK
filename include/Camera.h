@@ -18,6 +18,7 @@ class Camera {
       static FOCUSMODE focusMode;
       static double x;
       static double y;
+      static float zoom;
 };
 
 #endif

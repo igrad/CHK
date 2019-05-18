@@ -3,7 +3,7 @@
 FOCUSMODE Camera::focusMode = FOCUS_PLAYER;
 double Camera::x = 0;
 double Camera::y = 0;
-
+float Camera::zoom = 1.0;
 
 void Camera::SetFocusOnRect(SDL_Rect r) {
    Camera::x = r.x;

@@ -21,7 +21,10 @@ class Animation: public LTexture {
       int GetFrameHeight();
 
       // Loads image at specified path
-      bool LoadFromFile(string path, int frames, float duration, int frameW = 0, int frameH = 0);
+      bool LoadFromFile(string path, int frames, float duration,
+         int frameW = 0, int frameH = 0);
+      bool LoadFromReference(LTexture* ref, int frames, float duration,
+         int frameW = 0, int frameH = 0);
 
       // Increment the current frame count
       void IncrementCurrentFrame();
@@ -36,13 +39,6 @@ class Animation: public LTexture {
       int animFrameOfLastScreenFrame;
 
    private:
-      // The actual hardware texture
-      SDL_Texture* mTexture;
-
-      // Image dimensions
-      int mWidth;
-      int mHeight;
-
       // Number of frames stored in the sprite
       int frameCount;
 

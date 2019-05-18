@@ -17,7 +17,11 @@
 #include "..\include\Animation.h"
 #include "..\include\Actor.h"
 #include "..\include\Character.h"
+
+#include "..\include\Locale.h"
 #include "..\include\Level.h"
+
+#include "..\include\Door.h"
 
 // Screen dimension constants
 const int SCREEN_WIDTH = 1280;
@@ -240,8 +244,8 @@ int main(int argc, char* args[]) {
 
 			SDL_Rect r = {0, 0, 200, 50};
 			SDL_Color c = {.r=255, .g=255, .b=255};
-			ClickButton btn("test-button", "media\\images\\hello_world.png",
-			"Test String", FONT_TYPED, &c, &r, CR_ABSOLUTE);
+			ClickButton btn("test-button", "Test String", FONT_TYPED, &c, &r,
+			CR_ABSOLUTE, "media\\images\\hello_world.png");
 
 			buttons.push_back(btn);
 
@@ -262,7 +266,8 @@ int main(int argc, char* args[]) {
                   quit = true;
                } else if (e.type == SDL_MOUSEMOTION || // Handle mouse input
 						e.type == SDL_MOUSEBUTTONDOWN ||
-						e.type == SDL_MOUSEBUTTONUP) {
+						e.type == SDL_MOUSEBUTTONUP ||
+						e.type == SDL_MOUSEWHEEL) {
 						int mx, my;
 						SDL_PumpEvents();
 						SDL_GetMouseState(&mx, &my);
@@ -280,11 +285,23 @@ int main(int argc, char* args[]) {
 							if (PointInRect(mx, my, buttons[i].rect)) {
 								switch (e.type) {
 									case SDL_MOUSEBUTTONDOWN:
-										if (e.button.button == SDL_BUTTON_LEFT) {
-											buttons[i].OnClick();
+										switch (e.button.button) {
+											case SDL_BUTTON_LEFT:
+												buttons[i].OnLeftClick();
+												break;
+											case SDL_BUTTON_RIGHT:
+												buttons[i].OnRightClick();
+												break;
 										}
 										break;
-									case SDL_MOUSEBUTTONUP:
+									case SDL_MOUSEWHEEL:
+										if (e.wheel.y > 0) {
+											// User scrolled up
+											buttons[i].OnScrollUp();
+										} else if (e.wheel.y < 0) {
+											// User scrolled down
+											buttons[i].OnScrollDown();
+										}
 										break;
 								}
 							}

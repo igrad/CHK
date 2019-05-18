@@ -20,6 +20,9 @@ class LTexture {
       // Loads image at specified path
       bool LoadFromFile(string path);
 
+      // Load image from a referenced LTexture
+      bool LoadFromReference(LTexture* ref);
+
       // Load in text
       bool LoadFromRenderedText(string textureText, SDL_Color* textColor, TTF_Font* font);
 
@@ -40,7 +43,6 @@ class LTexture {
       // The actual hardware texture
       SDL_Texture* mTexture;
 
-   private:
       // Image dimensions
       int mWidth;
       int mHeight;

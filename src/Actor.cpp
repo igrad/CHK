@@ -81,8 +81,16 @@ void Actor::SetZoom(float newZoom) {
 
 
 
-bool Actor::LoadAnimation(int phase, string path, int frames, float duration, int frameW, int frameH) {
+bool Actor::LoadAnimation(int phase, string path, int frames, float duration,
+   int frameW, int frameH) {
    return anims[phase].LoadFromFile(path, frames, duration, frameW, frameH);
+}
+
+
+
+bool Actor::LoadAnimation(int phase, LTexture* ref, int frames, float duration,
+   int frameW, int frameH) {
+   return anims[phase].LoadFromReference(ref, frames, duration, frameW, frameH);
 }
 
 
@@ -97,6 +105,12 @@ void Actor::SetActiveAnim(int phase) {
 
 bool Actor::LoadTexture(int phase, string path) {
    return textures[phase].LoadFromFile(path);
+}
+
+
+
+bool Actor::LoadTexture(int phase, LTexture* ref) {
+   return textures[phase].LoadFromReference(ref);
 }
 
 

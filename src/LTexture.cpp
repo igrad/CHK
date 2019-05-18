@@ -54,6 +54,18 @@ bool LTexture::LoadFromFile(string path) {
 
 
 
+bool LTexture::LoadFromReference(LTexture* ref) {
+   // Get rid of preexisting texture
+   Free();
+
+   this->mTexture = ref->mTexture;
+
+   // Return success
+   return mTexture != NULL;
+}
+
+
+
 bool LTexture::LoadFromRenderedText(string textureText, SDL_Color* textColor,
    TTF_Font* font) {
    Free();

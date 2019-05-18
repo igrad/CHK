@@ -32,7 +32,8 @@ int Animation::GetFrameHeight() {
 
 
 
-bool Animation::LoadFromFile(string path, int frames, float duration, int frameW, int frameH) {
+bool Animation::LoadFromFile(string path, int frames, float duration,
+   int frameW, int frameH) {
    // Set the frame count
    frameCount = frames;
 
@@ -68,6 +69,43 @@ bool Animation::LoadFromFile(string path, int frames, float duration, int frameW
    }
 
    mTexture = newTexture;
+   if (mTexture == NULL) {
+      return false;
+   }
+
+   frameClips = new SDL_Rect[frameCount];
+   this->frameW = frameW;
+   this->frameH = frameH;
+
+   int yIter = 0;
+
+   for (int i = 0; i < frameCount; i++) {
+      if (i * frameW >= mWidth) {
+         ++yIter;
+      }
+      frameClips[i].x = i * frameW;
+      frameClips[i].y = yIter;
+      frameClips[i].w = frameW;
+      frameClips[i].h = mHeight;
+   }
+
+   return true;
+}
+
+
+
+bool Animation::LoadFromReference(LTexture* ref, int frames, float duration,
+   int frameW, int frameH) {
+   // Set the frame count
+   frameCount = frames;
+
+   // Set the animation duration
+   animDuration = duration;
+
+   // Get rid of preexisting texture
+   Free();
+
+   this->mTexture = ref->mTexture;
    if (mTexture == NULL) {
       return false;
    }
