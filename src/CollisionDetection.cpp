@@ -1,12 +1,19 @@
 #include "..\include\CollisionDetection.h"
 
 bool PointInRect(int x, int y, SDL_Rect* b) {
-   if ((x >= b->x) && (x < (b->x + b->w))) {
-      if ((y >= b->y) && (y < (b->y + b->h))) {
-         return true;
-      }
-   }
-   return false;
+   // if ((x >= b->x) && (x < (b->x + b->w))) {
+   //    if ((y >= b->y) && (y < (b->y + b->h))) {
+   //       return true;
+   //    }
+   // }
+   // return false;
+
+   bool flag = true;
+   if (x < b->x) flag = false;
+   if (x > b->x + b->w) flag = false;
+   if (y < b->y) flag = false;
+   if (y > b->y + b->h) flag = false;
+   return flag;
 }
 
 
