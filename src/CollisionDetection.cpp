@@ -46,12 +46,20 @@ bool IsRectCollision(SDL_Rect* a, SDL_Rect* b) {
    int ay = a->y;
    int aw = a->w;
    int ah = a->h;
+   int bx = b->x;
+   int by = b->y;
+   int bw = b->w;
+   int bh = b->h;
 
    bool flag = false;
    if (PointInRect(ax, ay, b)) { flag = true; }
-   if (PointInRect(ax + aw, ay, b)) { flag = true; }
-   if (PointInRect(ax, ay + ah, b)) { flag = true; }
-   if (PointInRect(ax + aw, ay + ah, b)) { flag = true; }
+   else if (PointInRect(ax + aw, ay, b)) { flag = true; }
+   else if (PointInRect(ax, ay + ah, b)) { flag = true; }
+   else if (PointInRect(ax + aw, ay + ah, b)) { flag = true; }
+   else if (PointInRect(bx, by, a)) { flag = true; }
+   else if (PointInRect(bx + bw, by, a)) { flag = true; }
+   else if (PointInRect(bx, by + bh, a)) { flag = true; }
+   else if (PointInRect(bx + bw, by + bh, a)) { flag = true; }
 
    return flag;
 }

@@ -8,6 +8,7 @@
 #include "Locale.h"
 #include "Door.h"
 #include "CollisionDetection.h"
+#include "LTimer.h"
 
 // For each genre of room, there will be prescribed values for the number of permitted mega rooms, as well as the size of each of the mega rooms and (perhaps) their suggested dimensions. Also include the number of rooms for a given level, and the width of all hallways, as well as if the hallways should be static width or varied.
 // Eventually, when a level is generated, it will take into account the rough location of the previous level's exit, and factor it into the entrance for the coming level
@@ -23,6 +24,7 @@ class Room {
       int y;
       int w;
       int h;
+      int area;
       int cX;
       int cY;
       SDL_Rect rect;
@@ -41,11 +43,16 @@ class Level {
       bool CheckNewRoom(SDL_Rect* room);
       void GenerateRandomRoom(int roomNum);
 
+      void FindPath(int a, int b, int adir, SDL_Rect* r);
       bool DigCorridor(int a, int b);
+      bool DigCorridor2(int a, int b);
+      bool DigNeighbor(int a, int b);
       bool GenerateCorridors();
       void CheckConnectionsToSpawn(int iter);
+      bool CheckWallHeights();
 
       void GenerateWalls();
+      void FinalizeWalls();
       void GenerateDoors();
       void GenerateLevel();
       bool LoadFromFile(string path, int width, int height);

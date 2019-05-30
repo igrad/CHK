@@ -65,4 +65,6 @@ void Fatal(string message);
 
 float FindDistance(int oX, int oY, int dX, int dY);
 
+int max(int x, int y);
+
 #endif
