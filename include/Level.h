@@ -45,6 +45,7 @@ class Level {
 
       void ResetMod10Changes();
       void PrintTiles(string fn);
+      void Scan4();
 
       void FindPath(int a, int b, int adir, SDL_Rect* r);
       bool DigCorridor(int a, int b);

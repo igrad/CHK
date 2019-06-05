@@ -214,9 +214,22 @@ void Level::PrintTiles(string fn) {
 
 
 
+void Level::Scan4() {
+   for (int cy = 0; cy < groundSize; cy++) {
+      for (int cx = 0; cx < groundSize; cx++) {
+         if ((ground[cy][cx] % 10) == 4) {
+            Log("Found 4!");
+            int und = 1/0;
+         }
+      }
+   }
+}
+
+
 void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
    // Locate our starting room, and pick an appropriate starting point on the
    // primary edge
+   Scan4();
    int ax = rooms[a].rect.x;
    int ay = rooms[a].rect.y;
    int aw = rooms[a].rect.w;
@@ -330,6 +343,10 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       return;
    }
 
+   if ((int)(FindDistance(x2, y2, x1, y1)) >= 25) {
+      Log("Distance greater than 25 - returning");
+      return;
+   }
    printf("\nConnecting from %i, %i to %i, %i (dist = %i)", y1, x1, y2, x2, (int)(FindDistance(x2, y2, x1, y1)));
 
    // We've selected our start and end points - time to see if we can connect
@@ -455,8 +472,8 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
          }
       }
    }
-
    Log("Done finding path options");
+   Scan4();
    PrintTiles("tiles1.txt");
 
    // Now that we've laid out our path candidates, our best path is the one that
@@ -468,12 +485,16 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       int y = queue[i][0];
       int x = queue[i][1];
       int s = queue[i][2];
-      int newval = ground[y][x] + (10 * (s + 1));
-      ground[y][x] = newval;
+      int orig = ground[y][x] % 10;
+      int newval = orig + (10 * (s + 1));
+      if (newval < 255) {
+         //printf("\n\ty: %i, x: %i, s: %i, newval: %i, current: %i", y, x, s, newval, orig);
+         ground[y][x] = newval;
+      }
    }
    Log("Wrote new ground values");
-
    PrintTiles("tiles2.txt");
+   Scan4();
 
    // Set our cursor at the start point
    int cx = x1;
@@ -481,12 +502,13 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
    int cs = 99;
 
    Log("Backtracing...");
+   Scan4();
    // Now we can start backtracing through the grid to find our optimal path
    int lastDir = bdir;
    int path[50][2];
    int pathCtr = 0;
    while (!((cx == x2) && (cy == y2))) {
-      cs = (int)((ground[cy][cx] - (ground[cy][cx] % 10)) / 10);
+      cs = (ground[cy][cx] - (ground[cy][cx] % 10)) / 10;
       printf("\ncy: %i, cx: %i, cs: %i", cy, cx, cs);
 
       // Index 0 = NORTH
@@ -506,16 +528,20 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       list[3][1] = cx - 1;
 
       bool candidates[4];
-      int minVal = 99;
+      int minVal = cs;
       int numCandidates = 0;
 
       for (int i = 0; i < 4; i++) {
+         candidates[i] = false;
          int ly = list[i][0];
          int lx = list[i][1];
          int lv = list[i][2];
 
          int initVal = ground[ly][lx];
-         int pathVal = (int)((initVal - (initVal % 10)) / 10);
+         int pathVal = (initVal - (initVal % 10)) / 10;
+
+         printf("\n\tl%i: ly: %i, lx: %i, lv: %i, init: %i, path: %i, min: %i",
+         i, ly, lx, lv, initVal, pathVal, minVal);
 
          if ((ly < 1) || (lx < 1)) {
             continue;
@@ -525,7 +551,7 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
             // Make sure our potential path isn't outside the queue entirely,
             // and also ensure that it's actually closer to the end goal than
             // the cursor is currently.
-            if ((pathVal < cs) && (pathVal <= minVal)) {
+            if (pathVal <= minVal) {
                // If this is the shortest path, then the previous candidates
                // don't really matter to us since they're longer.
                if (pathVal < minVal) {
@@ -542,11 +568,15 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       if (numCandidates == 0) {
          Warn("Found zero candidates!");
          ResetMod10Changes();
+         Scan4();
+         int und = 1/0;
          return;
       }
 
+      printf("\n\tCandidates: %s, %s, %s, %s", (candidates[0] ? "1" : "0"), (candidates[1] ? "1" : "0"), (candidates[2] ? "1" : "0"), (candidates[3] ? "1" : "0"));
+
       // Path candidates have been found, lets find the best match
-      int selectedDir = NORTH;
+      int selectedDir = -1;
       if (candidates[lastDir]) selectedDir = lastDir;
       else {
          int candidatePick = rand() % numCandidates;
@@ -576,6 +606,11 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
          }
       }
 
+      printf("\n\tSelected l%i", selectedDir);
+      if (selectedDir == -1) {
+         Warn("Failed to select dir!");
+         int und = 1/0;
+      }
       // Update our last direction followed for the next node
       lastDir = selectedDir;
 
@@ -592,6 +627,7 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
    pathCtr++;
 
    Log("Found backtrace");
+   Scan4();
 
    ofstream bt;
    bt.open("bt.txt");
@@ -621,7 +657,9 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       }
    }
 
+   Log("Writing tiles3");
    PrintTiles("tiles3.txt");
+   Scan4();
 
    // Finally, check our wall heights to make sure that we didn't make short
    // walls
@@ -692,10 +730,16 @@ bool Level::DigCorridor2(int a, int b) {
 
    // Try to build a corridor from our three sides
    FindPath(a, b, aprimary, &pathPoints);
+   Log("Tried path 1");
+   Scan4();
    if (pathPoints.x == 0) {
       FindPath(a, b, asecondary1, &pathPoints);
+      Log("Tried path 2");
+      Scan4();
       if (pathPoints.x == 0) {
          FindPath(a, b, asecondary2, &pathPoints);
+         Log("Tried path 3");
+         Scan4();
       }
    }
 
@@ -953,7 +997,7 @@ bool Level::GenerateCorridors() {
       }
    }
 
-   bool verifyingConnections = false;
+   bool verifyingConnections = true;
    while (verifyingConnections) {
       // Verify that all rooms are reachable from the spawn room
       connectedToSpawn = new bool[roomCount];
