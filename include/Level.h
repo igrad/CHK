@@ -43,6 +43,9 @@ class Level {
       bool CheckNewRoom(SDL_Rect* room);
       void GenerateRandomRoom(int roomNum);
 
+      void ResetMod10Changes();
+      void PrintTiles(string fn);
+
       void FindPath(int a, int b, int adir, SDL_Rect* r);
       bool DigCorridor(int a, int b);
       bool DigCorridor2(int a, int b);

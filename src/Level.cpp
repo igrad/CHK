@@ -188,6 +188,32 @@ bool Level::CheckWallHeights() {
 
 
 
+void Level::ResetMod10Changes() {
+   for (int cy = 0; cy < groundSize; cy++) {
+      for (int cx = 0; cx < groundSize; cx++) {
+         ground[cy][cx] = ground[cy][cx] % 10;
+      }
+   }
+}
+
+
+
+void Level::PrintTiles(string fn) {
+   ofstream tiles;
+   char buf[20];
+   tiles.open(fn);
+   for (int py = 0; py < groundSize; py++) {
+      for (int px = 0; px < groundSize; px++) {
+         snprintf(buf, 20, "%4u", ground[py][px]);
+         tiles << buf;
+      }
+      tiles << "\n";
+   }
+   tiles.close();
+}
+
+
+
 void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
    // Locate our starting room, and pick an appropriate starting point on the
    // primary edge
@@ -304,6 +330,8 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       return;
    }
 
+   printf("\nConnecting from %i, %i to %i, %i (dist = %i)", y1, x1, y2, x2, (int)(FindDistance(x2, y2, x1, y1)));
+
    // We've selected our start and end points - time to see if we can connect
    // the two
    // We have three values for every point in the queue, in this order:
@@ -317,57 +345,38 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
    queue[0][2] = 0;
 
    int list[4][3];
-   int minPathLength = 99;
+   int score = 0;
+   int scoreIndex = 0;
+   bool scoreIndexUpdated = true;
 
    while (running) {
       queuectr = ctr;
+      if (!scoreIndexUpdated) running = false;
+      else scoreIndexUpdated = false;
+
+      ofstream myFile;
+      myFile.open("queue.txt");
+      char buf[100];
+      snprintf(buf, 100, "%i, %i --> %i %i\n\n", y1, x1, y2, x2);
+      myFile << buf;
+      for (int i = 0; i < queuectr; i++) {
+         snprintf(buf, 100, "%i: \t%2i, %2i = %2i\n", i, queue[i][0], queue[i][1], queue[i][2]);
+         myFile << buf;
+      }
+      myFile.close();
+
       // If we've looked at 700 nodes and still haven't found the endpoint,
       // just start a new path
       if (queuectr >= 700) {
          // Go through and reset all ground values to their original state
-         for (int cy = 0; cy < groundSize; cy++) {
-            for (int cx = 0; cx < groundSize; cx++) {
-               ground[cy][cx] = ground[cy][cx] % 10;
-            }
-         }
-
-         ofstream myFile;
-         myFile.open("p1.txt");
-         char buff[10];
-         char buf[2];
-         snprintf(buff, 10, "x1: %2i\t", x1);
-         myFile << buff;
-         snprintf(buff, 10, "y1: %2i\n", y1);
-         myFile << buff;
-         snprintf(buff, 10, "x2: %2i\t", x2);
-         myFile << buff;
-         snprintf(buff, 10, "y2: %2i\n", y2);
-         myFile << buff;
-
-         for (int py = min(y1,y2) - 3; py < max(y1,y2) + 3; py++) {
-            for (int px = min(x1,x2) - 3; px < max(x1,x2) + 3; px++) {
-               buf[0] = ' ';
-               buf[1] = ' ';
-               if ((px == x1) && (py == y1)) snprintf(buf, 3, "$$");
-               else if ((px == x2) && (py == y2)) snprintf(buf, 3, "@@");
-               else {
-                  if (ground[py][px] == 2) snprintf(buf, 3, "||", ground[py][px]);
-                  else if (ground[py][px] == 1) snprintf(buf, 3, "::", ground[py][px]);
-                  else snprintf(buf, 3, "%2i", ground[py][px]);
-               }
-
-               myFile << buf;
-            }
-            myFile << "\n";
-         }
-         myFile.close();
-
+         ResetMod10Changes();
          Log("queuectr has exceeded max!");
-
          return;
       }
 
-      for (int i = 0; i < queuectr; i++) {
+      // Let's make sure we only need to look at the leaves of our tree
+      for (int i = scoreIndex; i < queuectr; i++) {
+         if (!running) break;
          // Index 0 = NORTH
          list[0][0] = queue[i][0] - 1;
          list[0][1] = queue[i][1];
@@ -384,7 +393,6 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
          list[3][0] = queue[i][0];
          list[3][1] = queue[i][1] - 1;
 
-         bool foundA = false;
          for (int j = 0; j < 4; j++) {
             // Validate that we aren't trying to access ground coordinates
             // at/beyond the edge of the map
@@ -395,27 +403,24 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
 
             if ((list[j][0] == y1) && (list[j][1] == x1)) {
                running = false;
-               foundA = true;
             }
 
+            // First, check if it's already in the queue
             bool inQ = false;
-            if (!foundA) {
-               // First, check if it's already in the queue
-               for (int k = 0; k < ctr; k++) {
-                  if ((queue[k][0] == list[j][0]) &&
-                  (queue[k][1] == list[j][1])) {
-                     if (queue[k][2] > list[j][2]) queue[k][2] = list[j][2];
-                     inQ = true;
-                  }
+            for (int k = 0; k < ctr; k++) {
+               if ((queue[k][0] == list[j][0]) &&
+               (queue[k][1] == list[j][1])) {
+                  if (queue[k][2] > list[j][2]) queue[k][2] = list[j][2];
+                  inQ = true;
                }
             }
 
-            if (foundA || !inQ) {
+            if (!inQ) {
                // Next, check if it's our end point (which will be a wall tile)
                // Here, we add the tile to the queue if it isn't already in the
                // queue.
                bool pushToQueue = false;
-               if (foundA) {
+               if ((list[j][0] == y1) && (list[j][1] == x1)) {
                   pushToQueue = true;
                } else if ((ground[list[j][0]][list[j][1]] == 0) ||
                   (ground[list[j][0]][list[j][1]] == 1)) {
@@ -439,6 +444,11 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
                   queue[ctr][0] = list[j][0];
                   queue[ctr][1] = list[j][1];
                   queue[ctr][2] = list[j][2];
+                  if (queue[ctr][2] > score) {
+                     scoreIndex = ctr;
+                     score = queue[ctr][2];
+                     scoreIndexUpdated = true;
+                  }
                   ctr++;
                }
             }
@@ -446,27 +456,38 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       }
    }
 
+   Log("Done finding path options");
+   PrintTiles("tiles1.txt");
+
    // Now that we've laid out our path candidates, our best path is the one that
    // takes the fewest tiles and the fewest turns. But before we find that path,
    // we need to draw on our map to help find the way.
    // We draw in multiples of 10 so that we don't overwrite any of the existing
    // data, at least not in base 10 we aren't :)
    for (int i = 0; i < ctr; i++) {
-      ground[queue[i][0]][queue[i][1]] = ground[queue[i][0]][queue[i][1]] +
-      (10 * (queue[i][2] + 1));
+      int y = queue[i][0];
+      int x = queue[i][1];
+      int s = queue[i][2];
+      int newval = ground[y][x] + (10 * (s + 1));
+      ground[y][x] = newval;
    }
+   Log("Wrote new ground values");
+
+   PrintTiles("tiles2.txt");
 
    // Set our cursor at the start point
    int cx = x1;
    int cy = y1;
    int cs = 99;
 
+   Log("Backtracing...");
    // Now we can start backtracing through the grid to find our optimal path
    int lastDir = bdir;
    int path[50][2];
    int pathCtr = 0;
-   while ((cx != x1) && (cy != y1)) {
+   while (!((cx == x2) && (cy == y2))) {
       cs = (int)((ground[cy][cx] - (ground[cy][cx] % 10)) / 10);
+      printf("\ncy: %i, cx: %i, cs: %i", cy, cx, cs);
 
       // Index 0 = NORTH
       list[0][0] = cy - 1;
@@ -493,37 +514,35 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
          int lx = list[i][1];
          int lv = list[i][2];
 
-         // If we have reached the end point, be sure to mark it as our selected
-         // candidate and our only candidate.
-         if ((ly == y2) && (lx == x2)) {
-            candidates[0] = false;
-            candidates[1] = false;
-            candidates[2] = false;
-            candidates[3] = false;
-
-            candidates[i] = true;
-            numCandidates = 1;
-            break;
-         }
          int initVal = ground[ly][lx];
          int pathVal = (int)((initVal - (initVal % 10)) / 10);
 
-         if (initVal < 10) pathVal = 99;
-
-         // Make sure our potential path isn't outside the queue entirely, and
-         // also ensure that it's actually closer to the end goal than the
-         // cursor is currently.
-         if ((pathVal < cs) && (pathVal <= minVal)) {
-            // If this is the shortest path, then the previous candidates
-            // don't really matter to us since they're longer.
-            if (pathVal < minVal) {
-               for (int j = 0; j < i; j++) candidates[i] = false;
-               numCandidates = 0;
-               minVal = pathVal;
+         if ((ly < 1) || (lx < 1)) {
+            continue;
+         } else if (initVal < 10) {
+            continue;
+         } else {
+            // Make sure our potential path isn't outside the queue entirely,
+            // and also ensure that it's actually closer to the end goal than
+            // the cursor is currently.
+            if ((pathVal < cs) && (pathVal <= minVal)) {
+               // If this is the shortest path, then the previous candidates
+               // don't really matter to us since they're longer.
+               if (pathVal < minVal) {
+                  for (int j = 0; j < i; j++) candidates[j] = false;
+                  numCandidates = 0;
+                  minVal = pathVal;
+               }
+               candidates[i] = true;
+               numCandidates++;
             }
-            candidates[i] = true;
-            numCandidates++;
          }
+      }
+
+      if (numCandidates == 0) {
+         Warn("Found zero candidates!");
+         ResetMod10Changes();
+         return;
       }
 
       // Path candidates have been found, lets find the best match
@@ -547,6 +566,8 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
                      if (list[i][0] < cy) dir = NORTH;
                      else dir = SOUTH;
                   }
+
+                  selectedDir = dir;
                   break;
                } else {
                   candidateCtr++;
@@ -566,34 +587,50 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       cx = list[selectedDir][1];
       pathCtr++;
    }
+   path[pathCtr][0] = cy;
+   path[pathCtr][1] = cx;
+   pathCtr++;
+
+   Log("Found backtrace");
+
+   ofstream bt;
+   bt.open("bt.txt");
+   char btbuf[100];
+   snprintf(btbuf, 100, "%i, %i --> %i %i\n", y1, x1, y2, x2);
+   bt << btbuf;
+   snprintf(btbuf, 100, "index\tx\ty\tval\n");
+   bt << btbuf;
+   for (int b = 0; b < pathCtr; b++) {
+      snprintf(btbuf, 100, "%i\t%i\t%i\t%i\n", b, path[b][1], path[b][0], ground[path[b][0]][path[b][1]]);
+      bt << btbuf;
+   }
+   bt.close();
 
    // We've created our path - time to clean up the extras
-   for (int i = 0; i < queuectr; i++) {
-      int y = queue[i][0];
-      int x = queue[i][1];
-      int val = queue[i][2];
-      bool inPath = false;
-
-      for (int j = 0; j < pathCtr; j++) {
-         if ((y == path[j][0]) && (x == path[j][1])) {
-            inPath = true;
-            break;
+   for (int py = 0; py < groundSize; py++) {
+      for (int px = 0; px < groundSize; px++) {
+         bool inPath = false;
+         for (int j = 0; j < pathCtr; j++) {
+            if ((py == path[j][0]) && (px == path[j][1])) {
+               inPath = true;
+               break;
+            }
          }
-      }
 
-      if (!inPath) ground[y][x] = ground[y][x] % 10;
+         if (!inPath) ground[py][px] = ground[py][px] % 10;
+      }
    }
+
+   PrintTiles("tiles3.txt");
 
    // Finally, check our wall heights to make sure that we didn't make short
    // walls
    if (!CheckWallHeights()) {
       // Go through and reset all ground values to their original state
-      for (int cy = 0; cy < groundSize; cy++) {
-         for (int cx = 0; cx < groundSize; cx++) {
-            ground[cy][cx] = ground[cy][cx] % 10;
-         }
-      }
+      ResetMod10Changes();
       Log("Wall height req has not been met");
+
+      PrintTiles("tiles_wallerror.txt");
       return;
    }
 
@@ -668,12 +705,15 @@ bool Level::DigCorridor2(int a, int b) {
       return false;
    }
 
+   PrintTiles("predig.txt");
+
    // We got a path, time to dig it with brute force
    for (int cY = 0; cY < groundSize; cY++) {
       for (int cX = 0; cX < groundSize; cX++) {
          if (ground[cY][cX] >= 10) ground[cY][cX] = 1;
       }
    }
+   PrintTiles("postdig.txt");
 
    return true;
 }
@@ -913,8 +953,8 @@ bool Level::GenerateCorridors() {
       }
    }
 
-   bool verifyingConnections = true;
-   while(verifyingConnections) {
+   bool verifyingConnections = false;
+   while (verifyingConnections) {
       // Verify that all rooms are reachable from the spawn room
       connectedToSpawn = new bool[roomCount];
       for (int i = 0; i < roomCount; i++) { connectedToSpawn[i] = false; }
@@ -1280,25 +1320,12 @@ void Level::GenerateLevel() {
    // Give large rooms a chance to have big pits in them (no more than 60% of the room). This chance should be tied to the locale of the level
 
    // Write final tile values to file
-   ofstream myFile;
-   myFile.open("tiles.txt");
-   char buf[2];
-   for (int py = 0; py < groundSize; py++) {
-      for (int px = 0; px < groundSize; px++) {
-         buf[0] = ' ';
-         buf[1] = ' ';
-         snprintf(buf, 3, "%i", ground[py][px]);
-         myFile << buf;
-      }
-      myFile << "\n";
-   }
-   myFile.close();
-
+   PrintTiles("tiles_final.txt");
 
    printf("\nFinal tile count: %i", roomTileCount);
    printf("\nMax collisions: %i, total: %i", NUMROOMCOLLISIONSALLOWED, NUMROOMCOLLISIONS);
 
-   printf("\nLevel generation time: %4.0i ms", timer.getTicks());
+   printf("\nLevel generation time: %4i ms", timer.getTicks());
 }
 
 
