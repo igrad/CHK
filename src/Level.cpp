@@ -176,8 +176,9 @@ bool Level::CheckWallHeights() {
    // that we can create tall walls in our levels
    for (int cY = 2; cY < groundSize - 2; cY++) {
       for (int cX = 2; cX < groundSize - 2; cX++) {
-         if (ground[cY][cX] == 0) {
-            if ((ground[cY - 1][cX] == 1) && (ground[cY + 1][cX] == 1)) {
+         if ((ground[cY][cX] % 10) == 0) {
+            if (((ground[cY - 1][cX] % 10) == 1) &&
+            ((ground[cY + 1][cX] % 10) == 1)) {
                return false;
             }
          }
@@ -214,22 +215,9 @@ void Level::PrintTiles(string fn) {
 
 
 
-void Level::Scan4() {
-   for (int cy = 0; cy < groundSize; cy++) {
-      for (int cx = 0; cx < groundSize; cx++) {
-         if ((ground[cy][cx] % 10) == 4) {
-            Log("Found 4!");
-            int und = 1/0;
-         }
-      }
-   }
-}
-
-
 void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
    // Locate our starting room, and pick an appropriate starting point on the
    // primary edge
-   Scan4();
    int ax = rooms[a].rect.x;
    int ay = rooms[a].rect.y;
    int aw = rooms[a].rect.w;
@@ -242,15 +230,6 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
 
    int x1, y1, x2, y2 = 0;
 
-   int bNSx = bx + (int)(bw/2);
-   int bEWy = by + (int)(bh/2);
-
-   int bN = (int)(FindDistance(bNSx, by - 1, x1, y1));
-   int bE = (int)(FindDistance(bx + bw, bEWy, x1, y1));
-   int bS = (int)(FindDistance(bNSx, by + bh, x1, y1));
-   int bW = (int)(FindDistance(bx - 1, bEWy, x1, y1));
-
-   int m = min(bN, min(bE, min(bS, bW)));
 
    // We will try 5 times to find an appropriate set of coordinates, then give
    // up on connecting these rooms
@@ -301,6 +280,16 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       return;
    }
 
+   int bNSx = bx + (int)(bw/2);
+   int bEWy = by + (int)(bh/2);
+
+   int bN = (int)(FindDistance(bNSx, by - 1, x1, y1));
+   int bE = (int)(FindDistance(bx + bw, bEWy, x1, y1));
+   int bS = (int)(FindDistance(bNSx, by + bh, x1, y1));
+   int bW = (int)(FindDistance(bx - 1, bEWy, x1, y1));
+
+   int m = min(bN, min(bE, min(bS, bW)));
+
    // Next, we do the same thing to find coords for room b
    findingCoords = 0;
    while (findingCoords < 5) {
@@ -343,17 +332,18 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       return;
    }
 
-   if ((int)(FindDistance(x2, y2, x1, y1)) >= 25) {
+   float pointDistance = FindDistance(x2, y2, x1, y1);
+   if (pointDistance >= 25.0f) {
       Log("Distance greater than 25 - returning");
       return;
    }
-   printf("\nConnecting from %i, %i to %i, %i (dist = %i)", y1, x1, y2, x2, (int)(FindDistance(x2, y2, x1, y1)));
+   printf("\nConnecting from %i, %i to %i, %i (dist = %.2f)", y1, x1, y2, x2, pointDistance);
 
    // We've selected our start and end points - time to see if we can connect
    // the two
    // We have three values for every point in the queue, in this order:
    // Y coord, x coord, path rank
-   int queue[800][3];
+   uint8_t queue[1300][3];
    int queuectr = 1;
    int ctr = 1;
    bool running = true;
@@ -371,6 +361,8 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       if (!scoreIndexUpdated) running = false;
       else scoreIndexUpdated = false;
 
+      if (score > 24) running = false;
+
       ofstream myFile;
       myFile.open("queue.txt");
       char buf[100];
@@ -382,12 +374,13 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       }
       myFile.close();
 
-      // If we've looked at 700 nodes and still haven't found the endpoint,
+      // If we've looked at 1200 nodes and still haven't found the endpoint,
       // just start a new path
-      if (queuectr >= 700) {
+      if (queuectr >= 1200 || !running) {
          // Go through and reset all ground values to their original state
-         ResetMod10Changes();
          Log("queuectr has exceeded max!");
+         PrintTiles("tiles_queue.txt");
+         ResetMod10Changes();
          return;
       }
 
@@ -414,6 +407,8 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
             // Validate that we aren't trying to access ground coordinates
             // at/beyond the edge of the map
             if ((list[j][0] < 2) || (list[j][1] < 2)) continue;
+            if ((list[j][0] > groundSize - 2) ||
+            (list[j][1] > groundSize - 2)) continue;
 
             // Copy the score from the parent
             list[j][2] = queue[i][2] + 1;
@@ -446,11 +441,8 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
                } else if (ground[list[j][0]][list[j][1]] == 3) {
                   // Check for invisible walls, but only allow them if it's one
                   // tile away from an end point
-                  if ((int)(ceil(
-                     FindDistance(list[j][1], list[j][0], x1, y1))) == 1) {
-                     pushToQueue = true;
-                  } else if ((int)(ceil(
-                     FindDistance(list[j][1], list[j][0], x2, y2))) == 1) {
+                  if ((FindDistance(list[j][1], list[j][0], x1, y1) <= 1.0f) ||
+                  (FindDistance(list[j][1], list[j][0], x1, y1) <= 1.0f)) {
                      pushToQueue = true;
                   }
                }
@@ -473,7 +465,6 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       }
    }
    Log("Done finding path options");
-   Scan4();
    PrintTiles("tiles1.txt");
 
    // Now that we've laid out our path candidates, our best path is the one that
@@ -492,24 +483,24 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
          ground[y][x] = newval;
       }
    }
+
+   ground[y1][x1] = 252;
    Log("Wrote new ground values");
    PrintTiles("tiles2.txt");
-   Scan4();
 
    // Set our cursor at the start point
    int cx = x1;
    int cy = y1;
-   int cs = 99;
+   int cs = 25;
 
    Log("Backtracing...");
-   Scan4();
    // Now we can start backtracing through the grid to find our optimal path
    int lastDir = bdir;
    int path[50][2];
    int pathCtr = 0;
    while (!((cx == x2) && (cy == y2))) {
       cs = (ground[cy][cx] - (ground[cy][cx] % 10)) / 10;
-      printf("\ncy: %i, cx: %i, cs: %i", cy, cx, cs);
+      //printf("\ncy: %i, cx: %i, cs: %i", cy, cx, cs);
 
       // Index 0 = NORTH
       list[0][0] = cy - 1;
@@ -540,10 +531,12 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
          int initVal = ground[ly][lx];
          int pathVal = (initVal - (initVal % 10)) / 10;
 
-         printf("\n\tl%i: ly: %i, lx: %i, lv: %i, init: %i, path: %i, min: %i",
-         i, ly, lx, lv, initVal, pathVal, minVal);
+         //printf("\n\tl%i: ly: %i, lx: %i, lv: %i, init: %i, path: %i, min: %i",
+         //i, ly, lx, lv, initVal, pathVal, minVal);
 
-         if ((ly < 1) || (lx < 1)) {
+         if ((ly < 2) || (lx < 2)) {
+            continue;
+         } else if ((ly > (groundSize - 2)) || (lx > (groundSize - 2))) {
             continue;
          } else if (initVal < 10) {
             continue;
@@ -568,12 +561,11 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
       if (numCandidates == 0) {
          Warn("Found zero candidates!");
          ResetMod10Changes();
-         Scan4();
          int und = 1/0;
          return;
       }
 
-      printf("\n\tCandidates: %s, %s, %s, %s", (candidates[0] ? "1" : "0"), (candidates[1] ? "1" : "0"), (candidates[2] ? "1" : "0"), (candidates[3] ? "1" : "0"));
+      //printf("\n\tCandidates: %s, %s, %s, %s", (candidates[0] ? "1" : "0"), (candidates[1] ? "1" : "0"), (candidates[2] ? "1" : "0"), (candidates[3] ? "1" : "0"));
 
       // Path candidates have been found, lets find the best match
       int selectedDir = -1;
@@ -606,7 +598,7 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
          }
       }
 
-      printf("\n\tSelected l%i", selectedDir);
+      //printf("\n\tSelected l%i", selectedDir);
       if (selectedDir == -1) {
          Warn("Failed to select dir!");
          int und = 1/0;
@@ -627,7 +619,6 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
    pathCtr++;
 
    Log("Found backtrace");
-   Scan4();
 
    ofstream bt;
    bt.open("bt.txt");
@@ -659,7 +650,6 @@ void Level::FindPath(int a, int b, int adir, SDL_Rect* r) {
 
    Log("Writing tiles3");
    PrintTiles("tiles3.txt");
-   Scan4();
 
    // Finally, check our wall heights to make sure that we didn't make short
    // walls
@@ -695,29 +685,105 @@ bool Level::DigCorridor2(int a, int b) {
    // speaking), and employing the primary side and two secondary sides as
    // available launch points for our path finding algorithm.
    // "A North of B", "A East of B", ...
-   int aNb = by - (ay + ah);
-   int aEb = bx - (ax + aw);
-   int aSb = ay - (by + bh);
-   int aWb = ax - (bx + bw);
+   int aNb = abs(by - (ay + ah));
+   int aEb = abs(ax - (bx + bw));
+   int aSb = abs(ay - (by + bh));
+   int aWb = abs(bx - (ax + aw));
 
-   // Find the primary edge and secondary edges
-   int m = max(aNb, max(aEb, max(aSb, aWb)));
-   int aprimary = SOUTH;
-   int asecondary1 = EAST;
-   int asecondary2 = WEST;
+   // Find the primary and secondary edge
+   int m = min(aNb, min(aEb, min(aSb, aWb)));
+   int aprimary, asecondary;
 
-   if (m == aEb) {
-      aprimary = EAST;
-      asecondary1 = NORTH;
-      asecondary2 = SOUTH;
-   } else if (m == aSb) {
-      aprimary = NORTH;
-      asecondary1 = WEST;
-      asecondary2 = EAST;
-   } else if (m == aWb) {
-      aprimary = WEST;
-      asecondary1 = SOUTH;
-      asecondary2 = NORTH;
+   if (m == aEb || m == aWb) {
+      if (m == aEb) aprimary = WEST;
+      else aprimary = EAST;
+
+      if (aNb < aSb) asecondary = SOUTH;
+      else asecondary = NORTH;
+   } else {
+      if (m == aNb) aprimary = SOUTH;
+      else aprimary = NORTH;
+
+      if (aWb < aEb) asecondary = EAST;
+      else asecondary = WEST;
+   }
+
+   Log("Found min");
+
+   // NOTE: Determine if we really want min rects for adir decision
+   // The content here is broken, and might not really be that useful.
+   if (false) {
+      // Find the favored direction, or the direction with the least traffic in it
+      SDL_Rect r1, r2;
+      switch (aprimary) {
+         case NORTH: // A is South of B
+            r1 = {min(ax, bx), by + bh,
+               max(ax + aw, bx + bw) - min(ax, bx), ay - (by + bh)};
+            break;
+         case EAST: // A is West of B
+            r1 = {ax + aw, min(ay, by),
+               bx - (ax + aw), max(ay + ah, by + bh) - min(ay, by)};
+            break;
+         case SOUTH: // A is North of B
+            r1 = {min(ax, bx), ay + ah,
+               max(ax + aw, bx + bw) - min(ax, bx), by - (ay + ah)};
+            break;
+         case WEST: // A is East of B
+            r1 = {bx + bw, min(ay, by),
+               ax - (bx + bw), max(ay + ah, by + bh) - min(ay, by)};
+            break;
+      }
+
+      Log("Set r1");
+
+      switch (asecondary) {
+         case NORTH:
+            r2 = {min(ax, bx), by + bh,
+               max(ax + aw, bx + bw) - min(ax, bx), ay - (by + bh)};
+            break;
+         case EAST:
+            r2 = {ax + aw, min(ay, by),
+               bx - (ax + aw), max(ay + ah, by + bh) - min(ay, by)};
+            break;
+         case SOUTH:
+            r2 = {min(ax, bx), ay + ah,
+               max(ax + aw, bx + bw) - min(ax, bx), by - (ay + ah)};
+            break;
+         case WEST:
+            r2 = {bx + bw, min(ay, by),
+               ax - (bx + bw), max(ay + ah, by + bh) - min(ay, by)};
+            break;
+      }
+
+      Log("Set r2");
+
+      int r1Traffic = 0;
+      for (int cy = r1.y; cy < r1.y + r1.h; cy++) {
+         for (int cx = r1.x; cx < r1.x + r1.w; cx++) {
+            if (ground[cy][cx] > 0) r1Traffic++;
+         }
+      }
+
+      int r2Traffic = 0;
+      for (int cy = r2.y; cy < r2.y + r2.h; cy++) {
+         for (int cx = r2.x; cx < r2.x + r2.w; cx++) {
+            if (ground[cy][cx] > 0) r2Traffic++;
+         }
+      }
+
+      Log("Set r comparison counts");
+      printf("\nr1: %2i %2i %2i %2i, r1Traffic:  %i", r1.x, r1.y, r1.w, r1.h, r1Traffic);
+      printf("\nr2: %2i %2i %2i %2i, r2Traffic:  %i", r2.x, r2.y, r2.w, r2.h, r2Traffic);
+
+      // If our secondary direction has a smaller proportion of traffic than our
+      // primary direction, make it our prefferred direction by flipping the two
+      if ((r1Traffic/(r1.w * r1.h)) > (r2Traffic/(r2.w * r2.h))) {
+         int c = asecondary;
+         asecondary = aprimary;
+         aprimary = c;
+      }
+
+      Log("Determined flip");
    }
 
    // Find our exact connection points and the best path between them
@@ -730,26 +796,14 @@ bool Level::DigCorridor2(int a, int b) {
 
    // Try to build a corridor from our three sides
    FindPath(a, b, aprimary, &pathPoints);
-   Log("Tried path 1");
-   Scan4();
    if (pathPoints.x == 0) {
-      FindPath(a, b, asecondary1, &pathPoints);
-      Log("Tried path 2");
-      Scan4();
+      FindPath(a, b, asecondary, &pathPoints);
+      // We still failed, return failure
       if (pathPoints.x == 0) {
-         FindPath(a, b, asecondary2, &pathPoints);
-         Log("Tried path 3");
-         Scan4();
+         Log("Found no suitable connections");
+         return false;
       }
    }
-
-   // We still failed, return failure
-   if (pathPoints.x == 0) {
-      Log("Found no suitable connections");
-      return false;
-   }
-
-   PrintTiles("predig.txt");
 
    // We got a path, time to dig it with brute force
    for (int cY = 0; cY < groundSize; cY++) {
@@ -757,7 +811,6 @@ bool Level::DigCorridor2(int a, int b) {
          if (ground[cY][cX] >= 10) ground[cY][cX] = 1;
       }
    }
-   PrintTiles("postdig.txt");
 
    return true;
 }
@@ -917,8 +970,42 @@ bool Level::GenerateCorridors() {
    // For every room, we attempt to make a corridor up to three times. If it
    // still can't make a corridor after three tries, then we come back to it
    // later
+   int roomNeighbors[50][3] = {0};
+   for (int i = 0; i < roomCount; i++) {
+      // Select the destination room by its proximity to the target room
+      float minDistance = 99.f;
+      float secondMinDistance = 99.f;
+      float thirdMinDistance = 99.f;
+      int room1 = 0;
+      int room2 = 0;
+      int room3 = 0;
+
+      for (int j = 0; j < roomCount; j++) {
+         if (j != i) {
+            float distance = FindDistance(rooms[i].cX, rooms[i].cY,
+               rooms[j].cX, rooms[j].cY);
+
+            if (distance <= minDistance) {
+               thirdMinDistance = secondMinDistance;
+               secondMinDistance = minDistance;
+               minDistance = distance;
+
+               room3 = room2;
+               room2 = room1;
+               room1 = j;
+            }
+         }
+      }
+
+      roomNeighbors[i][0] = room1;
+      roomNeighbors[i][1] = room2;
+      roomNeighbors[i][2] = room3;
+      printf("\nroomNeighbors | %i: %i, %i, %i", i, room1, room2, room3);
+   }
+
    for (int j = 0; j < 3; j++) {
       for (int i = 0; i < roomCount; i++) {
+         printf("\nAnalyzing room %i", i);
          // If our source room is already at max connections, we can skip it
          // and try another one.
          if (rooms[i].connections >= rooms[i].maxConnections) {
@@ -926,35 +1013,14 @@ bool Level::GenerateCorridors() {
          }
          else {
             // Select the destination room by its proximity to the target room
-            float minDistance = 99.f;
-            float secondMinDistance = 99.f;
-            float thirdMinDistance = 99.f;
-            int room1 = 0;
-            int room2 = 0;
-            int room3 = 0;
+            printf("\n\ti: %i, j: %i, dest should be: %i", i, j, roomNeighbors[i][j]);
+            int dest = roomNeighbors[i][j];
 
-            for (int k = 0; k < roomCount; k++) {
-               if (k != i) {
-                  float distance =
-                  FindDistance(rooms[i].cX, rooms[i].cY,
-                     rooms[k].cX, rooms[k].cY);
-
-                  if (distance < minDistance) {
-                     thirdMinDistance = secondMinDistance;
-                     secondMinDistance = minDistance;
-                     minDistance = distance;
-                     room3 = room2;
-                     room2 = room1;
-                     room1 = k;
-                  }
-               }
-            }
-            int dest = room1;
-            if (j == 2) dest = room2;
-            if (j == 3) dest = room3;
+            printf("\n\tDest = %i", dest);
 
             if ((j == 3) ||
             (rooms[dest].connections < rooms[dest].maxConnections)) {
+               printf("\nProbing connection between %i and %i", i, dest);
                // We have a solid connection ready to be made, potentially
                // First, we check and see if these two rooms are already
                // connected
@@ -995,9 +1061,12 @@ bool Level::GenerateCorridors() {
             }
          }
       }
+
+      printf("\nCompleted pass %i", j + 1);
+      std::cin.get();
    }
 
-   bool verifyingConnections = true;
+   bool verifyingConnections = false;
    while (verifyingConnections) {
       // Verify that all rooms are reachable from the spawn room
       connectedToSpawn = new bool[roomCount];
@@ -1079,10 +1148,18 @@ void Level::GenerateWalls() {
             else if (ground[cY + 1][cX + 1] == 1) { isWall = true; }
 
             if (isWall) ground[cY][cX] = 2;
+         }
+      }
+   }
 
+   for (int cY = 1; cY < groundSize - 1; cY++) {
+      for (int cX = 1; cX < groundSize - 1; cX++) {
+         if (ground[cY][cX] == 0) {
             // If the tile below this is a shown wall and this tile is void,
             // then we want this tile to be an invisible wall
-            if ((ground[cY][cX] == 0) && (ground[cY + 1][cX] == 2)) {
+            // Similarly, if the tile above this is a shown wall, this should
+            // be an invisible wall to prevent walls that are one unit high
+            if (ground[cY + 1][cX] == 2 || ground[cY - 1][cX] == 2) {
                ground[cY][cX] = 3;
             }
          }
@@ -1097,7 +1174,7 @@ void Level::FinalizeWalls() {
 
    for (int cY = 1; cY < groundSize - 1; cY++) {
       for (int cX = 1; cX < groundSize - 1; cX++) {
-         if ((ground[cY][cX] == 2) || (ground[cY][cX] == 3)) {
+         if (ground[cY][cX] == 2) {
             int key = (cY * 100) + cX;
             int lKey = (cY * 100) + cX - 1;
             int uKey = ((cY - 1) * 100) + cX;
