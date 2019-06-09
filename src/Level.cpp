@@ -973,34 +973,26 @@ bool Level::GenerateCorridors() {
    int roomNeighbors[50][3] = {0};
    for (int i = 0; i < roomCount; i++) {
       // Select the destination room by its proximity to the target room
-      float minDistance = 99.f;
-      float secondMinDistance = 99.f;
-      float thirdMinDistance = 99.f;
-      int room1 = 0;
-      int room2 = 0;
-      int room3 = 0;
+      float neighbors[roomCount];
+      float sortedNeighbors[roomCount];
+      for (int j = 0; j < roomCount; j++) {
+         float d = FindDistance(rooms[i].cX, rooms[i].cY,
+            rooms[j].cX, rooms[j].cY);
+         if (i == j) d = 99.f;
+         neighbors[j] = d;
+         sortedNeighbors[j] = d;
+      }
+
+      sort(sortedNeighbors, sortedNeighbors + roomCount);
 
       for (int j = 0; j < roomCount; j++) {
          if (j != i) {
-            float distance = FindDistance(rooms[i].cX, rooms[i].cY,
-               rooms[j].cX, rooms[j].cY);
-
-            if (distance <= minDistance) {
-               thirdMinDistance = secondMinDistance;
-               secondMinDistance = minDistance;
-               minDistance = distance;
-
-               room3 = room2;
-               room2 = room1;
-               room1 = j;
-            }
+            if (neighbors[j] == sortedNeighbors[0]) roomNeighbors[i][0] = j;
+            if (neighbors[j] == sortedNeighbors[1]) roomNeighbors[i][1] = j;
+            if (neighbors[j] == sortedNeighbors[2]) roomNeighbors[i][2] = j;
          }
       }
-
-      roomNeighbors[i][0] = room1;
-      roomNeighbors[i][1] = room2;
-      roomNeighbors[i][2] = room3;
-      printf("\nroomNeighbors | %i: %i, %i, %i", i, room1, room2, room3);
+      printf("\nroomNeighbors | %i: %i, %i, %i", i, roomNeighbors[i][0], roomNeighbors[i][1], roomNeighbors[i][2]);
    }
 
    for (int j = 0; j < 3; j++) {
@@ -1066,7 +1058,7 @@ bool Level::GenerateCorridors() {
       std::cin.get();
    }
 
-   bool verifyingConnections = false;
+   bool verifyingConnections = true;
    while (verifyingConnections) {
       // Verify that all rooms are reachable from the spawn room
       connectedToSpawn = new bool[roomCount];
