@@ -47,11 +47,13 @@ class Level {
       void PrintTiles(string fn);
       void Scan4();
 
-      void FindPath(int a, int b, int adir, SDL_Rect* r);
+      bool CheckWallTile(int x, int y);
+
+      bool FindPath(int a, int b, int adir);
       bool DigCorridor(int a, int b);
-      bool DigCorridor2(int a, int b);
       bool DigNeighbor(int a, int b);
       bool GenerateCorridors();
+      bool GenerateCorridors2();
       void CheckConnectionsToSpawn(int iter);
       bool CheckWallHeights();
 
