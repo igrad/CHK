@@ -176,7 +176,8 @@ bool Level::CheckWallHeights() {
    // that we can create tall walls in our levels
    for (int cY = 2; cY < groundSize - 2; cY++) {
       for (int cX = 2; cX < groundSize - 2; cX++) {
-         if ((ground[cY][cX] % 10) == 0) {
+         int g = ground[cY][cX] % 10;
+         if (g == 0 || g == 2 || g == 3) {
             if (((ground[cY - 1][cX] % 10) == 1) &&
             ((ground[cY + 1][cX] % 10) == 1)) {
                return false;
@@ -634,10 +635,14 @@ bool Level::DigCorridor(int a, int b) {
    int ay = rooms[a].rect.y;
    int aw = rooms[a].rect.w;
    int ah = rooms[a].rect.h;
+   int acx = ax + (int)(aw/2);
+   int acy = ay + (int)(ah/2);
    int bx = rooms[b].rect.x;
    int by = rooms[b].rect.y;
    int bw = rooms[b].rect.w;
    int bh = rooms[b].rect.h;
+   int bcx = bx + (int)(bw/2);
+   int bcy = by + (int)(bh/2);
 
    // Determine which walls are going to be connected
    // This is done by finding the distance between each of the edges and using
@@ -650,7 +655,7 @@ bool Level::DigCorridor(int a, int b) {
    int aSb = abs(ay - (by + bh));
    int aWb = abs(bx - (ax + aw));
 
-   // Find the primary and secondary edge
+   // Find the primary and secondary edges for room A
    int m = min(aNb, min(aEb, min(aSb, aWb)));
    int aprimary, asecondary;
 
@@ -846,6 +851,9 @@ bool Level::GenerateCorridors() {
    // still can't make a corridor after three tries, then we come back to it
    // later
    int roomNeighbors[50][3] = {0};
+   float shortestDistances[roomCount] = {0.0f};
+   float shortestDistancesSorted[roomCount] = {0.0f};
+   int roomOrder[roomCount] = {0};
    for (int i = 0; i < roomCount; i++) {
       // Select the destination room by its proximity to the target room
       float neighbors[roomCount];
@@ -867,33 +875,49 @@ bool Level::GenerateCorridors() {
             if (neighbors[j] == sortedNeighbors[2]) roomNeighbors[i][2] = j;
          }
       }
+
+      shortestDistances[i] = roomNeighbors[i][0];
+      shortestDistancesSorted[i] = roomNeighbors[i][0];
       printf("\nroomNeighbors | %i: %i, %i, %i", i, roomNeighbors[i][0], roomNeighbors[i][1], roomNeighbors[i][2]);
    }
 
+   sort(shortestDistancesSorted, shortestDistancesSorted + roomCount);
+
+   // Determine our path attempt order by trying to connect the furthest rooms
+   // first to give them priority
+   for (int i = 0; i < roomCount; i++) {
+      for (int j = 0; j < roomCount; j++) {
+         if (shortestDistancesSorted[i] == shortestDistances[j]) {
+            roomOrder[i] = j;
+         }
+      }
+   }
+
+   // Try to build connections to the 3 nearest rooms
    for (int j = 0; j < 3; j++) {
       for (int i = 0; i < roomCount; i++) {
-         printf("\nAnalyzing room %i | connections: %i, max: %i", i, rooms[i].connections, rooms[i].maxConnections);
+         int a = roomOrder[i];
+         printf("\nAnalyzing room %i | connections: %i, max: %i", a, rooms[a].connections, rooms[a].maxConnections);
          // If our source room is already at max connections, we can skip it
          // and try another one.
-         if (rooms[i].connections >= rooms[i].maxConnections) continue;
-         else if (rooms[i].connections > j) continue;
+         if (rooms[a].connections >= rooms[a].maxConnections) continue;
+         else if ((j == 1) && (rooms[a].connections > 0)) continue;
          else {
             // Select the destination room by its proximity to the target room
-            printf("\n\ti: %i, j: %i, dest should be: %i", i, j, roomNeighbors[i][j]);
-            int dest = roomNeighbors[i][j];
+            int dest = roomNeighbors[a][j];
 
             printf("\n\tDest = %i", dest);
 
             if ((j == 3) ||
             (rooms[dest].connections < rooms[dest].maxConnections)) {
-               printf("\nProbing connection between %i and %i", i, dest);
+               printf("\nProbing connection between %i and %i", a, dest);
                // We have a solid connection ready to be made, potentially
                // First, we check and see if these two rooms are already
                // connected
                bool alreadyConnected = false;
-               for (int k = 0; k < rooms[i].connections; k++) {
+               for (int k = 0; k < rooms[a].connections; k++) {
                   // If our room is already in the list of connections, skip
-                  if (dest == rooms[i].connectedRooms[k]) {
+                  if (dest == rooms[a].connectedRooms[k]) {
                      alreadyConnected = true;
                      break;
                   }
@@ -901,7 +925,7 @@ bool Level::GenerateCorridors() {
                   // If our room collides with a room that's already connected,
                   // prevent it
                   if (IsRectCollision(&rooms[dest].rect,
-                     &rooms[rooms[i].connectedRooms[k]].rect)) {
+                     &rooms[rooms[a].connectedRooms[k]].rect)) {
                      alreadyConnected = true;
                      break;
                   }
@@ -910,12 +934,12 @@ bool Level::GenerateCorridors() {
                // If they aren't connected already, we can try to build the
                // corridor between the two
                if (!alreadyConnected) {
-                  printf("\nTrying to dig a corridor from %i to %i", i, dest);
-                  if (DigCorridor(i, dest)) {
+                  printf("\nTrying to dig a corridor from %i to %i", a, dest);
+                  if (DigCorridor(a, dest)) {
                      numCorridors++;
-                     rooms[i].connectedRooms[rooms[i].connections] = dest;
-                     rooms[dest].connectedRooms[rooms[dest].connections] = i;
-                     rooms[i].connections++;
+                     rooms[a].connectedRooms[rooms[a].connections] = dest;
+                     rooms[dest].connectedRooms[rooms[dest].connections] = a;
+                     rooms[a].connections++;
                      rooms[dest].connections++;
 
                      if (numCorridors == MAXCORRIDORS) {
@@ -933,8 +957,9 @@ bool Level::GenerateCorridors() {
       //std::cin.get();
    }
 
+   // Verify that all rooms are reachable from the spawn room
+   bool allConnectedToSpawn = false;
    for (int k = 0; k < 10; k++) {
-      // Verify that all rooms are reachable from the spawn room
       connectedToSpawn = new bool[roomCount];
       for (int i = 0; i < roomCount; i++) { connectedToSpawn[i] = false; }
       connectedToSpawn[0] = true;
@@ -942,6 +967,7 @@ bool Level::GenerateCorridors() {
 
       // If a room isn't connected, then we need to force a connection to a room that is
       bool missingConnection = false;
+      bool madeConnection = false;
       for (int i = 0; i < roomCount; i++) {
          if (!connectedToSpawn[i]) {
             missingConnection = true;
@@ -950,6 +976,7 @@ bool Level::GenerateCorridors() {
                else if (j == i) { continue; }
                else if (FindDistance(rooms[i].x, rooms[i].y, rooms[j].x, rooms[j].y) <= (groundSize/2)) {
                   if (DigCorridor(i, j)) {
+                     madeConnection = true;
                      numCorridors++;
                      rooms[i].connectedRooms[rooms[i].connections] = j;
                      rooms[j].connectedRooms[rooms[j].connections] = i;
@@ -964,8 +991,14 @@ bool Level::GenerateCorridors() {
          }
       }
 
-      if (!missingConnection) k = 10;
+      if (!missingConnection) {
+         allConnectedToSpawn = true;
+         break;
+      }
+      if (madeConnection) k--;
    }
+
+   if (!allConnectedToSpawn) return false;
 
    //Simple logging to print out the room dimensions and connections to the console
    for (int i = 0; i < roomCount; i++) {
@@ -1239,49 +1272,57 @@ void Level::GenerateLevel() {
    floorRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
    wallRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
 
-   bool levelIsBigEnough = false;
-   while (!levelIsBigEnough) {
-      NUMROOMCOLLISIONS = 0;
-      while (roomsBuilt < roomCount) {
-         GenerateRandomRoom(roomsBuilt);
-         roomsBuilt++;
-      }
-
-      for (int i = 0; i < groundSize; i++) {
-         for (int j = 0; j < groundSize; j++) {
-            if (ground[i][j]) {
-               roomTileCount++;
-            }
+   bool generating = true;
+   while (generating) {
+      bool levelIsBigEnough = false;
+      while (!levelIsBigEnough) {
+         NUMROOMCOLLISIONS = 0;
+         while (roomsBuilt < roomCount) {
+            GenerateRandomRoom(roomsBuilt);
+            roomsBuilt++;
          }
-      }
 
-      if (roomTileCount >= desiredRoomTiles) {
-         levelIsBigEnough = true;
-      } else {
-         // If the room isn't big enough, start over
-         roomTileCount = 0;
-         roomsBuilt = 0;
-         if (rooms != NULL) { delete rooms; }
-         rooms = new Room[roomCount];
          for (int i = 0; i < groundSize; i++) {
             for (int j = 0; j < groundSize; j++) {
-               ground[i][j] = 0;
+               if (ground[i][j]) {
+                  roomTileCount++;
+               }
+            }
+         }
+
+         if (roomTileCount >= desiredRoomTiles) {
+            levelIsBigEnough = true;
+         } else {
+            // If the room isn't big enough, start over
+            roomTileCount = 0;
+            roomsBuilt = 0;
+            if (rooms != NULL) { delete rooms; }
+            rooms = new Room[roomCount];
+            for (int i = 0; i < groundSize; i++) {
+               for (int j = 0; j < groundSize; j++) {
+                  ground[i][j] = 0;
+               }
             }
          }
       }
+
+      Log("Setting spawn and exit rooms");
+
+      spawnRoom = rooms[0].rect;
+      exitRoom = rooms[roomCount - 1].rect;
+
+      Log("Creating walls and corridors");
+      GenerateWalls();
+
+      // Create corridors between rooms
+      if (!GenerateCorridors()) {
+         for (int y = 0; y < groundSize; y++) {
+            for (int x = 0; x < groundSize; x++) {
+               ground[y][x] = 0;
+            }
+         }
+      } else { generating = false; }
    }
-
-   Log("Setting spawn and exit rooms");
-
-   spawnRoom = rooms[0].rect;
-   exitRoom = rooms[roomCount - 1].rect;
-
-   Log("Creating walls for rooms");
-   GenerateWalls();
-
-   // Create corridors between rooms
-   Log("Generating corridors");
-   GenerateCorridors();
 
    // Plant secrets throughout the level
 
