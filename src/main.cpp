@@ -73,7 +73,6 @@ Locale dungeon;
 
 // Starts up SDL and creates window
 bool Init() {
-	Log("Initializing...");
 	//Initialization flag
 	bool success = true;
 

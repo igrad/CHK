@@ -146,14 +146,9 @@ void Level::GenerateRandomRoom(int roomNum) {
             rooms[roomNum].cX = x + (w/2);
             rooms[roomNum].cY = y + (h/2);
 
-            printf("\nGenerated Room %2i: %i, %i, %i, %i - maxCorridors: %i\t",
-            roomNum, rooms[roomNum].x, rooms[roomNum].y, rooms[roomNum].w,
-            rooms[roomNum].h, rooms[roomNum].maxConnections);
-
             // Go through all existing rooms and check if this room collides with any. If it does, we need to increase the connection counter
             for (int j = 0; j < roomsBuilt; j++) {
                if (IsRectCollision(&room, &rooms[j].rect)) {
-                  //printf("\n[Room collision during generation] Adding connection from %i to %i", roomNum, j);
                   rooms[roomNum].connectedRooms[rooms[roomNum].connections] = j;
                   rooms[roomNum].connections++;
 
@@ -335,10 +330,7 @@ bool Level::FindPath(int a, int b, int adir) {
       if ((groundCtr < 2) && (wallCtr < 3)) findingCoords = 6;
    }
 
-   if (findingCoords == 5) {
-      Log("Could not find connection point at room B");
-      return false;
-   }
+   if (findingCoords == 5) return false;
 
    float pointDistance = FindDistance(x2, y2, x1, y1);
    if (pointDistance >= 25.0f) return false;
@@ -857,8 +849,6 @@ bool Level::GenerateCorridors() {
                // If there was a collision, then we can dig a corridor
                // between these rooms!
                if (DigNeighbor(i, j)) {
-                  printf("\nDug neighbor corridor between %i and %i", j, i);
-
                   numCorridors++;
                   rooms[i].connectedRooms[rooms[i].connections] = j;
                   rooms[j].connectedRooms[rooms[j].connections] = i;
@@ -901,7 +891,6 @@ bool Level::GenerateCorridors() {
 
       shortestDistances[i] = roomNeighbors[i][0];
       shortestDistancesSorted[i] = roomNeighbors[i][0];
-      printf("\nroomNeighbors | %i: %i, %i, %i", i, roomNeighbors[i][0], roomNeighbors[i][1], roomNeighbors[i][2]);
    }
 
    sort(shortestDistancesSorted, shortestDistancesSorted + roomCount);
@@ -920,7 +909,6 @@ bool Level::GenerateCorridors() {
    for (int j = 0; j < 3; j++) {
       for (int i = 0; i < roomCount; i++) {
          int a = roomOrder[i];
-         printf("\nAnalyzing room %i | connections: %i, max: %i", a, rooms[a].connections, rooms[a].maxConnections);
          // If our source room is already at max connections, we can skip it
          // and try another one.
          if (rooms[a].connections >= rooms[a].maxConnections) continue;
@@ -929,11 +917,8 @@ bool Level::GenerateCorridors() {
             // Select the destination room by its proximity to the target room
             int dest = roomNeighbors[a][j];
 
-            printf("\n\tDest = %i", dest);
-
             if ((j == 3) ||
             (rooms[dest].connections < rooms[dest].maxConnections)) {
-               printf("\nProbing connection between %i and %i", a, dest);
                // We have a solid connection ready to be made, potentially
                // First, we check and see if these two rooms are already
                // connected
@@ -957,7 +942,6 @@ bool Level::GenerateCorridors() {
                // If they aren't connected already, we can try to build the
                // corridor between the two
                if (!alreadyConnected) {
-                  printf("\nTrying to dig a corridor from %i to %i", a, dest);
                   if (DigCorridor(a, dest)) {
                      numCorridors++;
                      rooms[a].connectedRooms[rooms[a].connections] = dest;
@@ -1293,7 +1277,6 @@ void Level::GenerateLevel() {
 
    bool generating = true;
    while (generating) {
-      Log("Generating");
       bool levelIsBigEnough = false;
       while (!levelIsBigEnough) {
          NUMROOMCOLLISIONS = 0;
@@ -1318,12 +1301,8 @@ void Level::GenerateLevel() {
          if (roomTileCount >= desiredRoomTiles) levelIsBigEnough = true;
       }
 
-      Log("Setting spawn and exit rooms");
-
       spawnRoom = rooms[0].rect;
       exitRoom = rooms[roomCount - 1].rect;
-
-      Log("Creating walls and corridors");
       GenerateWalls();
 
       // Create corridors between rooms
@@ -1484,11 +1463,9 @@ void Level::GenerateLevel() {
    // Scan the floorplan and build locales
 
    // Build walls
-   Log("Generating walls");
    GenerateWalls();
 
    // Finalize walls
-   Log("Finalizing Walls");
    FinalizeWalls();
    // Give large rooms a chance to have big pits in them (no more than 60% of the room). This chance should be tied to the locale of the level
 
