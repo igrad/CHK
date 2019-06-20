@@ -44,12 +44,13 @@ class Level {
       void GenerateRandomRoom(int roomNum);
 
       void ResetMod10Changes();
-      void PrintTiles(string fn);
-      void Scan4();
+      bool PointInRoom(int x, int y, int room);
+      bool PointInAnyRoom(int x, int y);
 
       bool CheckWallTile(int x, int y);
 
       bool FindPath(int a, int b, int adir);
+      bool DigShortCorridor(int x1, int y1, int x2, int y2);
       bool DigCorridor(int a, int b);
       bool DigNeighbor(int a, int b);
       bool GenerateCorridors();

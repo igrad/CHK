@@ -200,18 +200,17 @@ void Level::ResetMod10Changes() {
 
 
 
-void Level::PrintTiles(string fn) {
-   ofstream tiles;
-   char buf[20];
-   tiles.open(fn);
-   for (int py = 0; py < groundSize; py++) {
-      for (int px = 0; px < groundSize; px++) {
-         snprintf(buf, 20, "%4u", ground[py][px]);
-         tiles << buf;
-      }
-      tiles << "\n";
+bool Level::PointInRoom(int x, int y, int room) {
+   return PointInRect(x, y, &rooms[room].rect);
+}
+
+
+
+bool Level::PointInAnyRoom(int x, int y) {
+   for (int i = 0; i < roomCount; i++) {
+      if (PointInRoom(x, y, i)) return true;
    }
-   tiles.close();
+   return false;
 }
 
 
@@ -405,7 +404,7 @@ bool Level::FindPath(int a, int b, int adir) {
 
             // Validate that we aren't just running straight back into the
             // first room
-            if (PointInRect(list[j][1], list[j][0], &rooms[b].rect)) continue;
+            if (PointInRoom(list[j][1], list[j][0], b)) continue;
 
             // Copy the score from the parent
             list[j][2] = queue[i][2] + 1;
@@ -492,7 +491,6 @@ bool Level::FindPath(int a, int b, int adir) {
    int pathCtr = 0;
    while (!((cx == x2) && (cy == y2))) {
       cs = (ground[cy][cx] - (ground[cy][cx] % 10)) / 10;
-      //printf("\ncy: %i, cx: %i, cs: %i", cy, cx, cs);
 
       // Index 0 = NORTH
       list[0][0] = cy - 1;
@@ -523,12 +521,9 @@ bool Level::FindPath(int a, int b, int adir) {
          int initVal = ground[ly][lx];
          int pathVal = (initVal - (initVal % 10)) / 10;
 
-         //printf("\n\tl%i: ly: %i, lx: %i, lv: %i, init: %i, path: %i, min: %i",
-         //i, ly, lx, lv, initVal, pathVal, minVal);
-
          if ((ly < 2) || (lx < 2)) {
             continue;
-         } else if ((ly > (groundSize - 2)) || (lx > (groundSize - 2))) {
+         } else if ((ly > (groundSize - 3)) || (lx > (groundSize - 3))) {
             continue;
          } else if (initVal < 10) {
             continue;
@@ -688,6 +683,34 @@ bool Level::DigCorridor(int a, int b) {
       }
    }
 
+   return true;
+}
+
+
+
+bool Level::DigShortCorridor(int x1, int y1, int x2, int y2) {
+   int xi = min(x1, x2);
+   int xf = max(x1, x2);
+   int yi = min(y1, y2);
+   int yf = max(y1, y2);
+
+   for (int cy = yi; cy <= yf; cy++) {
+      for (int cx = xi; cx <= xf; cx++) {
+         int initVal = ground[cy][cx];
+         ground[cy][cx] = initVal + 10;
+      }
+   }
+
+   if (!CheckWallHeights()) {
+      ResetMod10Changes();
+      return false;
+   }
+
+   for (int cy = yi; cy <= yf; cy++) {
+      for (int cx = xi; cx <= xf; cx++) {
+         ground[cy][cx] = 1;
+      }
+   }
    return true;
 }
 
@@ -951,10 +974,6 @@ bool Level::GenerateCorridors() {
             }
          }
       }
-
-      //WriteOutWholeLevel();
-      //printf("\nCompleted pass %i", j + 1);
-      //std::cin.get();
    }
 
    // Verify that all rooms are reachable from the spawn room
@@ -1274,36 +1293,29 @@ void Level::GenerateLevel() {
 
    bool generating = true;
    while (generating) {
+      Log("Generating");
       bool levelIsBigEnough = false;
       while (!levelIsBigEnough) {
          NUMROOMCOLLISIONS = 0;
+         roomTileCount = 0;
+         roomsBuilt = 0;
+         delete rooms;
+         rooms = new Room[roomCount];
+         for (int i = 0; i < groundSize; i++) {
+            for (int j = 0; j < groundSize; j++) {
+               ground[i][j] = 0;
+            }
+         }
+
          while (roomsBuilt < roomCount) {
             GenerateRandomRoom(roomsBuilt);
             roomsBuilt++;
          }
 
-         for (int i = 0; i < groundSize; i++) {
-            for (int j = 0; j < groundSize; j++) {
-               if (ground[i][j]) {
-                  roomTileCount++;
-               }
-            }
-         }
+         for (int i = 0; i < roomCount; i++)
+            roomTileCount += rooms[i].w * rooms[i].h;
 
-         if (roomTileCount >= desiredRoomTiles) {
-            levelIsBigEnough = true;
-         } else {
-            // If the room isn't big enough, start over
-            roomTileCount = 0;
-            roomsBuilt = 0;
-            if (rooms != NULL) { delete rooms; }
-            rooms = new Room[roomCount];
-            for (int i = 0; i < groundSize; i++) {
-               for (int j = 0; j < groundSize; j++) {
-                  ground[i][j] = 0;
-               }
-            }
-         }
+         if (roomTileCount >= desiredRoomTiles) levelIsBigEnough = true;
       }
 
       Log("Setting spawn and exit rooms");
@@ -1321,7 +1333,146 @@ void Level::GenerateLevel() {
                ground[y][x] = 0;
             }
          }
-      } else { generating = false; }
+         continue;
+      }
+
+      if (!CheckWallHeights()) continue;
+
+      // Create impromptu room entrances from existing halls
+      for (int r = 0; r < roomCount; r++) {
+         if (rooms[r].connections < rooms[r].maxConnections) {
+            int rx = rooms[r].x;
+            int ry = rooms[r].y;
+            int rw = rooms[r].w;
+            int rh = rooms[r].h;
+
+            // Check North and South faces
+            bool Nuntouched = true;
+            bool Suntouched = true;
+            for (int x = rx; x < rx + rw; x++) {
+               if (ground[ry - 1][x] == 1) Nuntouched = false;
+               if (ground[ry + rh][x] == 1) Suntouched = false;
+            }
+
+            // Check East and West faces
+            bool Euntouched = true;
+            bool Wuntouched = true;
+            for (int y = ry; y < ry + rh; y++) {
+               if (ground[y][rx - 1] == 1) Wuntouched = false;
+               if (ground[y][rx + rw] == 1) Euntouched = false;
+            }
+
+            // Go through each side and find if we have any candidates
+            bool madeConnection = false;
+            int x1, y1, x2, y2 = 0;
+
+            if (Nuntouched) {
+               int startx = 0;
+               int endx = 0;
+               if (ry >= 4) {
+                  for (int x = rx; x < rx + rw; x++) {
+                     if (ground[ry - 3][x] == 1) {
+                        if (!PointInAnyRoom(x, ry - 3)) {
+                           if (startx == 0) startx = x;
+                           if (endx < x) endx = x;
+                        }
+                     }
+                  }
+
+                  if (startx > 0) {
+                     madeConnection = true;
+                     y1 = ry;
+                     y2 = ry - 3;
+                     int mod = (endx == startx) ?
+                        0 : (rand() % (endx - startx));
+                     x1 = startx + mod;
+                     x2 = x1;
+                  }
+               }
+            }
+
+            if (!madeConnection && Euntouched) {
+               int starty = 0;
+               int endy = 0;
+               if (rx + rw + 2 < groundSize) {
+                  for (int y = ry; y < ry + rh; y++) {
+                     if (ground[y][rx + rw + 2] == 1) {
+                        if (!PointInAnyRoom(rx + rw + 2, ry)) {
+                           if (starty == 0) starty = y;
+                           if (endy < y) endy = y;
+                        }
+                     }
+                  }
+
+                  if (starty > 0) {
+                     madeConnection = true;
+                     x1 = rx + rw;
+                     x2 = rx + rw + 2;
+                     int mod = (endy == starty) ?
+                        0 : (rand() % (endy - starty));
+                     y1 = starty + mod;
+                     y2 = y1;
+                  }
+               }
+            }
+
+            if (!madeConnection && Suntouched) {
+               int startx = 0;
+               int endx = 0;
+               if (ry + rh + 3 < groundSize) {
+                  for (int x = rx; x < rx + rw; x++) {
+                     if (ground[ry + rh + 3][x] == 1) {
+                        if (!PointInAnyRoom(x, ry + rh + 3)) {
+                           if (startx == 0) startx = x;
+                           if (endx < x) endx = x;
+                        }
+                     }
+                  }
+
+                  if (startx > 0) {
+                     madeConnection = true;
+                     y1 = ry + rh;
+                     y2 = ry + rh + 3;
+                     int mod = (endx == startx) ?
+                        0 : (rand() % (endx - startx));
+                     x1 = startx + mod;
+                     x2 = x1;
+                  }
+               }
+            }
+
+            if (!madeConnection && Wuntouched) {
+               int starty = 0;
+               int endy = 0;
+               if (rx >= 4) {
+                  for (int y = ry; y < ry + rh; y++) {
+                     if (ground[y][rx - 2] == 1) {
+                        if (!PointInAnyRoom(rx - 2, ry)) {
+                           if (starty == 0) starty = y;
+                           if (endy < y) endy = y;
+                        }
+                     }
+                  }
+
+                  if (starty > 0) {
+                     madeConnection = true;
+                     x1 = rx;
+                     x2 = rx - 2;
+                     int mod = (endy == starty) ?
+                        0 : (rand() % (endy - starty));
+                     y1 = starty + mod;
+                     y2 = y1;
+                  }
+               }
+            }
+
+            if (madeConnection) {
+               DigShortCorridor(x1, y1, x2, y2);
+            }
+         }
+      }
+
+      generating = false;
    }
 
    // Plant secrets throughout the level
