@@ -167,52 +167,10 @@ bool LoadMedia() {
 	dungeon.cornerSize = 1;
 	dungeon.corridorType = CORRIDOR_CORNERS;
 	dungeon.corridorSize = 1;
-	dungeon.floorTexture.LoadFromFile("media\\images\\dungeon\\floor1.png");
 	dungeon.floorTextureSize = 320;
 	dungeon.wallHeight = 43;
-	dungeon.wallTexture_Face1.LoadFromFile("media\\images\\dungeon\\wall1.png");
-	dungeon.wallTexture_Face2.LoadFromFile("media\\images\\dungeon\\wall2.png");
-	dungeon.wallTexture_Face3.LoadFromFile("media\\images\\dungeon\\wall3.png");
-	dungeon.wallTexture_LEdge.LoadFromFile("media\\images\\dungeon\\wall_edge_l.png");
-	dungeon.wallTexture_REdge.LoadFromFile("media\\images\\dungeon\\wall_edge_r.png");
-	dungeon.wallTexture_TEdge.LoadFromFile("media\\images\\dungeon\\wall_edge_t.png");
-	dungeon.wallTexture_LCorner.LoadFromFile("media\\images\\dungeon\\wall_corner_l.png");
-	dungeon.wallTexture_RCorner.LoadFromFile("media\\images\\dungeon\\wall_corner_r.png");
-
-	dungeon.doorN_shut.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorN_opening_slow.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorN_opening_fast.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorN_closing_slow.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorN_closing_fast.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorN_break_N.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorN_break_S.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorE_shut.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorE_open.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorE_opening_slow.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorE_opening_fast.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorE_closing_slow.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorE_closing_fast.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorE_break_E.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorE_break_W.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorS_shut.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorS_open.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorS_opening_slow.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorS_opening_fast.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorS_closing_slow.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorS_closing_fast.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorS_break_S.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorS_break_N.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorW_shut.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorW_open.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorW_opening_slow.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorW_opening_fast.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorW_closing_slow.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorW_closing_fast.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorW_break_W.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-	dungeon.doorW_break_E.LoadFromFile("media\\images\\dungeon\\doorN_shut.png");
-
-	dungeon.voidTexture.LoadFromFile("media\\images\\dungeon\\void.png");
 	dungeon.voidTextureSize = 640;
+	dungeon.Initialize("media\\images\\dungeon\\");
 
 	return success;
 }

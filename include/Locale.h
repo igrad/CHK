@@ -2,6 +2,7 @@
 #define LOCALE
 
 #include "essentials.h"
+#include "LTexture.h"
 
 enum CORRIDOR_TYPE {
    CORRIDOR_CORNERS,
@@ -13,7 +14,12 @@ enum CORNER_TYPE {
    CORNER_SHARP
 };
 
-struct Locale {
+class Locale {
+public:
+   Locale();
+
+   void Initialize(string prefix);
+
    int mapSize = 100;
    int minRoomDim = 4;
    int maxRoomDim = 20;
@@ -90,8 +96,6 @@ struct Locale {
    // miniboss enemy 3
    // boss enemy 1
    // boss enemy 2
-
-   Locale();
 };
 
 #endif

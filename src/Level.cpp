@@ -5,12 +5,6 @@ int NUMROOMCOLLISIONS = 0;
 int NUMROOMCOLLISIONSALLOWED = 0;
 int MAXCORRIDORS = 0;
 
-Locale::Locale() {
-   int mapSize = 100;
-   LTexture floorTexture = LTexture();
-   LTexture wallTexture = LTexture();
-}
-
 
 
 Room::Room() {
