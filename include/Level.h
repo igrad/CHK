@@ -40,6 +40,9 @@ class Level {
       Level();
       Level(Locale* locale);
 
+      bool IsGround(int x, int y);
+      bool IsWall(int x, int y);
+
       bool CheckNewRoom(SDL_Rect* room);
       void GenerateRandomRoom(int roomNum);
 
@@ -71,8 +74,9 @@ class Level {
       void WriteOutWholeLevel();
 
       void CompileRenderTargets(int xQ = -1, int yQ = -1);
-      void RenderFloor(int camX, int camY);
-      void RenderWalls(int yO, int yF, int camX, int camY);
+      void RenderFloor();
+      void RenderWalls(int yO, int yF);
+      void RenderDoors(int yO, int yF);
 
       ~Level();
 

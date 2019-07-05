@@ -158,19 +158,7 @@ bool LoadMedia() {
 	player.SetActiveAnim(ANIM_IDLE_IV);
 
 	// Initialize all locales
-	dungeon.mapSize = 50;
-	dungeon.minRoomDim = 3;
-	dungeon.maxRoomDim = 9;
-	dungeon.minRoomCount = 8;
-	dungeon.maxRoomCount = 18;
-	dungeon.cornerType = CORNER_SHARP;
-	dungeon.cornerSize = 1;
-	dungeon.corridorType = CORRIDOR_CORNERS;
-	dungeon.corridorSize = 1;
-	dungeon.floorTextureSize = 320;
-	dungeon.wallHeight = 43;
-	dungeon.voidTextureSize = 640;
-	dungeon.Initialize("media\\images\\dungeon\\");
+	dungeon.Initialize("dungeon");
 
 	return success;
 }
@@ -366,14 +354,19 @@ int main(int argc, char* args[]) {
 
 				int currentY = 0;
 
-				randomLevel.RenderFloor(Camera::x, Camera::y);
+				randomLevel.RenderFloor();
 
-				randomLevel.RenderWalls(currentY, player.hitBox.y, Camera::x, Camera::y);
-				currentY = player.hitBox.y;
+				randomLevel.RenderWalls(currentY,
+					player.hitBox.y + player.hitBox.h);
+				randomLevel.RenderDoors(currentY,
+					player.hitBox.y + player.hitBox.h);
+					
+				currentY = player.hitBox.y + player.hitBox.h;
 
 				player.Render(screenFrame, Camera::x, Camera::y);
 
-				randomLevel.RenderWalls(currentY, -1, Camera::x, Camera::y);
+				randomLevel.RenderWalls(currentY, -1);
+				randomLevel.RenderDoors(currentY, -1);
 
 				btn.Render();
 

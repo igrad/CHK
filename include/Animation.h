@@ -22,9 +22,9 @@ class Animation: public LTexture {
 
       // Loads image at specified path
       bool LoadFromFile(string path, int frames, float duration,
-         int frameW = 0, int frameH = 0);
+         int frameW = 0, int frameH = 0, bool reversed = false);
       bool LoadFromReference(LTexture* ref, int frames, float duration,
-         int frameW = 0, int frameH = 0);
+         int frameW = 0, int frameH = 0, bool reversed = false);
 
       // Increment the current frame count
       void IncrementCurrentFrame();
@@ -38,10 +38,10 @@ class Animation: public LTexture {
       int currentFrame;
       int animFrameOfLastScreenFrame;
 
-   private:
       // Number of frames stored in the sprite
       int frameCount;
-
+      
+   private:
       // Duration of the animation
       float animDuration;
 

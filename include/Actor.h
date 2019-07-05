@@ -41,6 +41,19 @@ enum PHASE_CHARACTER {
    ANIM_ABILITY_3
 };
 
+// Simple doors
+// Count: 8
+enum PHASE_DOOR {
+   TEXT_CLOSED,
+   TEXT_OPENED,
+   ANIM_OPEN_SLOW,
+   ANIM_OPEN_FAST,
+   ANIM_CLOSE_SLOW,
+   ANIM_CLOSE_FAST,
+   ANIM_BREAK_IN,
+   ANIM_BREAK_OUT
+};
+
 
 
 /**
@@ -63,9 +76,9 @@ class Actor: public Collider {
       void SetZoom(float newZoom);
 
       bool LoadAnimation(int phase, string path, int frames, float duration,
-         int frameW, int frameH);
+         int frameW, int frameH, bool reversed = false);
       bool LoadAnimation(int phase, LTexture* ref, int frames, float duration,
-         int frameW, int frameH);
+         int frameW, int frameH, bool reversed = false);
       void SetActiveAnim(int anim);
       bool LoadTexture(int phase, string path);
       bool LoadTexture(int phase, LTexture* ref);

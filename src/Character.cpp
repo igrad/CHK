@@ -3,7 +3,8 @@
 int statCap = 8;
 
 
-Character::Character(int level, int HP, int moveSpeed, int numAnims, int numTextures, bool collides): Actor(numAnims, numTextures) {
+Character::Character(int level, int HP, int moveSpeed, int numAnims,
+   int numTextures, bool collides): Actor(numAnims, numTextures) {
    charLevel = level;
    collisionEnabled = collides;
    this->moveSpeed = moveSpeed;
@@ -39,7 +40,8 @@ bool Character::SetStat(STATNAME stat, int newVal, bool ignoreStatCap) {
 
 
 
-bool Character::SetStats(int strength, int dexterity, int constitution, int intellect, int wisdom, int charisma) {
+bool Character::SetStats(int strength, int dexterity, int constitution,
+   int intellect, int wisdom, int charisma) {
    bool success = true;
 
    success = (SetStat(STR, strength) && success) ? true : false;

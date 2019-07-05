@@ -1,6 +1,5 @@
 #include "..\include\Level.h"
 
-enum DIRECTION { NORTH, EAST, SOUTH, WEST };
 int NUMROOMCOLLISIONS = 0;
 int NUMROOMCOLLISIONSALLOWED = 0;
 int MAXCORRIDORS = 0;
@@ -65,6 +64,30 @@ Level::Level(Locale* locale) {
    MAXCORRIDORS = roomCount;
 
    renderTargetsCompiled = false;
+}
+
+
+
+bool Level::IsGround(int x, int y) {
+   int g = ground[y][x];
+   if (g == 1) return true;
+   if (g == 5) return true;
+   if (g == 9) return true;
+   if (g > 15) return true;
+   return false;
+}
+
+
+
+bool Level::IsWall(int x, int y) {
+   int g = ground[y][x];
+   if (g == 2) return true;
+   if (g == 3) return true;
+   if (g == 6) return true;
+   if (g == 7) return true;
+   if (g == 10) return true;
+   if (g == 11) return true;
+   return false;
 }
 
 
@@ -1030,14 +1053,14 @@ void Level::GenerateWalls() {
       for (int cX = 1; cX < groundSize - 1; cX++) {
          if (ground[cY][cX] != 1) {
             bool isWall = false;
-            if (ground[cY - 1][cX] == 1) { isWall = true; }
-            else if (ground[cY][cX - 1] == 1) { isWall = true; }
-            else if (ground[cY - 1][cX - 1] == 1) { isWall = true; }
-            else if (ground[cY - 1][cX + 1] == 1) { isWall = true; }
-            else if (ground[cY + 1][cX - 1] == 1) { isWall = true; }
-            else if (ground[cY + 1][cX] == 1) { isWall = true; }
-            else if (ground[cY][cX + 1] == 1) { isWall = true; }
-            else if (ground[cY + 1][cX + 1] == 1) { isWall = true; }
+            if (IsGround(cX, cY - 1)) { isWall = true; }
+            else if (IsGround(cX, cY + 1)) { isWall = true; }
+            else if (IsGround(cX - 1, cY)) { isWall = true; }
+            else if (IsGround(cX + 1, cY)) { isWall = true; }
+            else if (IsGround(cX - 1, cY - 1)) { isWall = true; }
+            else if (IsGround(cX - 1, cY + 1)) { isWall = true; }
+            else if (IsGround(cX + 1, cY - 1)) { isWall = true; }
+            else if (IsGround(cX + 1, cY + 1)) { isWall = true; }
 
             if (isWall) ground[cY][cX] = 2;
          }
@@ -1212,51 +1235,149 @@ void Level::FinalizeWalls() {
 void Level::GenerateDoors() {
    // Lambda function to generate a percentile chance
    auto roll = [](){ return (rand() % 10) > 1; };
-   // First, search for valid locations
-   for (int cY = 2; cY < groundSize-2; cY++) {
-      for (int cX = 2; cX < groundSize-2; cX++) {
-         if (ground[cY][cX] == 1) {
-            if (ground[cY+1][cX] == 1 && ground[cY-1][cX] == 1 &&
-            ground[cY][cX+1] == 1 && ground[cY][cX-1] == 1) {
-               // We've found a + shape of floor tiles. Time to check if we're actually at a door junction
 
-               int TL = ground[cY-1][cX-1];
-               int TR = ground[cY-1][cX+1];
-               int BL = ground[cY+1][cX-1];
-               int BR = ground[cY+1][cX+1];
+   // Coords array is 5 components:
+   // Y, X, width of wall opening, direction toward center of room, and hand
+   int pcoords[100][5];
+   int pCtr = 0;
 
-               // First, we check for simple T intersections, perhaps of halls
-               if (TL == TR == BL == BR == 2) {
-                  continue;
-               } else if (TL == TR == 2 && (BL == 1 || BR == 1)) {
-                  // Spot for a North-pointing door
-                  if (roll()) {
-                     doors.push_back(new Door(cX, cY, 1, 1, 0, locale));
-                  }
-               } else if (TR == BR == 2 && (TL == 1 || BL == 1)) {
-                  // Spot for an East-pointing door
-                  if (roll()) {
-                     doors.push_back(new Door(cX, cY, 1, 1, 1, locale));
-                  }
-               } else if (BL == BR == 2 && (TL == 1 || TR == 1)) {
-                  // Spot for a South-pointing door
-                  if (roll()) {
-                     doors.push_back(new Door(cX, cY, 1, 1, 2, locale));
-                  }
-               } else if (TL == BL == 2 && (TR == 1 || BR == 1)) {
-                  // Spot for a West-pointing door
-                  if (roll()) {
-                     doors.push_back(new Door(cX, cY, 1, 1, 3, locale));
-                  }
+   // First, we look through each of the rooms to find wall segments that have
+   // floor tiles present, or an opening in the wall
+   for (int room = 0; room < roomCount; room++) {
+      int rx = rooms[room].x;
+      int ry = rooms[room].y;
+      int rw = rooms[room].w;
+      int rh = rooms[room].h;
+      int rwHalf = rx + (int)(rw/2);
+      int rhHalf = ry + (int)(rh/2);
+
+      int width = 1;
+      for (int y = ry; y < ry + rh; y++) {
+         if (ground[y][rx + rw] == 1) {
+            int hand = (y <= rhHalf) ? 1 : 0;
+            if (width > 1) {
+               pcoords[pCtr - 1][2] = width;
+               width++;
+            } else {
+               pcoords[pCtr][0] = y;
+               pcoords[pCtr][1] = rx + rw;
+               pcoords[pCtr][2] = width;
+               pcoords[pCtr][3] = WEST;
+               pcoords[pCtr][4] = room;
+               pcoords[pCtr][5] = hand;
+               pCtr++;
+            }
+            width++;
+         } else width = 1;
+      }
+
+      width = 1;
+      for (int y = ry; y < ry + rh; y++) {
+         if (ground[y][rx - 1] == 1) {
+            int hand = (y <= rhHalf) ? 1 : 0;
+            if (width > 1) {
+               pcoords[pCtr - 1][2] = width;
+               width++;
+            } else {
+               pcoords[pCtr][0] = y;
+               pcoords[pCtr][1] = rx - 1;
+               pcoords[pCtr][2] = width;
+               pcoords[pCtr][3] = EAST;
+               pcoords[pCtr][4] = room;
+               pcoords[pCtr][5] = hand;
+               pCtr++;
+            }
+            width++;
+         } else width = 1;
+      }
+
+      width = 1;
+      for (int x = rx; x < rx + rw; x++) {
+         if (ground[ry - 1][x] == 1) {
+            int hand = (x <= rwHalf) ? 1 : 0;
+            if (width > 1) {
+               pcoords[pCtr - 1][2] = width;
+               width++;
+            } else {
+               pcoords[pCtr][0] = ry - 1;
+               pcoords[pCtr][1] = x;
+               pcoords[pCtr][2] = width;
+               pcoords[pCtr][3] = SOUTH;
+               pcoords[pCtr][4] = room;
+               pcoords[pCtr][5] = hand;
+               pCtr++;
+            }
+            width++;
+         } else width = 1;
+      }
+
+      width = 1;
+      for (int x = rx; x < rx + rw; x++) {
+         if (ground[ry + rh][x] == 1) {
+            int hand = (x <= rwHalf) ? 1 : 0;
+            if (width > 1) {
+               pcoords[pCtr - 1][2] = width;
+               width++;
+            } else {
+               pcoords[pCtr][0] = ry + rh;
+               pcoords[pCtr][1] = x;
+               pcoords[pCtr][2] = width;
+               pcoords[pCtr][3] = NORTH;
+               pcoords[pCtr][4] = room;
+               pcoords[pCtr][5] = hand;
+               pCtr++;
+            }
+            width++;
+         } else width = 1;
+      }
+   }
+
+   // We've found our potential points and their widths, time to root out the
+   // ones we dont want
+   int coords[100][4]; // Y, X, direction toward center of room, hand
+   int ctr = 0;
+   for (int i = 0; i < pCtr; i++) {
+      if (pcoords[i][2] == locale->doorSize) {
+         // Make sure we aren't placing two doors immediately next to each other
+         bool doorNeighbor = false;
+         for (int j = 0; j < ctr; j++) {
+            if (coords[j][0] == pcoords[i][0] ||
+               coords[j][1] == pcoords[i][1]) {
+               if (abs(coords[j][0] - pcoords[i][0]) == 1 ||
+                  abs(coords[j][1] - pcoords[i][1]) == 1) {
+                  doorNeighbor = true;
+                  break;
                }
             }
+         }
+
+         if (!doorNeighbor && (rand() % 100) < locale->doorPercentChance) {
+            // We want to place a door here
+            coords[ctr][0] = pcoords[i][0];
+            coords[ctr][1] = pcoords[i][1];
+            coords[ctr][2] = pcoords[i][3];
+            coords[ctr][3] = pcoords[i][4];
+            ctr++;
          }
       }
    }
 
-   // Be sure we tell the doors to load up their textures and animations
-   for (int i = 0; i < doors.size(); i++) {
-      doors[i]->LoadArt();
+   // Now we know for sure where we want to place doors at in this level. Time
+   // to start creating door objects
+   for (int i = 0; i < ctr; i++) {
+      int y = coords[i][0];
+      int x = coords[i][1];
+      int dir = coords[i][2];
+      bool hand = coords[i][3]; // false: left-handed, true: right-handed
+
+      doors.push_back(new Door(x, y, locale->doorSize, 1, dir, hand, locale));
+      printf("\nCreated door at %i, %i", x, y);
+      ground[y][x] = 16; // Door tiles use 16
+      // We reserve a floor tile to make sure the door can be opened
+      if (dir == NORTH) ground[y + 1][x] = 5;
+      else if (dir == EAST) ground[y][x - 1] = 5;
+      else if (dir == SOUTH) ground[y - 1][x] = 5;
+      else if (dir == WEST) ground[y][x + 1] = 5;
    }
 }
 
@@ -1447,6 +1568,11 @@ void Level::GenerateLevel() {
 
       generating = false;
    }
+   // Build walls around corridors
+   GenerateWalls();
+
+   // Finalize walls
+   FinalizeWalls();
 
    // Plant secrets throughout the level
 
@@ -1456,11 +1582,8 @@ void Level::GenerateLevel() {
 
    // Scan the floorplan and build locales
 
-   // Build walls
-   GenerateWalls();
-
-   // Finalize walls
-   FinalizeWalls();
+   // Generate doors
+   GenerateDoors();
    // Give large rooms a chance to have big pits in them (no more than 60% of the room). This chance should be tied to the locale of the level
 
    printf("\nFinal tile count: %i", roomTileCount);
@@ -1578,7 +1701,8 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
       }
    }
 
-   // Blit the repeating textures to the appropriate buffer textures so that we can render one large texture instead of 300 small textures every frame
+   // Blit the repeating textures to the appropriate buffer textures so that we
+   // can render one large texture instead of 300 small textures every frame
    for (int yi = iterYStart; yi < iterYMax; yi++) {
       for (int xi = iterXStart; xi < iterXMax; xi++) {
          if (ground[yi][xi] == 2) {
@@ -1603,8 +1727,9 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
                wallHeight
             };
 
-            // If the tile beneath this tile is floor, then we render this tile as the "face" of the wall
-            if (ground[yi + 1][xi] == 1) {
+            // If the tile beneath this tile is floor, then we render this tile
+            // as the "face" of the wall
+            if (IsGround(xi, yi + 1)) {
                // render the face wall
                int q = (yi + xi) % 3;
 
@@ -1623,24 +1748,27 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
                bool drewLeft = false;
                bool drewRight = false;
 
-               // If the tile to our left is a floor tile, then this tile has the left edge of a wall
-               if (ground[yi][xi - 1] == 1 ||
-               (ground[yi][xi-1] == 2 && ground[yi+1][xi-1] == 1)) {
+               // If the tile to our left is a floor tile, then this tile has
+               // the left edge of a wall
+               if (IsGround(xi - 1, yi) ||
+               (IsWall(xi - 1, yi) && IsGround(xi - 1, yi + 1))) {
                   // Render the left edge
                   locale->wallTexture_LEdge.Render(&r);
                   drewLeft = true;
                }
 
-               // If the tile to our right is a floor tile, then this tile has the right edge of a wall
-               if (ground[yi][xi + 1] == 1 ||
-               (ground[yi][xi+1] == 2 && ground[yi+1][xi+1] == 1)) {
+               // If the tile to our right is a floor tile, then this tile has
+               // the right edge of a wall
+               if (IsGround(xi + 1, yi) ||
+               (IsWall(xi + 1, yi) && IsGround(xi + 1, yi + 1))) {
                   // Render the right edge
                   locale->wallTexture_REdge.Render(&r);
                   drewRight = true;
                }
 
-               // If the tile above this tile is a floor tile, then this tile has the back edge of a wall
-               if (ground[yi - 1][xi] == 1) {
+               // If the tile above this tile is a floor tile, then this tile
+               // has the back edge of a wall
+               if (IsGround(xi, yi - 1)) {
                   // render the back edge of wall
                   locale->wallTexture_TEdge.Render(&r);
                   drewLeft = true;
@@ -1649,20 +1777,21 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
 
 
 
-               // If the tile to our diagonal is a floor tile, then we need to provide a corner piece to its surrounding walls
-               if (ground[yi-1][xi-1] == 1 && !drewLeft) {
+               // If the tile to our diagonal is a floor tile, then we need to
+               // provide a corner piece to its surrounding walls
+               if (IsGround(xi - 1, yi - 1) && !drewLeft) {
                   // Render top-left corner
                   locale->wallTexture_LCorner.Render(&r);
                }
-               if (ground[yi-1][xi+1] == 1 && !drewRight) {
+               if (IsGround(xi + 1, yi - 1) && !drewRight) {
                   // Render top-right corner
                   locale->wallTexture_RCorner.Render(&r);
                }
-               if (ground[yi+1][xi+1] == 1 && !drewRight) {
+               if (IsGround(xi + 1, yi + 1) && !drewRight) {
                   // Render bottom-right corner
                   locale->wallTexture_REdge.Render(&r);
                }
-               if (ground[yi+1][xi-1] == 1 && !drewLeft) {
+               if (IsGround(xi - 1, yi + 1) && !drewLeft) {
                   // Render bottom-left corner
                   locale->wallTexture_LEdge.Render(&r);
                }
@@ -1678,14 +1807,14 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
 
 
 
-void Level::RenderFloor(int camX, int camY) {
+void Level::RenderFloor() {
    if (!renderTargetsCompiled) { CompileRenderTargets(); }
-   floorRender.Render(-camX, -camY);
+   floorRender.Render(-Camera::x, -Camera::y);
 }
 
 
 
-void Level::RenderWalls(int yO, int yF, int camX, int camY) {
+void Level::RenderWalls(int yO, int yF) {
    // yO is the pixel Y position of our current actor
    // yF, if positive, is the pixel Y position of the next actor
    int tileW = PIXELSPERFEET * 5 * zoom;
@@ -1708,8 +1837,8 @@ void Level::RenderWalls(int yO, int yF, int camX, int camY) {
    };
 
    SDL_Rect drawBox = {
-      -camX,
-      yO - camY,
+      -(int)Camera::x,
+      yO - (int)Camera::y,
       wallRender.GetWidth(),
       yF - yO
    };
@@ -1728,6 +1857,27 @@ void Level::RenderWalls(int yO, int yF, int camX, int camY) {
    //    SDL_RenderFillRect(gRenderer, &r);
    // }
    // SDL_SetRenderTarget(gRenderer, NULL);
+}
+
+
+
+void Level::RenderDoors(int yO, int yF) {
+   int tileW = PIXELSPERFEET * 5 * zoom;
+
+   int yOT = (int) floor(yO/tileW);
+   int yFT = (yF == -1) ? (groundSize - 1) : ((int) floor(yF/tileW));
+
+   if (yF == -1) {
+      yF = groundSize * tileW;
+   }
+
+   yO = yOT * tileW;
+   yF = yFT * tileW;
+
+   for (int i = 0; i < doors.size(); i++) {
+      int y = (int)doors[i]->drawCutoff;
+      if (y >= yO && y <= yF) doors[i]->Render();
+   }
 }
 
 

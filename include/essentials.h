@@ -26,6 +26,10 @@ enum KeyPressSurfaces {
    KEY_PRESS_SURFACE_TOTAL
 };
 
+// Directions
+enum DIRECTION { NORTH, EAST, SOUTH, WEST };
+
+// Level constants
 extern const int SCREEN_WIDTH;
 extern const int SCREEN_HEIGHT;
 extern const int SCREEN_FPS;

@@ -30,6 +30,10 @@ class Collider {
       double xPos;
       double yPos;
 
+      // The point at which, if something's y value is greater than this value,
+      // the other object is "ahead of" (rendered after) this collider
+      int drawCutoff;
+
       // Because the collider's hitbox may not necessary correspond with their origin on screen, we separate the two values.
       SDL_Rect hitBox;
       SDL_Rect drawBox;

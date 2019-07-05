@@ -33,7 +33,7 @@ int Animation::GetFrameHeight() {
 
 
 bool Animation::LoadFromFile(string path, int frames, float duration,
-   int frameW, int frameH) {
+   int frameW, int frameH, bool reversed) {
    // Set the frame count
    frameCount = frames;
 
@@ -77,16 +77,29 @@ bool Animation::LoadFromFile(string path, int frames, float duration,
    this->frameW = frameW;
    this->frameH = frameH;
 
-   int yIter = 0;
+   if (!reversed) {
+      int yIter = 0;
 
-   for (int i = 0; i < frameCount; i++) {
-      if (i * frameW >= mWidth) {
-         ++yIter;
+      for (int i = 0; i < frameCount; i++) {
+         if (i * frameW >= mWidth) {
+            yIter++;
+         }
+         frameClips[i].x = (i * frameW) % mWidth;
+         frameClips[i].y = yIter * frameH;
+         frameClips[i].w = frameW;
+         frameClips[i].h = frameH;
       }
-      frameClips[i].x = i * frameW;
-      frameClips[i].y = yIter;
-      frameClips[i].w = frameW;
-      frameClips[i].h = mHeight;
+   } else {
+      int yIter = ((mHeight > frameH) ? (int)floor(mHeight/frameH) : 0);
+      for (int i = frameCount - 1; i >= 0; i--) {
+         if (i * frameW >= mWidth) {
+            yIter--;
+         }
+         frameClips[i].x = (i * frameW) % mWidth;
+         frameClips[i].y = yIter * frameH;
+         frameClips[i].w = frameW;
+         frameClips[i].h = frameH;
+      }
    }
 
    return true;
@@ -95,7 +108,7 @@ bool Animation::LoadFromFile(string path, int frames, float duration,
 
 
 bool Animation::LoadFromReference(LTexture* ref, int frames, float duration,
-   int frameW, int frameH) {
+   int frameW, int frameH, bool reversed) {
    // Set the frame count
    frameCount = frames;
 
