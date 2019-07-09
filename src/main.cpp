@@ -329,7 +329,12 @@ int main(int argc, char* args[]) {
 				// First, players
 				if (player.queueCollisions) {
 					// Check collisions with other characters, and then walls
-					CheckCollisions(&player, &randomLevel.walls);
+					CheckWallCollisions(&player, &randomLevel.walls);
+					for (int i = 0; i < (&randomLevel.doors)->size(); i++) {
+						CheckDoorCollisions(&player, &randomLevel.doors[i]->part1);
+						CheckDoorCollisions(&player, &randomLevel.doors[i]->door);
+						CheckDoorCollisions(&player, &randomLevel.doors[i]->part2);
+					}
 				}
 
 				// Next, other characters
@@ -360,7 +365,7 @@ int main(int argc, char* args[]) {
 					player.hitBox.y + player.hitBox.h);
 				randomLevel.RenderDoors(currentY,
 					player.hitBox.y + player.hitBox.h);
-					
+
 				currentY = player.hitBox.y + player.hitBox.h;
 
 				player.Render(screenFrame, Camera::x, Camera::y);

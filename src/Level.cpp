@@ -685,6 +685,60 @@ bool Level::DigCorridor(int a, int b) {
       if (!FindPath(a, b, asecondary)) return false;
    }
 
+   // Now we check both rooms to make sure we didn't create a fake entrance
+   // which can only happen if either room already has one or more connections
+   // First, examine room A
+   if (rooms[a].connections > 1) {
+      for (int cy = ay; cy < ay + ah; cy++) {
+         if (!IsWall(ax - 1, cy)) {
+            if (!IsGround(ax - 2, cy)) ground[cy][ax - 1] = 2;
+         }
+
+         if (!IsWall(ax + aw, cy)) {
+            if (!IsGround(ax + aw + 1, cy)) ground[cy][ax + aw] = 2;
+         }
+      }
+
+      for (int cx = ax; cx < ax + aw; cx++) {
+         if (!IsWall(cx, ay - 1)) {
+            if (!IsGround(cx, ay - 2)) ground[ay - 1][cx] = 2;
+         }
+
+         if (!IsWall(cx, ay + ah)) {
+            if (!IsGround(cx, ay + ah + 1)) ground[ay + ah][cx] = 2;
+         }
+      }
+   }
+
+   // Next, room B
+   if (rooms[b].connections > 1) {
+      for (int cy = by; cy < by + bh; cy++) {
+         if (!IsWall(bx - 1, cy)) {
+            if (!IsGround(bx - 2, cy)) {
+               ground[cy][bx - 1] = 2;
+               printf("\nping: %2i, %2i, room: %i", cy, bx - 1, b);
+            }
+         }
+
+         if (!IsWall(bx + bw, cy)) {
+            if (!IsGround(bx + bw + 1, cy)) {
+               ground[cy][bx + bw] = 2;
+               printf("\nping: %2i, %2i, room: %i", cy, bx + bw, b);
+            }
+         }
+      }
+
+      for (int cx = bx; cx < bx + bw; cx++) {
+         if (!IsWall(cx, by - 1)) {
+            if (!IsGround(cx, by - 2)) ground[by - 1][cx] = 2;
+         }
+
+         if (!IsWall(cx, by + bh)) {
+            if (!IsGround(cx, by + bh + 1)) ground[by + bh][cx] = 2;
+         }
+      }
+   }
+
    // We got a path, time to dig it with brute force
    for (int cY = 0; cY < groundSize; cY++) {
       for (int cX = 0; cX < groundSize; cX++) {
@@ -1214,7 +1268,7 @@ void Level::FinalizeWalls() {
 
                int y = (cY * blockSize);
                int h = blockSize;
-               if (ground[cY - 1][cX] == 1) {
+               if (IsGround(cX, cY - 1)) {
                   y += blockSize / 2;
                   h = blockSize / 2;
                }
@@ -1846,17 +1900,25 @@ void Level::RenderWalls(int yO, int yF) {
    wallRender.Render(&drawBox, &wallChunk);
 
    // Paint collided walls
-   // for (auto i=walls.begin(); i != walls.end(); i++) {
-   //    int x = (i->second.hitBox.x) + 5;
-   //    int y = (i->second.hitBox.y) + 5;
-   //    int w = (i->second.hitBox.w) - 10;
-   //    int h = (i->second.hitBox.h) - 10;
-   //
-   //    SDL_Rect r = {x, y, w, h};
-   //    SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
-   //    SDL_RenderFillRect(gRenderer, &r);
-   // }
-   // SDL_SetRenderTarget(gRenderer, NULL);
+   SDL_SetRenderDrawColor(gRenderer, 255, 0, 0, 63);
+   LTexture colliderDraw;
+   colliderDraw.CreateBlank(wallRender.mWidth, wallRender.mHeight);
+   SDL_SetRenderTarget(gRenderer, colliderDraw.mTexture);
+   for (auto i=walls.begin(); i != walls.end(); i++) {
+      int x = (i->second.hitBox.x) + 5;
+      int y = (i->second.hitBox.y) + 5;
+      int w = (i->second.hitBox.w) - 10;
+      int h = (i->second.hitBox.h) - 10;
+
+      SDL_Rect r = {x, y, w, h};
+      SDL_RenderFillRect(gRenderer, &r);
+   }
+   SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
+   SDL_Rect db = {0, 0, wallRender.mWidth, wallRender.mHeight};
+   colliderDraw.Render(&db);
+
+   SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+   SDL_SetRenderTarget(gRenderer, NULL);
 }
 
 

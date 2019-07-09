@@ -216,6 +216,31 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
          }
          break;
    }
+
+   part1.hitBox.x = part1.hitBox.x * GZOOM;
+   part1.hitBox.y = part1.hitBox.y * GZOOM;
+   part1.hitBox.w = part1.hitBox.w * GZOOM;
+   part1.hitBox.h = part1.hitBox.h * GZOOM;
+   part2.hitBox.x = part2.hitBox.x * GZOOM;
+   part2.hitBox.y = part2.hitBox.y * GZOOM;
+   part2.hitBox.w = part2.hitBox.w * GZOOM;
+   part2.hitBox.h = part2.hitBox.h * GZOOM;
+   door.hitBox.x = door.hitBox.x * GZOOM;
+   door.hitBox.y = door.hitBox.y * GZOOM;
+   door.hitBox.w = door.hitBox.w * GZOOM;
+   door.hitBox.h = door.hitBox.h * GZOOM;
+   
+   part1.hitBox.x += (gridX * tileW);
+   part1.hitBox.y += (gridY * tileW);
+   part2.hitBox.x += (gridX * tileW);
+   part2.hitBox.y += (gridY * tileW);
+   door.hitBox.x += (gridX * tileW);
+   door.hitBox.y += (gridY * tileW);
+
+   // TODO: Remove this after testing
+   // Temporarily setting all doors to open, as far as colliders are concerned
+   door.hitBox.w = 0;
+   door.hitBox.h = 0;
 }
 
 
