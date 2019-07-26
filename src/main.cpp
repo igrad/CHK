@@ -218,14 +218,20 @@ int main(int argc, char* args[]) {
 			LTimer capTimer;
 
 			// Test button
-			vector<ClickRegion> buttons;
+			// Create a templated vector in main that stores all of the clickable
+		   // objects loaded up, and each tick, iterate through that list to find
+			// which ones are currently on-screen, and then check if they are
+			// being hovered over or are being clicked on.
+			vector<ClickRegion> clickables;
 
 			SDL_Rect r = {0, 0, 200, 50};
 			SDL_Color c = {.r=255, .g=255, .b=255};
-			ClickButton btn("test-button", "Test String", FONT_TYPED, &c, &r,
+			ClickButton btn("Test String", FONT_TYPED, &c, &r,
 			CR_ABSOLUTE, "media\\images\\hello_world.png");
+			btn.SetFunction(LEFTCLICK, [](int a, int b, int c){printf("\nI've been left-clicked!");},
+			0, 0, 0);
 
-			buttons.push_back(btn);
+			clickables.push_back(btn);
 
 			// Start counting frames per second
 			int countedFrames = 0;
@@ -257,28 +263,28 @@ int main(int argc, char* args[]) {
 
 						// Iterate through all buttons and find if the mouse is currently
 						// hovering over them
-						for (int i = buttons.size() - 1; i >= 0; i--) {
+						for (int i = clickables.size() - 1; i >= 0; i--) {
 							// If the button isn't active, we don't need to bother
-							if (!buttons[i].active) continue;
-							if (PointInRect(mx, my, buttons[i].rect)) {
+							if (!clickables[i].clickActive) continue;
+							if (PointInRect(mx, my, &clickables[i].clickRect)) {
 								switch (e.type) {
 									case SDL_MOUSEBUTTONDOWN:
 										switch (e.button.button) {
 											case SDL_BUTTON_LEFT:
-												buttons[i].OnLeftClick();
+												clickables[i].OnLeftClick();
 												break;
 											case SDL_BUTTON_RIGHT:
-												buttons[i].OnRightClick();
+												clickables[i].OnRightClick();
 												break;
 										}
 										break;
 									case SDL_MOUSEWHEEL:
 										if (e.wheel.y > 0) {
 											// User scrolled up
-											buttons[i].OnScrollUp();
+											clickables[i].OnScrollUp();
 										} else if (e.wheel.y < 0) {
 											// User scrolled down
-											buttons[i].OnScrollDown();
+											clickables[i].OnScrollDown();
 										}
 										break;
 								}

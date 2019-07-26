@@ -1290,9 +1290,14 @@ void Level::GenerateDoors() {
    // Lambda function to generate a percentile chance
    auto roll = [](){ return (rand() % 10) > 1; };
 
-   // Coords array is 5 components:
-   // Y, X, width of wall opening, direction toward center of room, and hand
-   int pcoords[100][5];
+   // Coords array is 6 components:
+   // 0: Y
+   // 1: X
+   // 2: width of wall opening
+   // 3: direction toward center of room
+   // 4: room #
+   // 5: hand
+   int pcoords[100][6];
    int pCtr = 0;
 
    // First, we look through each of the rooms to find wall segments that have
@@ -1388,7 +1393,12 @@ void Level::GenerateDoors() {
 
    // We've found our potential points and their widths, time to root out the
    // ones we dont want
-   int coords[100][4]; // Y, X, direction toward center of room, hand
+   // 0: Y
+   // 1: X
+   // 2: direction toward center of room
+   // 3: room #
+   // 4: hand
+   int coords[100][5]; // Y, X, direction toward center of room, room, and hand
    int ctr = 0;
    for (int i = 0; i < pCtr; i++) {
       if (pcoords[i][2] == locale->doorSize) {
@@ -1411,6 +1421,7 @@ void Level::GenerateDoors() {
             coords[ctr][1] = pcoords[i][1];
             coords[ctr][2] = pcoords[i][3];
             coords[ctr][3] = pcoords[i][4];
+            coords[ctr][4] = pcoords[i][5];
             ctr++;
          }
       }
@@ -1422,9 +1433,11 @@ void Level::GenerateDoors() {
       int y = coords[i][0];
       int x = coords[i][1];
       int dir = coords[i][2];
-      bool hand = coords[i][3]; // false: left-handed, true: right-handed
+      int room = coords[i][3];
+      bool hand = coords[i][4]; // false: left-handed, true: right-handed
 
-      doors.push_back(new Door(x, y, locale->doorSize, 1, dir, hand, locale));
+      doors.push_back(new Door(x, y, locale->doorSize, 1, dir, hand, room,
+         locale));
       printf("\nCreated door at %i, %i", x, y);
       ground[y][x] = 16; // Door tiles use 16
       // We reserve a floor tile to make sure the door can be opened

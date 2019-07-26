@@ -45,12 +45,12 @@ public:
    LTexture wallTexture_LCorner;
    LTexture wallTexture_RCorner;
 
-   double doorNSChangeRate_slow;
-   double doorNSChangeRate_fast;
-   double doorEChangeRate_slow;
-   double doorEChangeRate_fast;
-   double doorWChangeRate_slow;
-   double doorWChangeRate_fast;
+   float doorNSChangeRate_slow;
+   float doorNSChangeRate_fast;
+   float doorEChangeRate_slow;
+   float doorEChangeRate_fast;
+   float doorWChangeRate_slow;
+   float doorWChangeRate_fast;
 
    LTexture doorNS_right_inside_open;
    LTexture doorNS_right_inside_closed;

@@ -1,13 +1,14 @@
 #include "..\include\Door.h"
 
 Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
-   Locale* locale): Actor(6, 4) {
+   int room, Locale* locale): Actor(6, 4) {
    char buf[6];
    snprintf(buf, 6, "%2i%2i", gridX, gridY);
    id = buf;
 
    this->direction = direction;
    this->hand = hand;
+   attachedRoom = room;
    this->locale = locale;
 
    int tileW = PIXELSPERFEET * 5 * GZOOM;
@@ -33,7 +34,7 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
 
    // Load the art assets and collision rects for this door
    switch (direction) {
-      case 0:
+      case NORTH:
          if (hand) { // Right-handed door
             // Load the colliders
             part1.hitBox = locale->doorNS_right_inside_part1Clip;
@@ -41,29 +42,29 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             door.hitBox = locale->doorNS_right_inside_doorClip;
 
             // Door textures
-            LoadTexture(0, &locale->doorNS_right_inside_open);
-            LoadTexture(1, &locale->doorNS_right_inside_closed);
+            LoadTexture(0, &locale->doorNS_right_inside_closed);
+            LoadTexture(1, &locale->doorNS_right_inside_open);
 
             // Door animations
             // Open slowly
             LoadAnimation(0, &locale->doorNS_right_inside_open_anim,
-               8, 1.5, drawW, drawH);
+               8, locale->doorNSChangeRate_slow, drawW, drawH);
             // Open fast
             LoadAnimation(1, &locale->doorNS_right_inside_open_anim,
-               8, 0.5, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
             // Close slowly
             LoadAnimation(2, &locale->doorNS_right_inside_open_anim,
-               8, 1.5, drawW, drawH, true);
+               8, locale->doorNSChangeRate_slow, drawW, drawH, true);
                // Reversed animation because it's closing
             // Close fast
             LoadAnimation(3, &locale->doorNS_right_inside_open_anim,
-               8, 0.5, drawW, drawH, true);
+               8, locale->doorNSChangeRate_fast, drawW, drawH, true);
             // Break outward
             LoadAnimation(4, &locale->doorNS_right_inside_break_out_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
             // Break inward
             LoadAnimation(5, &locale->doorNS_right_inside_break_in_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
          } else { // Left-handed door
             part1.hitBox = locale->doorNS_left_inside_part1Clip;
             part2.hitBox = locale->doorNS_left_inside_part2Clip;
@@ -73,20 +74,20 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             LoadTexture(1, &locale->doorNS_left_inside_closed);
 
             LoadAnimation(0, &locale->doorNS_left_inside_open_anim,
-               8, 1.5, drawW, drawH);
+               8, locale->doorNSChangeRate_slow, drawW, drawH);
             LoadAnimation(1, &locale->doorNS_left_inside_open_anim,
-               8, 0.5, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
             LoadAnimation(2, &locale->doorNS_left_inside_open_anim,
-               8, 1.5, drawW, drawH, true);
+               8, locale->doorNSChangeRate_slow, drawW, drawH, true);
             LoadAnimation(3, &locale->doorNS_left_inside_open_anim,
-               8, 0.5, drawW, drawH, true);
+               8, locale->doorNSChangeRate_fast, drawW, drawH, true);
             LoadAnimation(4, &locale->doorNS_left_inside_break_out_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
             LoadAnimation(5, &locale->doorNS_left_inside_break_in_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
          }
          break;
-      case 1:
+      case EAST:
          if (hand) {
             part1.hitBox = locale->doorE_right_part1Clip;
             part2.hitBox = locale->doorE_right_part2Clip;
@@ -96,17 +97,17 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             LoadTexture(1, &locale->doorE_right_closed);
 
             LoadAnimation(0, &locale->doorE_right_open_anim,
-               8, 1.5, drawW, drawH);
+               8, locale->doorEChangeRate_slow, drawW, drawH);
             LoadAnimation(1, &locale->doorE_right_open_anim,
-               8, 0.5, drawW, drawH);
+               8, locale->doorEChangeRate_fast, drawW, drawH);
             LoadAnimation(2, &locale->doorE_right_open_anim,
-               8, 1.5, drawW, drawH, true);
+               8, locale->doorEChangeRate_slow, drawW, drawH, true);
             LoadAnimation(3, &locale->doorE_right_open_anim,
-               8, 0.5, drawW, drawH, true);
+               8, locale->doorEChangeRate_fast, drawW, drawH, true);
             LoadAnimation(4, &locale->doorE_right_open_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorEChangeRate_fast, drawW, drawH);
             LoadAnimation(5, &locale->doorE_right_open_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorEChangeRate_fast, drawW, drawH);
          } else {
             part1.hitBox = locale->doorE_left_part1Clip;
             part2.hitBox = locale->doorE_left_part2Clip;
@@ -116,20 +117,20 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             LoadTexture(1, &locale->doorE_left_closed);
 
             LoadAnimation(0, &locale->doorE_left_open_anim,
-               8, 1.5, drawW, drawH);
+               8, locale->doorEChangeRate_slow, drawW, drawH);
             LoadAnimation(1, &locale->doorE_left_open_anim,
-               8, 0.5, drawW, drawH);
+               8, locale->doorEChangeRate_fast, drawW, drawH);
             LoadAnimation(2, &locale->doorE_left_open_anim,
-               8, 1.5, drawW, drawH, true);
+               8, locale->doorEChangeRate_slow, drawW, drawH, true);
             LoadAnimation(3, &locale->doorE_left_open_anim,
-               8, 0.5, drawW, drawH, true);
+               8, locale->doorEChangeRate_fast, drawW, drawH, true);
             LoadAnimation(4, &locale->doorE_left_open_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorEChangeRate_fast, drawW, drawH);
             LoadAnimation(5, &locale->doorE_left_open_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorEChangeRate_fast, drawW, drawH);
          }
          break;
-      case 2:
+      case SOUTH:
          if (hand) {
             part1.hitBox = locale->doorNS_right_outside_part1Clip;
             part2.hitBox = locale->doorNS_right_outside_part2Clip;
@@ -139,17 +140,17 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             LoadTexture(1, &locale->doorNS_right_outside_closed);
 
             LoadAnimation(0, &locale->doorNS_right_outside_open_anim,
-               8, 1.5, drawW, drawH);
+               8, locale->doorNSChangeRate_slow, drawW, drawH);
             LoadAnimation(1, &locale->doorNS_right_outside_open_anim,
-               8, 0.5, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
             LoadAnimation(2, &locale->doorNS_right_outside_open_anim,
-               8, 1.5, drawW, drawH, true);
+               8, locale->doorNSChangeRate_slow, drawW, drawH, true);
             LoadAnimation(3, &locale->doorNS_right_outside_open_anim,
-               8, 0.5, drawW, drawH, true);
+               8, locale->doorNSChangeRate_fast, drawW, drawH, true);
             LoadAnimation(4, &locale->doorNS_right_outside_break_out_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
             LoadAnimation(5, &locale->doorNS_right_outside_break_in_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
          } else {
             part1.hitBox = locale->doorNS_left_outside_part1Clip;
             part2.hitBox = locale->doorNS_left_outside_part2Clip;
@@ -159,20 +160,20 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             LoadTexture(1, &locale->doorNS_left_outside_closed);
 
             LoadAnimation(0, &locale->doorNS_left_outside_open_anim,
-               8, 1.5, drawW, drawH);
+               8, locale->doorNSChangeRate_slow, drawW, drawH);
             LoadAnimation(1, &locale->doorNS_left_outside_open_anim,
-               8, 0.5, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
             LoadAnimation(2, &locale->doorNS_left_outside_open_anim,
-               8, 1.5, drawW, drawH, true);
+               8, locale->doorNSChangeRate_slow, drawW, drawH, true);
             LoadAnimation(3, &locale->doorNS_left_outside_open_anim,
-               8, 0.5, drawW, drawH, true);
+               8, locale->doorNSChangeRate_fast, drawW, drawH, true);
             LoadAnimation(4, &locale->doorNS_left_outside_break_out_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
             LoadAnimation(5, &locale->doorNS_left_outside_break_in_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, drawW, drawH);
          }
          break;
-      case 3:
+      case WEST:
          if (hand) {
             part1.hitBox = locale->doorW_right_part1Clip;
             part2.hitBox = locale->doorW_right_part2Clip;
@@ -182,17 +183,17 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             LoadTexture(1, &locale->doorW_right_closed);
 
             LoadAnimation(0, &locale->doorW_right_open_anim,
-               8, 1.5, drawW, drawH);
+               8, locale->doorWChangeRate_slow, drawW, drawH);
             LoadAnimation(1, &locale->doorW_right_open_anim,
-               8, 0.5, drawW, drawH);
+               8, locale->doorWChangeRate_fast, drawW, drawH);
             LoadAnimation(2, &locale->doorW_right_open_anim,
-               8, 1.5, drawW, drawH, true);
+               8, locale->doorWChangeRate_slow, drawW, drawH, true);
             LoadAnimation(3, &locale->doorW_right_open_anim,
-               8, 0.5, drawW, drawH, true);
+               8, locale->doorWChangeRate_fast, drawW, drawH, true);
             LoadAnimation(4, &locale->doorW_right_open_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorWChangeRate_fast, drawW, drawH);
             LoadAnimation(5, &locale->doorW_right_open_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorWChangeRate_fast, drawW, drawH);
          } else {
             part1.hitBox = locale->doorW_left_part1Clip;
             part2.hitBox = locale->doorW_left_part2Clip;
@@ -202,17 +203,17 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             LoadTexture(1, &locale->doorW_left_closed);
 
             LoadAnimation(0, &locale->doorW_left_open_anim,
-               8, 1.5, drawW, drawH);
+               8, locale->doorWChangeRate_slow, drawW, drawH);
             LoadAnimation(1, &locale->doorW_left_open_anim,
-               8, 0.5, drawW, drawH);
+               8, locale->doorWChangeRate_fast, drawW, drawH);
             LoadAnimation(2, &locale->doorW_left_open_anim,
-               8, 1.5, drawW, drawH, true);
+               8, locale->doorWChangeRate_slow, drawW, drawH, true);
             LoadAnimation(3, &locale->doorW_left_open_anim,
-               8, 0.5, drawW, drawH, true);
+               8, locale->doorWChangeRate_fast, drawW, drawH, true);
             LoadAnimation(4, &locale->doorW_left_open_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorWChangeRate_fast, drawW, drawH);
             LoadAnimation(5, &locale->doorW_left_open_anim,
-               8, 1.0, drawW, drawH);
+               8, locale->doorWChangeRate_fast, drawW, drawH);
          }
          break;
    }
@@ -229,7 +230,7 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    door.hitBox.y = door.hitBox.y * GZOOM;
    door.hitBox.w = door.hitBox.w * GZOOM;
    door.hitBox.h = door.hitBox.h * GZOOM;
-   
+
    part1.hitBox.x += (gridX * tileW);
    part1.hitBox.y += (gridY * tileW);
    part2.hitBox.x += (gridX * tileW);
@@ -237,10 +238,13 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    door.hitBox.x += (gridX * tileW);
    door.hitBox.y += (gridY * tileW);
 
-   // TODO: Remove this after testing
-   // Temporarily setting all doors to open, as far as colliders are concerned
-   door.hitBox.w = 0;
-   door.hitBox.h = 0;
+   // Set the mouseHandler parameters
+   clickRect = {
+      gridX * tileW,
+      gridY * tileW,
+      tileW,
+      tileW
+   };
 }
 
 
@@ -309,6 +313,12 @@ void Door::Close(bool fast) {
 
 
 
+void Door::Break() {
+   // Do the breaking thing
+}
+
+
+
 void Door::Lock() {
    if (!isLocked) {
       isLocked = true;
@@ -321,6 +331,35 @@ void Door::Unlock() {
    if (isLocked) {
       isLocked = false;
    }
+}
+
+
+
+void Door::Examine() {
+   // Describe if the door is broken, unlocked, has a lock, etc.
+}
+
+
+
+void Door::CreateDropMenuOptions() {
+   bool canBreak = !isOpen && !isBroken;
+
+   string* btns = new string[5];
+   string op = isOpen ? "Open " : "Close ";
+
+   int ctr = 2;
+   btns[0] = op + "slowly";
+   btns[1] = op + "quickly";
+   if (canBreak) {
+      btns[ctr] = "Break";
+      ctr++;
+   }
+   if (hasLock) {
+      if (isLocked) btns[ctr] = "Unlock";
+      else btns[ctr] = "Lock";
+      ctr++;
+   }
+   btns[ctr] = "Examine";
 }
 
 

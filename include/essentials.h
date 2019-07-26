@@ -5,6 +5,8 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <functional>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -49,6 +51,11 @@ extern TTF_Font* FONT_TYPED;
 extern TTF_Font* FONT_TYPED_BOLD;
 extern TTF_Font* FONT_TYPED_ITALIC;
 
+// Common font colors
+extern SDL_Color FONTC_WHITE;
+extern SDL_Color FONTC_BLACK;
+extern SDL_Color FONTC_OFFWHITE;
+extern SDL_Color FONTC_OFFBLACK;
 
 
 // The window we'll be rendering to

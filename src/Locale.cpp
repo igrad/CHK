@@ -131,12 +131,12 @@ void Locale::InitDungeon() {
    doorNS_left_inside_part1Clip = {0, 20, 9, 23};
    doorNS_left_inside_part2Clip = {32, 20, 9, 23};
    doorNS_left_inside_doorClip = {10, 20, 22, 23};
-   doorNS_right_outside_part1Clip = {0, 20, 9, 23};
-   doorNS_right_outside_part2Clip = {32, 20, 9, 23};
-   doorNS_right_outside_doorClip = {10, 20, 22, 23};
-   doorNS_left_outside_part1Clip = {0, 20, 9, 23};
-   doorNS_left_outside_part2Clip = {32, 20, 9, 23};
-   doorNS_left_outside_doorClip = {10, 20, 22, 23};
+   doorNS_right_outside_part1Clip = {0, 20, 9, 20};
+   doorNS_right_outside_part2Clip = {32, 20, 9, 20};
+   doorNS_right_outside_doorClip = {10, 20, 22, 20};
+   doorNS_left_outside_part1Clip = {0, 20, 9, 20};
+   doorNS_left_outside_part2Clip = {32, 20, 9, 20};
+   doorNS_left_outside_doorClip = {10, 20, 22, 20};
    // doorE_left_part1Clip = {};
    // doorE_left_part2Clip;
    // doorE_left_doorClip;
