@@ -24,10 +24,12 @@ class LTexture {
       bool LoadFromReference(LTexture* ref);
 
       // Load in text
-      bool LoadFromRenderedText(string textureText, SDL_Color* textColor, TTF_Font* font);
+      bool LoadFromRenderedText(string textureText, SDL_Color* textColor,
+         TTF_Font* font, int* rw = NULL, int* rh = NULL);
 
       // Creates a blank image that we can use as a renderer
-      bool CreateBlank(int width, int height, SDL_TextureAccess access = SDL_TEXTUREACCESS_TARGET);
+      bool CreateBlank(int width, int height,
+         SDL_TextureAccess access = SDL_TEXTUREACCESS_TARGET);
 
       // Renders texture at given point
       void Render(SDL_Rect* drawBox, SDL_Rect* clip = NULL);
@@ -39,6 +41,8 @@ class LTexture {
 
       // Deallocates texture
       void Free();
+
+      bool loaded;
 
       // The actual hardware texture
       SDL_Texture* mTexture;

@@ -4,6 +4,7 @@
 #include "essentials.h"
 #include "Camera.h"
 #include "LTexture.h"
+#include "UITheme.h"
 
 enum CLICKREGION_TYPE {
    CR_ABSOLUTE,
@@ -63,14 +64,18 @@ public:
 class ClickButton: public ClickRegion {
 public:
    ClickButton();
-   ClickButton(string textStr, TTF_Font* fontStyle,
-      SDL_Color* fontColor, SDL_Rect* area, CLICKREGION_TYPE ct,
+   ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
+      SDL_Color* fontColor, int padding, SDL_Rect* area, CLICKREGION_TYPE ct,
       string bgPath);
+   ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
+      SDL_Color* fontColor, int padding, SDL_Rect* area, CLICKREGION_TYPE ct,
+      LTexture* bg);
 
-   void Render();
+   void Render(SDL_Rect* r = NULL);
 
    string path;
    string text;
+   int size;
    LTexture* texture;
    TTF_Font* font;
 };
@@ -79,13 +84,30 @@ public:
 
 class DropMenu {
 public:
+   DropMenu(int x, int y, int cols, int rows, CLICKREGION_TYPE ct,
+      DropMenuUI* UIScheme);
    DropMenu(int x, int y, int cols, int rows, int btnW, int btnH, int margin,
-      int separation, TTF_Font* fontStyle, SDL_Color* fontColor,
-      CLICKREGION_TYPE ct, string bgPath, string btnBgPath);
+      int separation, int fontSize, TTF_Font* fontStyle, SDL_Color* fontColor,
+      int btnPadding, CLICKREGION_TYPE ct, LTexture* bg, LTexture* btnbg);
 
-   void AddButton(string textString);
+   template <typename Proc>
+   void AddButton(string textString, MOUSEEVENT m, Proc p,
+      int a1 = -1, int a2 =-1, int a3 = -1) {
+      SDL_Rect r = {
+         btnRect.x,
+         btnRect.y + (int)(buttons.size() * (separation + btnRect.h)),
+         btnRect.w,
+         btnRect.h
+      };
 
-   void Open(int x, int y);
+      buttons.push_back(ClickButton(textString, fontSize, fontStyle,
+         fontColor, btnPadding, &r, ct, btnbg));
+
+      buttons[buttons.size() - 1].SetFunction(m, p, a1, a2, a3);
+   }
+   void ClearButtons();
+
+   void Open(int x = 0, int y = 0);
    void Close();
 
    void Render();
@@ -96,13 +118,18 @@ public:
    SDL_Rect btnRect;
    int margin;
    int separation;
+   int fontSize;
+   int btnPadding;
    TTF_Font* fontStyle;
    SDL_Color* fontColor;
-   string bgPath;
-   string btnBgPath;
+
+   LTexture* background;
+   LTexture* btnbg;
 
    vector<ClickButton> buttons;
    int optCount;
+
+   bool rendering;
 };
 
 #endif

@@ -245,6 +245,8 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
       tileW,
       tileW
    };
+
+   dropmenu = new DropMenu(0, 0, 1, 5, CR_RELATIVE, &UI.doorDM);
 }
 
 
@@ -272,7 +274,16 @@ void Door::AttemptUnlock(string key) {
 
 
 
+void Door::AttemptOpen(bool fast) {
+   //if (isLocked) return; // Inform the player that the door is locked!
+   //else
+   Log("Attempting to open");
+   this->Open(fast);
+}
+
+
 void Door::Open(bool fast) {
+   Log("Opening!");
    if (!isOpen) {
       isOpen = true;
       isLocked = false;
@@ -341,25 +352,47 @@ void Door::Examine() {
 
 
 
-void Door::CreateDropMenuOptions() {
+void Door::OpenDropMenu() {
+   Log("Opening door drop menu");
+
+   dropmenu->rendering = true;
+
+   dropmenu->ClearButtons();
    bool canBreak = !isOpen && !isBroken;
 
    string* btns = new string[5];
    string op = isOpen ? "Open " : "Close ";
 
-   int ctr = 2;
-   btns[0] = op + "slowly";
-   btns[1] = op + "quickly";
+   dropmenu->AddButton(op + "slowly", LEFTCLICK, [this](int a, int b, int c){
+      this->AttemptOpen(false);
+   });
+
+   dropmenu->AddButton(op + "fast", LEFTCLICK, [this](int a, int b, int c){
+      this->AttemptOpen(true);
+   });
+
    if (canBreak) {
-      btns[ctr] = "Break";
-      ctr++;
+      dropmenu->AddButton("Break down", LEFTCLICK, [this](int a, int b, int c){
+         //this->AttemptBreak(true);
+      });
    }
    if (hasLock) {
-      if (isLocked) btns[ctr] = "Unlock";
-      else btns[ctr] = "Lock";
-      ctr++;
+      if (isLocked) {
+         dropmenu->AddButton("Unlock", LEFTCLICK,
+         [this](int a, int b, int c){
+            // We technically need to show the unlock attempt UI here
+            //this->AttemptUnlock(true);
+         });
+      }
+      else {
+         dropmenu->AddButton("Lock", LEFTCLICK, [this](int a, int b, int c){
+            //this->Lock(true);
+         });
+      }
    }
-   btns[ctr] = "Examine";
+   dropmenu->AddButton("Examine", LEFTCLICK, [this](int a, int b, int c){
+      // this->AttemptOpen(true);
+   });
 }
 
 

@@ -1651,6 +1651,12 @@ void Level::GenerateLevel() {
 
    // Generate doors
    GenerateDoors();
+   for (auto d : doors) {
+      d->SetFunction(RIGHTCLICK, [d](int a, int b, int c) {
+         d->OpenDropMenu();
+      });
+   }
+
    // Give large rooms a chance to have big pits in them (no more than 60% of the room). This chance should be tied to the locale of the level
 
    printf("\nFinal tile count: %i", roomTileCount);

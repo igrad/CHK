@@ -23,6 +23,8 @@
 
 #include "..\include\Door.h"
 
+#include "..\include\UITheme.h"
+
 // Screen dimension constants
 const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 960;
@@ -44,6 +46,9 @@ const int SCREEN_TICKS_PER_FRAME = 1000/SCREEN_FPS;
 const float PIXELSPERFEET = 8.0; // This is preliminary and only used for testing. Once we have a proper camera class up and running, the zoom attribute of the camera will determine this value
 
 
+
+// UI
+UITheme UI;
 
 // Fonts
 TTF_Font* FONT_SCROLL = NULL;
@@ -157,8 +162,22 @@ bool LoadMedia() {
 		8, 1.2, 20, 40);
 	player.SetActiveAnim(ANIM_IDLE_IV);
 
-	// Initialize all locales
+	// TODO: Initialize locale (this should eventually be moved to level loading)
 	dungeon.Initialize("dungeon");
+
+	Log("Loading media for UI");
+	// Load UI themes
+	UI.doorDM.bg->LoadFromFile("media\\images\\dmbg.png");
+	UI.doorDM.btnbg->LoadFromFile("media\\images\\dmbtnbg.png");
+	UI.doorDM.fontSize = 20;
+	UI.doorDM.fontStyle = FONT_TYPED;
+	UI.doorDM.fontColor = &FONTC_OFFWHITE;
+	UI.doorDM.margin = 4;
+	UI.doorDM.separation = 4;
+	UI.doorDM.btnW = 120;
+	UI.doorDM.btnH = 20;
+
+	Log("Media loaded");
 
 	return success;
 }
@@ -222,16 +241,16 @@ int main(int argc, char* args[]) {
 		   // objects loaded up, and each tick, iterate through that list to find
 			// which ones are currently on-screen, and then check if they are
 			// being hovered over or are being clicked on.
-			vector<ClickRegion> clickables;
+			vector<ClickRegion*> clickables;
 
-			SDL_Rect r = {0, 0, 200, 50};
-			SDL_Color c = {.r=255, .g=255, .b=255};
-			ClickButton btn("Test String", FONT_TYPED, &c, &r,
-			CR_ABSOLUTE, "media\\images\\hello_world.png");
-			btn.SetFunction(LEFTCLICK, [](int a, int b, int c){printf("\nI've been left-clicked!");},
-			0, 0, 0);
-
-			clickables.push_back(btn);
+			// Compile objects into clickables vector that are sensitive to
+			// mouse events
+			for (auto d : randomLevel.doors) {
+				clickables.push_back(d);
+				printf("\nclickRect: %i %i %i %i", d->clickRect.x,
+					d->clickRect.y, d->clickRect.w, d->clickRect.h);
+			}
+			printf("\nClickables size: %i", clickables.size());
 
 			// Start counting frames per second
 			int countedFrames = 0;
@@ -256,35 +275,31 @@ int main(int argc, char* args[]) {
 						SDL_PumpEvents();
 						SDL_GetMouseState(&mx, &my);
 
-						// Mouse position logging
-						// char outstr[50];
-						// snprintf(outstr, 50, "Mouse position: %i, %i", mx, my);
-						// Log(outstr);
-
-						// Iterate through all buttons and find if the mouse is currently
-						// hovering over them
+						// Iterate through all buttons and find if the mouse is
+						// currently hovering over them
 						for (int i = clickables.size() - 1; i >= 0; i--) {
 							// If the button isn't active, we don't need to bother
-							if (!clickables[i].clickActive) continue;
-							if (PointInRect(mx, my, &clickables[i].clickRect)) {
+							if (!clickables[i]->clickActive) continue;
+							if (PointInRect(mx + Camera::x, my + Camera::y,
+								&clickables[i]->clickRect)) {
 								switch (e.type) {
 									case SDL_MOUSEBUTTONDOWN:
 										switch (e.button.button) {
 											case SDL_BUTTON_LEFT:
-												clickables[i].OnLeftClick();
+												clickables[i]->OnLeftClick();
 												break;
 											case SDL_BUTTON_RIGHT:
-												clickables[i].OnRightClick();
+												clickables[i]->OnRightClick();
 												break;
 										}
 										break;
 									case SDL_MOUSEWHEEL:
 										if (e.wheel.y > 0) {
 											// User scrolled up
-											clickables[i].OnScrollUp();
+											clickables[i]->OnScrollUp();
 										} else if (e.wheel.y < 0) {
 											// User scrolled down
-											clickables[i].OnScrollDown();
+											clickables[i]->OnScrollDown();
 										}
 										break;
 								}
@@ -358,9 +373,13 @@ int main(int argc, char* args[]) {
 					Camera::SetFocusOnActor(&player);
 				}
 
-				// Iterate through the list of actors here, but until we have more than one actor, we can do this without iterations
-				// We need a vector of actors, sorted by their Y position. If two of them tie, it doesn't matter
-				// We iterate through this vector, and get the Y tile of the current actor so that we can chop up the walls
+				// Iterate through the list of actors here, but until we have more
+				// than one actor, we can do this without iterations
+				// We need a vector of actors, sorted by their Y position. If two
+				// of them tie, it doesn't matter
+				// We iterate through this vector, and get the Y tile of the
+				// current actor so that we can chop up the walls
+
 				//vector sortedActors
 
 				int currentY = 0;
@@ -379,7 +398,10 @@ int main(int argc, char* args[]) {
 				randomLevel.RenderWalls(currentY, -1);
 				randomLevel.RenderDoors(currentY, -1);
 
-				btn.Render();
+				// Render UI
+				for (auto d : randomLevel.doors) {
+					d->dropmenu->Render();
+				}
 
             // Update screen
             SDL_RenderPresent(gRenderer);

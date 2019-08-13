@@ -7,6 +7,7 @@ LTexture::LTexture() {
    mTexture = NULL;
    mWidth = 0;
    mHeight = 0;
+   loaded = false;
 }
 
 
@@ -20,7 +21,7 @@ LTexture::LTexture(string path) {
 
 bool LTexture::LoadFromFile(string path) {
    // Get rid of preexisting texture
-   Free();
+   if (loaded) Free();
 
    // The final texture
    SDL_Texture* newTexture = NULL;
@@ -28,15 +29,18 @@ bool LTexture::LoadFromFile(string path) {
    // Load the image at specified path
    SDL_Surface* loadedSurface = IMG_Load(path.c_str());
    if (loadedSurface == NULL) {
-      printf("Unable to load image %s! SDL_image error: %s\n", path.c_str(), IMG_GetError());
+      printf("\nUnable to load image! SDL_image error: %s",
+      path.c_str(), IMG_GetError());
    } else {
       // Color key the image
-      SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0, 0xFF, 0xFF));
+      SDL_SetColorKey(loadedSurface, SDL_TRUE,
+         SDL_MapRGB(loadedSurface->format, 0, 0xFF, 0xFF));
 
-      // Create texture from surface picels
+      // Create texture from surface pixels
       newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
       if (newTexture == NULL) {
-         printf("Unable to create texture from %s! SDL_Error: %s\n", path.c_str(), SDL_GetError());
+         printf("\nUnable to create texture from %s! SDL_Error: %s",
+         path.c_str(), SDL_GetError());
       } else {
          // Get image dimensions
          mWidth = loadedSurface->w;
@@ -49,6 +53,7 @@ bool LTexture::LoadFromFile(string path) {
 
    // Return success
    mTexture = newTexture;
+   loaded = true;
    return mTexture != NULL;
 }
 
@@ -56,9 +61,11 @@ bool LTexture::LoadFromFile(string path) {
 
 bool LTexture::LoadFromReference(LTexture* ref) {
    // Get rid of preexisting texture
-   Free();
+   if (loaded) Free();
 
    this->mTexture = ref->mTexture;
+
+   loaded = true;
 
    // Return success
    return mTexture != NULL;
@@ -67,8 +74,8 @@ bool LTexture::LoadFromReference(LTexture* ref) {
 
 
 bool LTexture::LoadFromRenderedText(string textureText, SDL_Color* textColor,
-   TTF_Font* font) {
-   Free();
+   TTF_Font* font, int* rw, int* rh) {
+   if (loaded) Free();
 
    SDL_Surface* textSurface = TTF_RenderText_Solid(font, textureText.c_str(),
    *textColor);
@@ -83,11 +90,15 @@ bool LTexture::LoadFromRenderedText(string textureText, SDL_Color* textColor,
          // Get image dimensions
          mWidth = textSurface->w;
          mHeight = textSurface->h;
+
+         TTF_SizeText(font, textureText.c_str(), rw, rh);
       }
 
       // Delete old surface
       SDL_FreeSurface(textSurface);
    }
+
+   loaded = true;
 
    return mTexture != NULL;
 }
@@ -95,8 +106,9 @@ bool LTexture::LoadFromRenderedText(string textureText, SDL_Color* textColor,
 
 
 bool LTexture::CreateBlank(int width, int height, SDL_TextureAccess access) {
-   Free();
-   mTexture = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_RGBA8888, access, width, height);
+   if (loaded) Free();
+   mTexture = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_RGBA8888, access,
+      width, height);
 
    SDL_SetTextureBlendMode(mTexture, SDL_BLENDMODE_BLEND);
 
@@ -106,6 +118,8 @@ bool LTexture::CreateBlank(int width, int height, SDL_TextureAccess access) {
    }
    mWidth = width;
    mHeight = height;
+
+   loaded = true;
 
    return mTexture != NULL;
 }
@@ -139,11 +153,12 @@ int LTexture::GetHeight() {
 
 void LTexture::Free() {
    // Free texture if it exists
-   if (mTexture != NULL) {
+   if (loaded) {
       SDL_DestroyTexture(mTexture);
       mTexture = NULL;
       mWidth = 0;
       mHeight = 0;
+      loaded = false;
    }
 }
 

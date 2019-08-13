@@ -8,6 +8,7 @@
 #include "Decal.h"
 #include "CollisionDetection.h"
 #include "MouseEvents.h"
+#include "UITheme.h"
 
 class Door: public Actor, public ClickRegion {
 public:
@@ -19,6 +20,7 @@ public:
    // CB functions
    void SetLocked(string key);
    void AttemptUnlock(string key);
+   void AttemptOpen(bool fast);
    void Open(bool fast);
    void Close(bool fast);
    void Break();
@@ -26,7 +28,7 @@ public:
    void Unlock();
    void Examine();
 
-   void CreateDropMenuOptions();
+   void OpenDropMenu();
 
    void Render();
 
@@ -53,6 +55,8 @@ public:
    bool isBroken;
    string keyID;
    int difficulty;
+
+   DropMenu* dropmenu;
 };
 
 #endif
