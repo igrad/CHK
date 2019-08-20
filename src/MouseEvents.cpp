@@ -1,12 +1,16 @@
 #include "..\include\MouseEvents.h"
 
+vector<ClickRegion*> ClickRegion::clickables = {};
+DropMenu* DropMenu::focusedDM = NULL;
+vector<DropMenu*> DropMenu::pendingDMs = {};
+
 ClickRegion::ClickRegion() {
    clickRect = {0, 0, 0, 0};
    crType = CR_ABSOLUTE;
 
    clickActive = true;
 
-   for (int i = 0; i < 5; i++) callbackSet[i] = false;
+   for (auto cb: callbackSet) cb = false;
 }
 
 ClickRegion::ClickRegion(SDL_Rect* area, CLICKREGION_TYPE ct) {
@@ -45,34 +49,52 @@ void ClickRegion::OnHover() {
    }
 }
 
-void ClickRegion::OnLeftClick() {
+bool ClickRegion::OnLeftClick() {
    if (callbackSet[LEFTCLICK]) {
       MouseEventData* a = &callbacks[LEFTCLICK];
-      a->proc(a->par1, a->par2, a->par3);
+      return a->proc(a->par1, a->par2, a->par3);
    }
+   return false;
 }
 
-void ClickRegion::OnRightClick() {
+bool ClickRegion::OnRightClick() {
    if (callbackSet[RIGHTCLICK]) {
       MouseEventData* a = &callbacks[RIGHTCLICK];
-      a->proc(a->par1, a->par2, a->par3);
+      return a->proc(a->par1, a->par2, a->par3);
    }
+   return false;
 }
 
-void ClickRegion::OnScrollUp() {
+bool ClickRegion::OnScrollUp() {
    if (callbackSet[SCROLLUP]) {
       MouseEventData* a = &callbacks[SCROLLUP];
-      a->proc(a->par1, a->par2, a->par3);
+      return a->proc(a->par1, a->par2, a->par3);
    }
+   return false;
 }
 
-void ClickRegion::OnScrollDown() {
+bool ClickRegion::OnScrollDown() {
    if (callbackSet[SCROLLDOWN]) {
       MouseEventData* a = &callbacks[SCROLLDOWN];
-      a->proc(a->par1, a->par2, a->par3);
+      return a->proc(a->par1, a->par2, a->par3);
    }
+   return false;
 }
 
+DropMenu* ClickRegion::GetDM() {
+   return linkedDM;
+}
+
+vector<ClickRegion*> ClickRegion::GetRegionsAtMouse(int mx, int my) {
+   vector<ClickRegion*> results;
+   vector<ClickRegion*>::iterator i = clickables.begin();
+   while (i != clickables.end()) {
+      if (PointInRect(mx, my, &((*i)->clickRect))) results.push_back(*i);
+      advance(i, 1);
+   }
+
+   return results;
+}
 
 
 ClickButton::ClickButton() {
@@ -80,9 +102,9 @@ ClickButton::ClickButton() {
 }
 
 ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
-   SDL_Color* fontColor, int padding, SDL_Rect* area, CLICKREGION_TYPE ct,
-   string bgPath):
-   ClickRegion(area, ct) {
+   SDL_Color* fontColor, int padding, SDL_Rect* clickRect, SDL_Rect* drawRect,
+   CLICKREGION_TYPE ct, string bgPath):
+   ClickRegion(clickRect, ct) {
    texture = new LTexture();
    path = bgPath;
    text = textStr;
@@ -90,8 +112,10 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
 
    LTexture tempText;
    if (bgPath != "") tempText.LoadFromFile(bgPath);
-   int w = area->w;
-   int h = area->h;
+   if (clickRect != NULL) this->clickRect = *clickRect;
+   if (drawRect != NULL) this->drawRect = *drawRect;
+   int w = clickRect->w;
+   int h = clickRect->h;
 
    texture->CreateBlank(w, h);
 
@@ -117,17 +141,19 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
 }
 
 ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
-   SDL_Color* fontColor, int padding, SDL_Rect* area, CLICKREGION_TYPE ct,
-   LTexture* bg):
-   ClickRegion(area, ct) {
+   SDL_Color* fontColor, int padding, SDL_Rect* clickRect, SDL_Rect* drawRect,
+   CLICKREGION_TYPE ct, LTexture* bg):
+   ClickRegion(clickRect, ct) {
    texture = new LTexture();
    text = textStr;
    font = fontStyle;
 
    LTexture tempText;
    if (bg != NULL) tempText = *bg;
-   int w = area->w * GZOOM;
-   int h = area->h * GZOOM;
+   if (clickRect != NULL) this->clickRect = *clickRect;
+   if (drawRect != NULL) this->drawRect = *drawRect;
+   int w = clickRect->w * GZOOM;
+   int h = clickRect->h * GZOOM;
 
    texture->CreateBlank(w, h);
 
@@ -153,12 +179,12 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
 }
 
 void ClickButton::Render(SDL_Rect* r) {
-   if (r != NULL) clickRect = *r;
+   if (r != NULL) drawRect = *r;
 
    if (crType == CR_ABSOLUTE) {
-      texture->Render(&clickRect);
+      texture->Render(&drawRect);
    } else if (crType == CR_RELATIVE) {
-      texture->Render(clickRect.x, clickRect.y);
+      texture->Render(drawRect.x, drawRect.y);
    }
 }
 
@@ -179,13 +205,13 @@ DropMenu::DropMenu(int x, int y, int cols, int rows, CLICKREGION_TYPE ct,
 
    rendering = false;
 
-   btnRect = {margin * GZOOM, margin * GZOOM,
-      UIScheme->btnW * GZOOM, UIScheme->btnH * GZOOM};
-   area = {x * GZOOM, y * GZOOM,
-      ((UIScheme->btnW * cols) + (2 * margin) + (separation * (cols - 1))) *
-      GZOOM,
-      ((UIScheme->btnH * rows) + (2 * margin) + (separation * (rows - 1))) *
-      GZOOM
+   btnRect = {(int)(margin * GZOOM), (int)(margin * GZOOM),
+      (int)(UIScheme->btnW * GZOOM), (int)(UIScheme->btnH * GZOOM)};
+   area = {(int)(x * GZOOM), (int)(y * GZOOM),
+      (int)(((UIScheme->btnW * cols) + (2 * margin) +
+      (separation * (cols - 1))) * GZOOM),
+      (int)(((UIScheme->btnH * rows) + (2 * margin) +
+      (separation * (rows - 1))) * GZOOM)
    };
 }
 
@@ -206,10 +232,13 @@ DropMenu::DropMenu(int x, int y, int cols, int rows, int btnW, int btnH,
 
    rendering = false;
 
-   btnRect = {margin * GZOOM, margin * GZOOM, btnW * GZOOM, btnH * GZOOM};
-   area = {x * GZOOM, y * GZOOM,
-      ((btnW * cols) + (2 * margin) + (separation * (cols - 1))) * GZOOM,
-      ((btnH * rows) + (2 * margin) + (separation * (rows - 1))) * GZOOM
+   btnRect = {(int)(margin * GZOOM), (int)(margin * GZOOM),
+      (int)(btnW * GZOOM), (int)(btnH * GZOOM)};
+   area = {(int)(x * GZOOM), (int)(y * GZOOM),
+      (int)(((btnW * cols) + (2 * margin) + (separation * (cols - 1))) *
+      GZOOM),
+      (int)(((btnH * rows) + (2 * margin) + (separation * (rows - 1))) *
+      GZOOM)
    };
 }
 
@@ -224,14 +253,48 @@ void DropMenu::Open(int x, int y) {
 
 void DropMenu::Close() {
    rendering = false;
+   Log("Closing door drop menu");
 }
 
 void DropMenu::Render() {
    if (rendering) {
       background->Render(&area);
-      for (int i = 0; i < buttons.size(); i++) {
-         SDL_Rect* r = &buttons[i].clickRect;
-         buttons[i].Render();
-      }
+      for (int i = 0; i < buttons.size(); i++) buttons[i].Render();
    }
+}
+
+bool DropMenu::IsPending() {
+   return find(DropMenu::pendingDMs.begin(), DropMenu::pendingDMs.end(), this)
+      != DropMenu::pendingDMs.end();
+}
+
+vector<DropMenu*> DropMenu::GetDMsAtMouse(int mx, int my) {
+   vector<DropMenu*> results;
+   vector<DropMenu*>::iterator i = pendingDMs.begin();
+   while (i != pendingDMs.end()) {
+      if (PointInRect(mx, my, &((*i)->area))) results.push_back(*i);
+      advance(i, 1);
+   }
+
+   return results;
+}
+
+void DropMenu::AddPendingDM(DropMenu* dm) {
+   pendingDMs.push_back(dm);
+   focusedDM = dm;
+}
+
+void DropMenu::RemovePendingDM(DropMenu* dm) {
+   if (find(pendingDMs.begin(), pendingDMs.end(), dm) != pendingDMs.end()) {
+      if (pendingDMs.size() < 1) pendingDMs.clear();
+      else remove(pendingDMs.begin(), pendingDMs.end(), dm);
+   }
+
+   if (pendingDMs.size() > 0) focusedDM = pendingDMs.back();
+   else focusedDM = NULL;
+}
+
+void DropMenu::ClearPendingDMs() {
+   pendingDMs.clear();
+   focusedDM = NULL;
 }

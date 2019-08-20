@@ -3,7 +3,6 @@
 
 #include "essentials.h"
 #include "Collider.h"
-#include "Door.h"
 #include "Actor.h"
 
 bool PointInRect(int x, int y, SDL_Rect* b);

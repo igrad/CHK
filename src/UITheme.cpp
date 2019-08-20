@@ -9,7 +9,7 @@ DropMenuUI::DropMenuUI() {
    bg = new LTexture();
    btnbg = new LTexture();
 
-   fontSize = 20;
+   fontSize = 14;
    fontStyle = NULL;
    fontColor = NULL;
 

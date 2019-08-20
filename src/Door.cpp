@@ -247,6 +247,7 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    };
 
    dropmenu = new DropMenu(0, 0, 1, 5, CR_RELATIVE, &UI.doorDM);
+   linkedDM = dropmenu;
 }
 
 
@@ -280,6 +281,7 @@ void Door::AttemptOpen(bool fast) {
    Log("Attempting to open");
    this->Open(fast);
 }
+
 
 
 void Door::Open(bool fast) {
@@ -365,15 +367,18 @@ void Door::OpenDropMenu() {
 
    dropmenu->AddButton(op + "slowly", LEFTCLICK, [this](int a, int b, int c){
       this->AttemptOpen(false);
+      return false;
    });
 
    dropmenu->AddButton(op + "fast", LEFTCLICK, [this](int a, int b, int c){
       this->AttemptOpen(true);
+      return false;
    });
 
    if (canBreak) {
       dropmenu->AddButton("Break down", LEFTCLICK, [this](int a, int b, int c){
          //this->AttemptBreak(true);
+         return false;
       });
    }
    if (hasLock) {
@@ -382,16 +387,19 @@ void Door::OpenDropMenu() {
          [this](int a, int b, int c){
             // We technically need to show the unlock attempt UI here
             //this->AttemptUnlock(true);
+            return false;
          });
       }
       else {
          dropmenu->AddButton("Lock", LEFTCLICK, [this](int a, int b, int c){
             //this->Lock(true);
+            return false;
          });
       }
    }
    dropmenu->AddButton("Examine", LEFTCLICK, [this](int a, int b, int c){
       // this->AttemptOpen(true);
+      return false;
    });
 }
 

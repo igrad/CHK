@@ -169,13 +169,13 @@ bool LoadMedia() {
 	// Load UI themes
 	UI.doorDM.bg->LoadFromFile("media\\images\\dmbg.png");
 	UI.doorDM.btnbg->LoadFromFile("media\\images\\dmbtnbg.png");
-	UI.doorDM.fontSize = 20;
+	UI.doorDM.fontSize = 14;
 	UI.doorDM.fontStyle = FONT_TYPED;
 	UI.doorDM.fontColor = &FONTC_OFFWHITE;
 	UI.doorDM.margin = 4;
 	UI.doorDM.separation = 4;
-	UI.doorDM.btnW = 120;
-	UI.doorDM.btnH = 20;
+	UI.doorDM.btnW = 60;
+	UI.doorDM.btnH = 10;
 
 	Log("Media loaded");
 
@@ -241,20 +241,21 @@ int main(int argc, char* args[]) {
 		   // objects loaded up, and each tick, iterate through that list to find
 			// which ones are currently on-screen, and then check if they are
 			// being hovered over or are being clicked on.
-			vector<ClickRegion*> clickables;
+			vector<ClickRegion*>* clickables = &ClickRegion::clickables;
+			DropMenu* focusedDM;
+			vector<DropMenu*>* pendingDMs = &DropMenu::pendingDMs;
 
 			// Compile objects into clickables vector that are sensitive to
 			// mouse events
-			for (auto d : randomLevel.doors) {
-				clickables.push_back(d);
-				printf("\nclickRect: %i %i %i %i", d->clickRect.x,
-					d->clickRect.y, d->clickRect.w, d->clickRect.h);
-			}
-			printf("\nClickables size: %i", clickables.size());
+			for (auto d : randomLevel.doors) clickables->push_back(d);
 
 			// Start counting frames per second
 			int countedFrames = 0;
 			fpsTimer.start();
+
+			vector<ClickRegion*> hoveredCRs;
+			vector<DropMenu*> hoveredDMs;
+			bool newDMWaiting = false;
 
 			Log("Starting main event loop");
 
@@ -275,36 +276,128 @@ int main(int argc, char* args[]) {
 						SDL_PumpEvents();
 						SDL_GetMouseState(&mx, &my);
 
-						// Iterate through all buttons and find if the mouse is
-						// currently hovering over them
-						for (int i = clickables.size() - 1; i >= 0; i--) {
-							// If the button isn't active, we don't need to bother
-							if (!clickables[i]->clickActive) continue;
-							if (PointInRect(mx + Camera::x, my + Camera::y,
-								&clickables[i]->clickRect)) {
-								switch (e.type) {
-									case SDL_MOUSEBUTTONDOWN:
-										switch (e.button.button) {
-											case SDL_BUTTON_LEFT:
-												clickables[i]->OnLeftClick();
-												break;
-											case SDL_BUTTON_RIGHT:
-												clickables[i]->OnRightClick();
-												break;
-										}
-										break;
-									case SDL_MOUSEWHEEL:
-										if (e.wheel.y > 0) {
-											// User scrolled up
-											clickables[i]->OnScrollUp();
-										} else if (e.wheel.y < 0) {
-											// User scrolled down
-											clickables[i]->OnScrollDown();
-										}
-										break;
+						newDMWaiting = false;
+
+						hoveredCRs = ClickRegion::GetRegionsAtMouse(
+							mx + Camera::x, my + Camera::y);
+						hoveredDMs = DropMenu::GetDMsAtMouse(
+							mx + Camera::x, my + Camera::y);
+
+						// TODO: Working on updating this chunk with the new static members of ClickRegion and DropMenu
+						bool eventIssued = false;
+						switch (e.type) {
+							case SDL_MOUSEBUTTONDOWN:
+							if (e.button.button == SDL_BUTTON_LEFT) {
+								eventIssued = true;
+
+								if (hoveredCRs.size() > 0) {
+									newDMWaiting = hoveredCRs.back()->OnLeftClick();
+								}
+							} else if (e.button.button == SDL_BUTTON_RIGHT) {
+								eventIssued = true;
+
+								if (hoveredCRs.size() > 0) {
+									newDMWaiting = hoveredCRs.back()->OnRightClick();
+								}
+							}
+
+							break;
+
+							case SDL_MOUSEWHEEL:
+							if (e.wheel.y > 0) {
+								eventIssued = true;
+
+								if (hoveredCRs.size() > 0) {
+									newDMWaiting = hoveredCRs.back()->OnScrollUp();
+								}
+							} else if (e.wheel.y < 0) {
+								eventIssued = true;
+
+								if (hoveredCRs.size() > 0) {
+									newDMWaiting = hoveredCRs.back()->OnScrollDown();
+								}
+							}
+							break;
+						}
+
+						// Check to see if user has clicked out of the drop menu
+						if (e.type == SDL_MOUSEBUTTONDOWN ||
+							e.type == SDL_MOUSEWHEEL) {
+							if (DropMenu::focusedDM != NULL) {
+								if (find(hoveredDMs.begin(), hoveredDMs.end(),
+									DropMenu::focusedDM) == hoveredDMs.end()) {
+									if (!newDMWaiting) DropMenu::focusedDM->Close();
 								}
 							}
 						}
+
+						// If we have a new DM opened on this frame, we add it to the
+						// pendingDMs vector and automatically set it as the new
+						// focused DM
+						if (newDMWaiting) {
+							DropMenu::AddPendingDM(hoveredCRs.back()->GetDM());
+						}
+
+						// If the cursor isn't over the focused DM, and the DM has
+						// already been moused-over, then it means the user isn't
+						// interested
+						if (DropMenu::focusedDM != NULL) {
+							if (DropMenu::focusedDM->hovered &&
+								find(pendingDMs->begin(), pendingDMs->end(),
+								DropMenu::focusedDM) == pendingDMs->end()) {
+								DropMenu::focusedDM->Close();
+								DropMenu::RemovePendingDM(DropMenu::focusedDM);
+							}
+						}
+
+						// Iterate through all buttons and find if the mouse is
+						// currently hovering over them
+						// for (int i = clickables->size() - 1; i >= 0; i--) {
+						// 	// If the button isn't active, we don't need to bother
+						// 	if (!clickables[i]->clickActive) continue;
+						// 	if (ClickRegion::GetRegionsAtMouse(mx + Camera::x,
+						// 		my + Camera::y)) {
+						// 		bool eventIssued = false;
+						// 		switch (e.type) {
+						// 			case SDL_MOUSEBUTTONDOWN:
+						// 				if (e.button.button == SDL_BUTTON_LEFT) {
+						// 					newDMWaiting =
+						// 					clickables[i]->OnLeftClick();
+						// 					eventIssued = true;
+						// 				} else if (e.button.button == SDL_BUTTON_RIGHT) {
+						// 					newDMWaiting =
+						// 					clickables[i]->OnRightClick();
+						// 					eventIssued = true;
+						// 				}
+						//
+						// 				if (clickables[i]->GetDM() == DMWaitingForInput) {
+						// 					clickOutOfWaitingDM = false;
+						// 				}
+						// 				break;
+						// 			case SDL_MOUSEWHEEL:
+						// 				if (e.wheel.y > 0) {
+						// 					newDMWaiting =
+						// 					clickables[i]->OnScrollUp();
+						// 					eventIssued = true;
+						// 				} else if (e.wheel.y < 0) {
+						// 					newDMWaiting =
+						// 					clickables[i]->OnScrollDown();
+						// 					eventIssued = true;
+						// 				}
+						// 				break;
+						// 			}
+						//
+						// 		if (!eventIssued) clickables[i]->OnHover();
+						// 		if (newDMWaiting) {
+						// 			DMWaitingForInput = clickables[i]->GetDM();
+						// 			// Get the buttons from the DM and add them to the
+						// 		}
+						// 	}
+						// }
+						//
+						// if (!clickOutOfWaitingDM && !newDMWaiting) {
+						// 	DMWaitingForInput->Close();
+						// }
 					}
             }
 
@@ -359,8 +452,8 @@ int main(int argc, char* args[]) {
 				}
 
 				// Next, other characters
-				// Next, projectiles
 				// Finally, items
+				// Next, projectiles
 
             // Clear screen
             SDL_RenderClear(gRenderer);

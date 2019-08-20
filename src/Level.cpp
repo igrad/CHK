@@ -1438,7 +1438,6 @@ void Level::GenerateDoors() {
 
       doors.push_back(new Door(x, y, locale->doorSize, 1, dir, hand, room,
          locale));
-      printf("\nCreated door at %i, %i", x, y);
       ground[y][x] = 16; // Door tiles use 16
       // We reserve a floor tile to make sure the door can be opened
       if (dir == NORTH) ground[y + 1][x] = 5;
@@ -1454,8 +1453,10 @@ void Level::GenerateLevel() {
    // Start a timer for level generation for optimization
    LTimer timer;
    timer.start();
-   floorRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
-   wallRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM, PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
+   floorRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM,
+   PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
+   wallRender.CreateBlank(PIXELSPERFEET * 5 * (groundSize + 10) * GMAXZOOM,
+   PIXELSPERFEET * 5 * groundSize * GMAXZOOM);
 
    bool generating = true;
    while (generating) {
@@ -1654,13 +1655,16 @@ void Level::GenerateLevel() {
    for (auto d : doors) {
       d->SetFunction(RIGHTCLICK, [d](int a, int b, int c) {
          d->OpenDropMenu();
+         return true;
       });
    }
 
-   // Give large rooms a chance to have big pits in them (no more than 60% of the room). This chance should be tied to the locale of the level
+   // Give large rooms a chance to have big pits in them (no more than 60% of
+   // the room). This chance should be tied to the locale of the level
 
    printf("\nFinal tile count: %i", roomTileCount);
-   printf("\nMax collisions: %i, total: %i", NUMROOMCOLLISIONSALLOWED, NUMROOMCOLLISIONS);
+   printf("\nMax collisions: %i, total: %i",
+      NUMROOMCOLLISIONSALLOWED, NUMROOMCOLLISIONS);
 
    printf("\nLevel generation time: %4i ms", timer.getTicks());
 }
@@ -1738,18 +1742,22 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
    // First, we paint the repeating texture of the floor everywhere
    SDL_SetRenderTarget(gRenderer, floorRender.mTexture);
    for (int yi = 0; yi < ceil(floorRender.GetHeight()/floorTextureSize); yi++) {
-      for (int xi = 0; xi < ceil(floorRender.GetWidth()/floorTextureSize); xi++) {
+      for (int xi = 0; xi < ceil(floorRender.GetWidth()/floorTextureSize);
+      xi++) {
          SDL_Rect r = {
             floorTextureSize * xi,
             floorTextureSize * yi,
-            min(floorTextureSize, abs((floorTextureSize * (xi)) - floorRender.GetWidth())),
-            min(floorTextureSize, abs((floorTextureSize * (yi)) - floorRender.GetHeight()))
+            min(floorTextureSize,
+               abs((floorTextureSize * (xi)) - floorRender.GetWidth())),
+            min(floorTextureSize,
+               abs((floorTextureSize * (yi)) - floorRender.GetHeight()))
          };
          locale->floorTexture.Render(&r);
       }
    }
 
-   // Next, we initialize the void texture (OOB), and render the void onto the walls layer
+   // Next, we initialize the void texture (OOB), and render the void onto the
+   // walls layer
    SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
    for (int yi = iterYStart; yi < iterYMax; yi++) {
       for (int xi = iterXStart; xi < iterXMax; xi++) {

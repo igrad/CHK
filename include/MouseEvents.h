@@ -2,6 +2,7 @@
 #define MOUSEEVENTS
 
 #include "essentials.h"
+#include "CollisionDetection.h"
 #include "Camera.h"
 #include "LTexture.h"
 #include "UITheme.h"
@@ -20,11 +21,13 @@ enum MOUSEEVENT {
 };
 
 struct MouseEventData {
-   std::function<void(int, int, int)> proc;
+   std::function<bool(int, int, int)> proc;
    int par1;
    int par2;
    int par3;
 };
+
+class DropMenu;
 
 class ClickRegion {
 public:
@@ -43,13 +46,17 @@ public:
    void SetSize(int w, int h);
    void SetSize(SDL_Rect* r);
 
+   // Click handling methods
    void OnHover();
+   bool OnLeftClick();
+   bool OnRightClick();
+   bool OnScrollUp();
+   bool OnScrollDown();
 
-   void OnLeftClick();
-   void OnRightClick();
-
-   void OnScrollUp();
-   void OnScrollDown();
+   // General UI handling methods
+   DropMenu* GetDM();
+   static vector<ClickRegion*> GetRegionsAtMouse(int mx, int my);
+   static vector<ClickRegion*> clickables;
 
    MouseEventData callbacks[5];
    bool callbackSet[5];
@@ -57,6 +64,8 @@ public:
    SDL_Rect clickRect;
    bool clickActive;
    CLICKREGION_TYPE crType;
+
+   DropMenu* linkedDM;
 };
 
 
@@ -65,17 +74,18 @@ class ClickButton: public ClickRegion {
 public:
    ClickButton();
    ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
-      SDL_Color* fontColor, int padding, SDL_Rect* area, CLICKREGION_TYPE ct,
-      string bgPath);
+      SDL_Color* fontColor, int padding, SDL_Rect* clickRect,
+      SDL_Rect* drawRect, CLICKREGION_TYPE ct, string bgPath);
    ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
-      SDL_Color* fontColor, int padding, SDL_Rect* area, CLICKREGION_TYPE ct,
-      LTexture* bg);
+      SDL_Color* fontColor, int padding, SDL_Rect* clickRect,
+      SDL_Rect* drawRect, CLICKREGION_TYPE ct, LTexture* bg);
 
    void Render(SDL_Rect* r = NULL);
 
    string path;
    string text;
    int size;
+   SDL_Rect drawRect;
    LTexture* texture;
    TTF_Font* font;
 };
@@ -90,6 +100,13 @@ public:
       int separation, int fontSize, TTF_Font* fontStyle, SDL_Color* fontColor,
       int btnPadding, CLICKREGION_TYPE ct, LTexture* bg, LTexture* btnbg);
 
+   void ClearButtons();
+
+   void Open(int x = 0, int y = 0);
+   void Close();
+
+   void Render();
+
    template <typename Proc>
    void AddButton(string textString, MOUSEEVENT m, Proc p,
       int a1 = -1, int a2 =-1, int a3 = -1) {
@@ -101,16 +118,18 @@ public:
       };
 
       buttons.push_back(ClickButton(textString, fontSize, fontStyle,
-         fontColor, btnPadding, &r, ct, btnbg));
+         fontColor, btnPadding, &r, &r, ct, btnbg));
 
       buttons[buttons.size() - 1].SetFunction(m, p, a1, a2, a3);
    }
-   void ClearButtons();
 
-   void Open(int x = 0, int y = 0);
-   void Close();
-
-   void Render();
+   bool IsPending();
+   static vector<DropMenu*> GetDMsAtMouse(int mx, int my);
+   static void AddPendingDM(DropMenu* dm);
+   static void RemovePendingDM(DropMenu* dm);
+   static void ClearPendingDMs();
+   static vector<DropMenu*> pendingDMs;
+   static DropMenu* focusedDM;
 
    CLICKREGION_TYPE ct;
 
@@ -130,6 +149,8 @@ public:
    int optCount;
 
    bool rendering;
+
+   bool hovered;
 };
 
 #endif
