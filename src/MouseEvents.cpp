@@ -88,13 +88,35 @@ DropMenu* ClickRegion::GetDM() {
 vector<ClickRegion*> ClickRegion::GetRegionsAtMouse(int mx, int my) {
    vector<ClickRegion*> results;
    vector<ClickRegion*>::iterator i = clickables.begin();
+
+   int sx = mx - Camera::x;
+   int sy = my - Camera::y;
    while (i != clickables.end()) {
-      if (PointInRect(mx, my, &((*i)->clickRect))) results.push_back(*i);
+      if ((*i)->crType == CR_ABSOLUTE) {
+         // printf("\nChecking CR_ABSOLUTE: {%4i %4i} %4i %4i %4i %4i", sx, sy,
+         // (*i)->clickRect.x, (*i)->clickRect.y,
+         // (*i)->clickRect.w, (*i)->clickRect.h);
+         if (PointInRect(sx, sy, &((*i)->clickRect))) results.push_back(*i);
+      } else {
+         // printf("\nChecking CR_RELATIVE: {%4i %4i} %4i %4i %4i %4i", mx, my,
+         // (*i)->clickRect.x, (*i)->clickRect.y,
+         // (*i)->clickRect.w, (*i)->clickRect.h);
+         if (PointInRect(mx, my, &((*i)->clickRect))) results.push_back(*i);
+      }
       advance(i, 1);
    }
 
    return results;
 }
+
+void ClickRegion::RemoveClickable(ClickRegion* r) {
+   auto i = find(clickables.begin(), clickables.end(), r);
+   if (i != clickables.end()) {
+      if (clickables.size() == 1) clickables.clear();
+      else clickables.erase(i);
+   }
+}
+
 
 
 ClickButton::ClickButton() {
@@ -247,13 +269,24 @@ void DropMenu::ClearButtons() {
 }
 
 void DropMenu::Open(int x, int y) {
+   // Important that this comes after all of the AddButton calls are completed,
+   // or we can see some buttons missing from the DM
    rendering = true;
-   // We can add opening or closing animations later on if needed
+
+   // We can add opening or closing animations here later on if needed
+
+   for (int i = 0; i < buttons.size(); i++) {
+      ClickRegion::clickables.push_back(&buttons[i]);
+   }
 }
 
 void DropMenu::Close() {
+   for (int i = 0; i < buttons.size(); i++) {
+      ClickRegion::RemoveClickable(&buttons[i]);
+   }
+
    rendering = false;
-   Log("Closing door drop menu");
+   DropMenu::RemovePendingDM(this);
 }
 
 void DropMenu::Render() {
@@ -263,16 +296,29 @@ void DropMenu::Render() {
    }
 }
 
-bool DropMenu::IsPending() {
-   return find(DropMenu::pendingDMs.begin(), DropMenu::pendingDMs.end(), this)
-      != DropMenu::pendingDMs.end();
-}
-
 vector<DropMenu*> DropMenu::GetDMsAtMouse(int mx, int my) {
    vector<DropMenu*> results;
    vector<DropMenu*>::iterator i = pendingDMs.begin();
+
+   int x = mx;
+   int y = my;
+   int sx = mx - Camera::x;
+   int sy = my - Camera::y;
    while (i != pendingDMs.end()) {
-      if (PointInRect(mx, my, &((*i)->area))) results.push_back(*i);
+      // printf("\nChecking DM collisions: %i, %i {%i %i %i %i}", x, y,
+      // (*i)->area.x, (*i)->area.y, (*i)->area.w, (*i)->area.h);
+
+      if ((*i)->ct == CR_ABSOLUTE) {
+         if (PointInRect(sx, sy, &((*i)->area))) {
+            results.push_back(*i);
+            (*i)->hovered = true;
+         }
+      } else {
+         if (PointInRect(mx, my, &((*i)->area))) {
+            results.push_back(*i);
+            (*i)->hovered = true;
+         }
+      }
       advance(i, 1);
    }
 
@@ -285,9 +331,12 @@ void DropMenu::AddPendingDM(DropMenu* dm) {
 }
 
 void DropMenu::RemovePendingDM(DropMenu* dm) {
-   if (find(pendingDMs.begin(), pendingDMs.end(), dm) != pendingDMs.end()) {
-      if (pendingDMs.size() < 1) pendingDMs.clear();
-      else remove(pendingDMs.begin(), pendingDMs.end(), dm);
+   auto i = find(pendingDMs.begin(), pendingDMs.end(), dm);
+   if (i != pendingDMs.end()) {
+      if (pendingDMs.size() == 1) pendingDMs.clear();
+      else pendingDMs.erase(i);
+      //erase(pendingDMs.begin(), pendingDMs.end(), dm);
+      dm->hovered = false;
    }
 
    if (pendingDMs.size() > 0) focusedDM = pendingDMs.back();

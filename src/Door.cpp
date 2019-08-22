@@ -11,6 +11,7 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    attachedRoom = room;
    this->locale = locale;
 
+
    int tileW = PIXELSPERFEET * 5 * GZOOM;
    xPos = gridX * tileW;
    yPos = gridY * tileW;
@@ -31,6 +32,7 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    phase = TEXT_CLOSED;
    newPhase = false;
    frame = 0;
+   crType = CR_RELATIVE;
 
    // Load the art assets and collision rects for this door
    switch (direction) {
@@ -246,7 +248,7 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
       tileW
    };
 
-   dropmenu = new DropMenu(0, 0, 1, 5, CR_RELATIVE, &UI.doorDM);
+   dropmenu = new DropMenu(0, 0, 1, 5, CR_ABSOLUTE, &UI.doorDM);
    linkedDM = dropmenu;
 }
 
@@ -357,12 +359,9 @@ void Door::Examine() {
 void Door::OpenDropMenu() {
    Log("Opening door drop menu");
 
-   dropmenu->rendering = true;
-
    dropmenu->ClearButtons();
    bool canBreak = !isOpen && !isBroken;
 
-   string* btns = new string[5];
    string op = isOpen ? "Open " : "Close ";
 
    dropmenu->AddButton(op + "slowly", LEFTCLICK, [this](int a, int b, int c){
@@ -401,6 +400,8 @@ void Door::OpenDropMenu() {
       // this->AttemptOpen(true);
       return false;
    });
+
+   dropmenu->Open();
 }
 
 

@@ -56,6 +56,7 @@ public:
    // General UI handling methods
    DropMenu* GetDM();
    static vector<ClickRegion*> GetRegionsAtMouse(int mx, int my);
+   static void RemoveClickable(ClickRegion* r);
    static vector<ClickRegion*> clickables;
 
    MouseEventData callbacks[5];
@@ -117,13 +118,13 @@ public:
          btnRect.h
       };
 
-      buttons.push_back(ClickButton(textString, fontSize, fontStyle,
-         fontColor, btnPadding, &r, &r, ct, btnbg));
+      ClickButton b = ClickButton(textString, fontSize, fontStyle,
+         fontColor, btnPadding, &r, &r, ct, btnbg);
+      b.SetFunction(m, p, a1, a2, a3);
 
-      buttons[buttons.size() - 1].SetFunction(m, p, a1, a2, a3);
+      buttons.push_back(b);
    }
 
-   bool IsPending();
    static vector<DropMenu*> GetDMsAtMouse(int mx, int my);
    static void AddPendingDM(DropMenu* dm);
    static void RemovePendingDM(DropMenu* dm);

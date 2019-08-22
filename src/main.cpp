@@ -259,6 +259,8 @@ int main(int argc, char* args[]) {
 
 			Log("Starting main event loop");
 
+			int mx, my, gmx, gmy;
+
          // While the application is running
          while(!quit) {
 				// Start the cap timer
@@ -272,16 +274,18 @@ int main(int argc, char* args[]) {
 						e.type == SDL_MOUSEBUTTONDOWN ||
 						e.type == SDL_MOUSEBUTTONUP ||
 						e.type == SDL_MOUSEWHEEL) {
-						int mx, my;
 						SDL_PumpEvents();
 						SDL_GetMouseState(&mx, &my);
+						gmx = mx + Camera::x;
+						gmy = my + Camera::y;
 
 						newDMWaiting = false;
 
-						hoveredCRs = ClickRegion::GetRegionsAtMouse(
-							mx + Camera::x, my + Camera::y);
-						hoveredDMs = DropMenu::GetDMsAtMouse(
-							mx + Camera::x, my + Camera::y);
+						hoveredCRs = ClickRegion::GetRegionsAtMouse(gmx, gmy);
+						hoveredDMs = DropMenu::GetDMsAtMouse(gmx, gmy);
+
+						printf("\nMouse: %4d, %4d {%4d, %4d}\t\tCRs: %d, DMs: %d",
+						mx, my, gmx, gmy, hoveredCRs.size(), hoveredDMs.size());
 
 						// TODO: Working on updating this chunk with the new static members of ClickRegion and DropMenu
 						bool eventIssued = false;
