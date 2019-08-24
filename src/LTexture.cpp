@@ -84,6 +84,7 @@ bool LTexture::LoadFromRenderedText(string textureText, SDL_Color* textColor,
    } else {
       // Create texture from surface pixels
       mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+      SDL_SetTextureBlendMode(mTexture, SDL_BLENDMODE_ADD);
       if (mTexture == NULL) {
          Warn("Unable to create texture from textSurface!");
       } else {

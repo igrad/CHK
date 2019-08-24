@@ -42,41 +42,41 @@ void ClickRegion::SetSize(SDL_Rect* r) {
    clickRect.h = r->h;
 }
 
-void ClickRegion::OnHover() {
+void ClickRegion::OnHover(int mx, int my) {
    if (callbackSet[HOVER]) {
       MouseEventData* a = &callbacks[HOVER];
-      a->proc(a->par1, a->par2, a->par3);
+      a->proc(mx, my, a->par3);
    }
 }
 
-bool ClickRegion::OnLeftClick() {
+bool ClickRegion::OnLeftClick(int mx, int my) {
    if (callbackSet[LEFTCLICK]) {
       MouseEventData* a = &callbacks[LEFTCLICK];
-      return a->proc(a->par1, a->par2, a->par3);
+      return a->proc(mx, my, a->par3);
    }
    return false;
 }
 
-bool ClickRegion::OnRightClick() {
+bool ClickRegion::OnRightClick(int mx, int my) {
    if (callbackSet[RIGHTCLICK]) {
       MouseEventData* a = &callbacks[RIGHTCLICK];
-      return a->proc(a->par1, a->par2, a->par3);
+      return a->proc(mx, my, a->par3);
    }
    return false;
 }
 
-bool ClickRegion::OnScrollUp() {
+bool ClickRegion::OnScrollUp(int mx, int my) {
    if (callbackSet[SCROLLUP]) {
       MouseEventData* a = &callbacks[SCROLLUP];
-      return a->proc(a->par1, a->par2, a->par3);
+      return a->proc(mx, my, a->par3);
    }
    return false;
 }
 
-bool ClickRegion::OnScrollDown() {
+bool ClickRegion::OnScrollDown(int mx, int my) {
    if (callbackSet[SCROLLDOWN]) {
       MouseEventData* a = &callbacks[SCROLLDOWN];
-      return a->proc(a->par1, a->par2, a->par3);
+      return a->proc(mx, my, a->par3);
    }
    return false;
 }
@@ -131,6 +131,7 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    path = bgPath;
    text = textStr;
    font = fontStyle;
+   displaceSet = false;
 
    LTexture tempText;
    if (bgPath != "") tempText.LoadFromFile(bgPath);
@@ -169,9 +170,8 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    texture = new LTexture();
    text = textStr;
    font = fontStyle;
+   displaceSet = false;
 
-   LTexture tempText;
-   if (bg != NULL) tempText = *bg;
    if (clickRect != NULL) this->clickRect = *clickRect;
    if (drawRect != NULL) this->drawRect = *drawRect;
    int w = clickRect->w * GZOOM;
@@ -181,13 +181,13 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
 
    SDL_Rect r = {0, 0, w, h};
    SDL_SetRenderTarget(gRenderer, texture->mTexture);
-   tempText.Render(NULL);
+   if (bg != NULL) bg->Render(NULL);
 
    int tw, th;
+   LTexture tempText;
    tempText.LoadFromRenderedText(textStr, fontColor, fontStyle, &tw, &th);
 
    // Shrink the text to fit the font size
-   double woh = tw/th;
    double fontH = fontSize * GZOOM;
    r = {
       padding,       // This assumes we want L-justified text (liable to change)
@@ -198,6 +198,30 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    tempText.Render(&r);
 
    SDL_SetRenderTarget(gRenderer, NULL);
+}
+
+void ClickButton::Displace(int ax, int ay) {
+   if (!displaceSet) {
+      dX = ax;
+      dY = ay;
+      clickRect.x += dX;
+      clickRect.y += dY;
+      drawRect.x += dX;
+      drawRect.y += dY;
+
+      displaceSet = true;
+   }
+}
+
+void ClickButton::ResetDisplace() {
+   if (displaceSet) {
+      clickRect.x -= dX;
+      clickRect.y -= dY;
+      drawRect.x -= dX;
+      drawRect.y -= dY;
+
+      displaceSet = false;
+   }
 }
 
 void ClickButton::Render(SDL_Rect* r) {
@@ -215,25 +239,23 @@ void ClickButton::Render(SDL_Rect* r) {
 DropMenu::DropMenu(int x, int y, int cols, int rows, CLICKREGION_TYPE ct,
    DropMenuUI* UIScheme) {
    // Rule of thumb: never make more than 8 rows
-   this->margin = UIScheme->margin;
-   this->separation = UIScheme->separation;
+   this->margin = (int)(UIScheme->margin * GZOOM);
+   this->separation = (int)(UIScheme->separation * GZOOM);
    this->ct = ct;
-   this->fontSize = UIScheme->fontSize;
+   this->fontSize = (int)(UIScheme->fontSize * GZOOM);
    this->fontStyle = UIScheme->fontStyle;
    this->fontColor = UIScheme->fontColor;
    this->background = UIScheme->bg;
    this->btnbg = UIScheme->btnbg;
-   this->btnPadding = UIScheme->btnPadding;
+   this->btnPadding = (int)(UIScheme->btnPadding);
 
    rendering = false;
 
-   btnRect = {(int)(margin * GZOOM), (int)(margin * GZOOM),
-      (int)(UIScheme->btnW * GZOOM), (int)(UIScheme->btnH * GZOOM)};
-   area = {(int)(x * GZOOM), (int)(y * GZOOM),
-      (int)(((UIScheme->btnW * cols) + (2 * margin) +
-      (separation * (cols - 1))) * GZOOM),
-      (int)(((UIScheme->btnH * rows) + (2 * margin) +
-      (separation * (rows - 1))) * GZOOM)
+   btnRect = {margin, margin,
+      (int)(UIScheme->btnW * GZOOM), (int)(UIScheme->btnH)};
+   area = {x, y,
+      (btnRect.w*cols) + (2*margin) + (separation*(cols-1)),
+      (btnRect.h*rows) + (2*margin) + (separation*(rows-1))
    };
 }
 
@@ -242,25 +264,23 @@ DropMenu::DropMenu(int x, int y, int cols, int rows, int btnW, int btnH,
    SDL_Color* fontColor, int btnPadding, CLICKREGION_TYPE ct, LTexture* bg,
    LTexture* btnbg) {
    // Rule of thumb: never make more than 8 rows
-   this->margin = margin;
-   this->separation = separation;
+   this->margin = (int)(margin * GZOOM);
+   this->separation = (int)(separation * GZOOM);
    this->ct = ct;
-   this->fontSize = fontSize;
+   this->fontSize = (int)(fontSize * GZOOM);
    this->fontStyle = fontStyle;
    this->fontColor = fontColor;
    this->background = bg;
    this->btnbg = btnbg;
-   this->btnPadding = btnPadding;
+   this->btnPadding = (int)(btnPadding * GZOOM);
 
    rendering = false;
 
-   btnRect = {(int)(margin * GZOOM), (int)(margin * GZOOM),
+   btnRect = {this->margin, this->margin,
       (int)(btnW * GZOOM), (int)(btnH * GZOOM)};
-   area = {(int)(x * GZOOM), (int)(y * GZOOM),
-      (int)(((btnW * cols) + (2 * margin) + (separation * (cols - 1))) *
-      GZOOM),
-      (int)(((btnH * rows) + (2 * margin) + (separation * (rows - 1))) *
-      GZOOM)
+   area = {x, y,
+      (btnRect.w*cols) + (2*this->margin) + (this->separation*(cols-1)),
+      (btnRect.h*rows) + (2*this->margin) + (this->separation*(rows-1))
    };
 }
 
@@ -275,6 +295,26 @@ void DropMenu::Open(int x, int y) {
 
    // We can add opening or closing animations here later on if needed
 
+   // Recalculate the background size, as DMs are liable to change the number of
+   // options over time
+   // This is also where we can determine proximity to window edge and
+   // adjust the X/y coords as needed
+   int btnc = buttons.size();
+   int cols = floor(btnc / 8) + 1;
+   int rows = btnc % 8;
+   int btnW = btnRect.w;
+   int btnH = btnRect.h;
+   area = {x, y,
+      (btnW*cols) + ((2*margin) + (separation*(cols-1))),
+      (btnH*rows) + ((2*margin) + (separation*(rows-1)))
+   };
+
+   if ((x + area.w) > SCREEN_WIDTH) area.x -= area.w;
+   if ((y + area.h) > SCREEN_HEIGHT) area.y -= area.h;
+
+   for (int i = 0; i < buttons.size(); i++) buttons[i].Displace(area.x, area.y);
+
+   // Push the updated buttons to the clickables vector
    for (int i = 0; i < buttons.size(); i++) {
       ClickRegion::clickables.push_back(&buttons[i]);
    }
@@ -282,6 +322,7 @@ void DropMenu::Open(int x, int y) {
 
 void DropMenu::Close() {
    for (int i = 0; i < buttons.size(); i++) {
+      buttons[i].ResetDisplace();
       ClickRegion::RemoveClickable(&buttons[i]);
    }
 
@@ -292,7 +333,9 @@ void DropMenu::Close() {
 void DropMenu::Render() {
    if (rendering) {
       background->Render(&area);
-      for (int i = 0; i < buttons.size(); i++) buttons[i].Render();
+      for (int i = 0; i < buttons.size(); i++) {
+         buttons[i].Render();
+      }
    }
 }
 

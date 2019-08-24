@@ -28,7 +28,7 @@ public:
    void Unlock();
    void Examine();
 
-   void OpenDropMenu();
+   void OpenDropMenu(int mx, int my);
 
    void Render();
 

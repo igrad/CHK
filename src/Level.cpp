@@ -1654,7 +1654,7 @@ void Level::GenerateLevel() {
    GenerateDoors();
    for (auto d : doors) {
       d->SetFunction(RIGHTCLICK, [d](int a, int b, int c) {
-         d->OpenDropMenu();
+         d->OpenDropMenu(a, b);
          return true;
       });
    }

@@ -356,13 +356,13 @@ void Door::Examine() {
 
 
 
-void Door::OpenDropMenu() {
+void Door::OpenDropMenu(int mx, int my) {
    Log("Opening door drop menu");
 
    dropmenu->ClearButtons();
    bool canBreak = !isOpen && !isBroken;
 
-   string op = isOpen ? "Open " : "Close ";
+   string op = isOpen ? "Close " : "Open ";
 
    dropmenu->AddButton(op + "slowly", LEFTCLICK, [this](int a, int b, int c){
       this->AttemptOpen(false);
@@ -401,7 +401,7 @@ void Door::OpenDropMenu() {
       return false;
    });
 
-   dropmenu->Open();
+   dropmenu->Open(mx, my);
 }
 
 

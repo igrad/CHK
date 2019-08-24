@@ -169,13 +169,13 @@ bool LoadMedia() {
 	// Load UI themes
 	UI.doorDM.bg->LoadFromFile("media\\images\\dmbg.png");
 	UI.doorDM.btnbg->LoadFromFile("media\\images\\dmbtnbg.png");
-	UI.doorDM.fontSize = 14;
+	UI.doorDM.fontSize = 16;
 	UI.doorDM.fontStyle = FONT_TYPED;
 	UI.doorDM.fontColor = &FONTC_OFFWHITE;
 	UI.doorDM.margin = 4;
 	UI.doorDM.separation = 4;
-	UI.doorDM.btnW = 60;
-	UI.doorDM.btnH = 10;
+	UI.doorDM.btnW = 100;
+	UI.doorDM.btnH = 30;
 
 	Log("Media loaded");
 
@@ -295,13 +295,15 @@ int main(int argc, char* args[]) {
 								eventIssued = true;
 
 								if (hoveredCRs.size() > 0) {
-									newDMWaiting = hoveredCRs.back()->OnLeftClick();
+									newDMWaiting =
+									hoveredCRs.back()->OnLeftClick(mx, my);
 								}
 							} else if (e.button.button == SDL_BUTTON_RIGHT) {
 								eventIssued = true;
 
 								if (hoveredCRs.size() > 0) {
-									newDMWaiting = hoveredCRs.back()->OnRightClick();
+									newDMWaiting =
+									hoveredCRs.back()->OnRightClick(mx, my);
 								}
 							}
 
@@ -312,25 +314,33 @@ int main(int argc, char* args[]) {
 								eventIssued = true;
 
 								if (hoveredCRs.size() > 0) {
-									newDMWaiting = hoveredCRs.back()->OnScrollUp();
+									newDMWaiting =
+									hoveredCRs.back()->OnScrollUp(mx, my);
 								}
 							} else if (e.wheel.y < 0) {
 								eventIssued = true;
 
 								if (hoveredCRs.size() > 0) {
-									newDMWaiting = hoveredCRs.back()->OnScrollDown();
+									newDMWaiting =
+									hoveredCRs.back()->OnScrollDown(mx, my);
 								}
 							}
 							break;
 						}
 
 						// Check to see if user has clicked out of the drop menu
-						if (e.type == SDL_MOUSEBUTTONDOWN ||
-							e.type == SDL_MOUSEWHEEL) {
+						if (e.type == SDL_MOUSEBUTTONDOWN) {
 							if (DropMenu::focusedDM != NULL) {
 								if (find(hoveredDMs.begin(), hoveredDMs.end(),
 									DropMenu::focusedDM) == hoveredDMs.end()) {
 									if (!newDMWaiting) DropMenu::focusedDM->Close();
+								} else {
+									// If they click on a button in the focused DM
+									// and it doesn't open a new DM, we can close the
+									// focused DM after the action is handled above
+									if ((hoveredCRs.size() > 0) && !newDMWaiting) {
+										DropMenu::focusedDM->Close();
+									}
 								}
 							}
 						}

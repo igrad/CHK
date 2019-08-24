@@ -47,11 +47,11 @@ public:
    void SetSize(SDL_Rect* r);
 
    // Click handling methods
-   void OnHover();
-   bool OnLeftClick();
-   bool OnRightClick();
-   bool OnScrollUp();
-   bool OnScrollDown();
+   void OnHover(int mx, int my);
+   bool OnLeftClick(int mx, int my);
+   bool OnRightClick(int mx, int my);
+   bool OnScrollUp(int mx, int my);
+   bool OnScrollDown(int mx, int my);
 
    // General UI handling methods
    DropMenu* GetDM();
@@ -81,6 +81,8 @@ public:
       SDL_Color* fontColor, int padding, SDL_Rect* clickRect,
       SDL_Rect* drawRect, CLICKREGION_TYPE ct, LTexture* bg);
 
+   void Displace(int ax, int ay);
+   void ResetDisplace();
    void Render(SDL_Rect* r = NULL);
 
    string path;
@@ -89,6 +91,10 @@ public:
    SDL_Rect drawRect;
    LTexture* texture;
    TTF_Font* font;
+
+   bool displaceSet;
+   int dX;
+   int dY;
 };
 
 
