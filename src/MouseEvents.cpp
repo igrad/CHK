@@ -133,21 +133,22 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    font = fontStyle;
    displaceSet = false;
 
-   LTexture tempText;
-   if (bgPath != "") tempText.LoadFromFile(bgPath);
    if (clickRect != NULL) this->clickRect = *clickRect;
    if (drawRect != NULL) this->drawRect = *drawRect;
-   int w = clickRect->w;
-   int h = clickRect->h;
+   int w = drawRect->w;
+   int h = drawRect->h;
 
    texture->CreateBlank(w, h);
 
    SDL_Rect r = {0, 0, w, h};
    SDL_SetRenderTarget(gRenderer, texture->mTexture);
-   tempText.Render(NULL);
 
+   LTexture tempText;
    int tw, th;
+   if (bgPath != "") tempText.LoadFromFile(bgPath);
+   tempText.Render(NULL);
    tempText.LoadFromRenderedText(textStr, fontColor, fontStyle, &tw, &th);
+   th = TTF_FontHeight(fontStyle);
 
    // Shrink the text to fit the font size
    double woh = tw/th;
@@ -174,8 +175,8 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
 
    if (clickRect != NULL) this->clickRect = *clickRect;
    if (drawRect != NULL) this->drawRect = *drawRect;
-   int w = clickRect->w * GZOOM;
-   int h = clickRect->h * GZOOM;
+   int w = drawRect->w * GZOOM;
+   int h = drawRect->h * GZOOM;
 
    texture->CreateBlank(w, h);
 
@@ -186,6 +187,7 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    int tw, th;
    LTexture tempText;
    tempText.LoadFromRenderedText(textStr, fontColor, fontStyle, &tw, &th);
+   th = TTF_FontHeight(fontStyle);
 
    // Shrink the text to fit the font size
    double fontH = fontSize * GZOOM;

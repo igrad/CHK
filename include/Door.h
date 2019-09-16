@@ -13,7 +13,7 @@
 class Door: public Actor, public ClickRegion {
 public:
    Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
-      int room, Locale* locale);
+      int room, int frameW, int frameH, Locale* locale);
 
    void SetHitbox(SDL_Rect* p1, SDL_Rect* p2, SDL_Rect* d);
 
@@ -48,6 +48,7 @@ public:
    Collider part1;
    Collider part2;
    Collider door;
+   SDL_Rect doorBackup;
 
    bool isOpen;
    bool hasLock;

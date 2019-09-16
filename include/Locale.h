@@ -45,6 +45,9 @@ public:
    LTexture wallTexture_LCorner;
    LTexture wallTexture_RCorner;
 
+   int defaultDoorFrameW;
+   int defaultDoorFrameH;
+
    float doorNSChangeRate_slow;
    float doorNSChangeRate_fast;
    float doorEChangeRate_slow;

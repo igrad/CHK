@@ -1,7 +1,7 @@
 #include "..\include\Door.h"
 
 Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
-   int room, Locale* locale): Actor(6, 4) {
+   int room, int frameW, int frameH, Locale* locale): Actor(6, 4) {
    char buf[6];
    snprintf(buf, 6, "%2i%2i", gridX, gridY);
    id = buf;
@@ -50,43 +50,43 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             // Door animations
             // Open slowly
             LoadAnimation(0, &locale->doorNS_right_inside_open_anim,
-               8, locale->doorNSChangeRate_slow, drawW, drawH);
+               8, locale->doorNSChangeRate_slow, frameW, frameH);
             // Open fast
             LoadAnimation(1, &locale->doorNS_right_inside_open_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
             // Close slowly
             LoadAnimation(2, &locale->doorNS_right_inside_open_anim,
-               8, locale->doorNSChangeRate_slow, drawW, drawH, true);
+               8, locale->doorNSChangeRate_slow, frameW, frameH, true);
                // Reversed animation because it's closing
             // Close fast
             LoadAnimation(3, &locale->doorNS_right_inside_open_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH, true);
+               8, locale->doorNSChangeRate_fast, frameW, frameH, true);
             // Break outward
             LoadAnimation(4, &locale->doorNS_right_inside_break_out_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
             // Break inward
             LoadAnimation(5, &locale->doorNS_right_inside_break_in_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
          } else { // Left-handed door
             part1.hitBox = locale->doorNS_left_inside_part1Clip;
             part2.hitBox = locale->doorNS_left_inside_part2Clip;
             door.hitBox = locale->doorNS_left_inside_doorClip;
 
-            LoadTexture(0, &locale->doorNS_left_inside_open);
-            LoadTexture(1, &locale->doorNS_left_inside_closed);
+            LoadTexture(0, &locale->doorNS_left_inside_closed);
+            LoadTexture(1, &locale->doorNS_left_inside_open);
 
             LoadAnimation(0, &locale->doorNS_left_inside_open_anim,
-               8, locale->doorNSChangeRate_slow, drawW, drawH);
+               8, locale->doorNSChangeRate_slow, frameW, frameH);
             LoadAnimation(1, &locale->doorNS_left_inside_open_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
             LoadAnimation(2, &locale->doorNS_left_inside_open_anim,
-               8, locale->doorNSChangeRate_slow, drawW, drawH, true);
+               8, locale->doorNSChangeRate_slow, frameW, frameH, true);
             LoadAnimation(3, &locale->doorNS_left_inside_open_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH, true);
+               8, locale->doorNSChangeRate_fast, frameW, frameH, true);
             LoadAnimation(4, &locale->doorNS_left_inside_break_out_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
             LoadAnimation(5, &locale->doorNS_left_inside_break_in_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
          }
          break;
       case EAST:
@@ -95,41 +95,41 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             part2.hitBox = locale->doorE_right_part2Clip;
             door.hitBox = locale->doorE_right_doorClip;
 
-            LoadTexture(0, &locale->doorE_right_open);
-            LoadTexture(1, &locale->doorE_right_closed);
+            LoadTexture(0, &locale->doorE_right_closed);
+            LoadTexture(1, &locale->doorE_right_open);
 
             LoadAnimation(0, &locale->doorE_right_open_anim,
-               8, locale->doorEChangeRate_slow, drawW, drawH);
+               8, locale->doorEChangeRate_slow, frameW, frameH);
             LoadAnimation(1, &locale->doorE_right_open_anim,
-               8, locale->doorEChangeRate_fast, drawW, drawH);
+               8, locale->doorEChangeRate_fast, frameW, frameH);
             LoadAnimation(2, &locale->doorE_right_open_anim,
-               8, locale->doorEChangeRate_slow, drawW, drawH, true);
+               8, locale->doorEChangeRate_slow, frameW, frameH, true);
             LoadAnimation(3, &locale->doorE_right_open_anim,
-               8, locale->doorEChangeRate_fast, drawW, drawH, true);
+               8, locale->doorEChangeRate_fast, frameW, frameH, true);
             LoadAnimation(4, &locale->doorE_right_open_anim,
-               8, locale->doorEChangeRate_fast, drawW, drawH);
+               8, locale->doorEChangeRate_fast, frameW, frameH);
             LoadAnimation(5, &locale->doorE_right_open_anim,
-               8, locale->doorEChangeRate_fast, drawW, drawH);
+               8, locale->doorEChangeRate_fast, frameW, frameH);
          } else {
             part1.hitBox = locale->doorE_left_part1Clip;
             part2.hitBox = locale->doorE_left_part2Clip;
             door.hitBox = locale->doorE_left_doorClip;
 
-            LoadTexture(0, &locale->doorE_left_open);
-            LoadTexture(1, &locale->doorE_left_closed);
+            LoadTexture(0, &locale->doorE_left_closed);
+            LoadTexture(1, &locale->doorE_left_open);
 
             LoadAnimation(0, &locale->doorE_left_open_anim,
-               8, locale->doorEChangeRate_slow, drawW, drawH);
+               8, locale->doorEChangeRate_slow, frameW, frameH);
             LoadAnimation(1, &locale->doorE_left_open_anim,
-               8, locale->doorEChangeRate_fast, drawW, drawH);
+               8, locale->doorEChangeRate_fast, frameW, frameH);
             LoadAnimation(2, &locale->doorE_left_open_anim,
-               8, locale->doorEChangeRate_slow, drawW, drawH, true);
+               8, locale->doorEChangeRate_slow, frameW, frameH, true);
             LoadAnimation(3, &locale->doorE_left_open_anim,
-               8, locale->doorEChangeRate_fast, drawW, drawH, true);
+               8, locale->doorEChangeRate_fast, frameW, frameH, true);
             LoadAnimation(4, &locale->doorE_left_open_anim,
-               8, locale->doorEChangeRate_fast, drawW, drawH);
+               8, locale->doorEChangeRate_fast, frameW, frameH);
             LoadAnimation(5, &locale->doorE_left_open_anim,
-               8, locale->doorEChangeRate_fast, drawW, drawH);
+               8, locale->doorEChangeRate_fast, frameW, frameH);
          }
          break;
       case SOUTH:
@@ -138,41 +138,41 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             part2.hitBox = locale->doorNS_right_outside_part2Clip;
             door.hitBox = locale->doorNS_right_outside_doorClip;
 
-            LoadTexture(0, &locale->doorNS_right_outside_open);
-            LoadTexture(1, &locale->doorNS_right_outside_closed);
+            LoadTexture(0, &locale->doorNS_right_outside_closed);
+            LoadTexture(1, &locale->doorNS_right_outside_open);
 
             LoadAnimation(0, &locale->doorNS_right_outside_open_anim,
-               8, locale->doorNSChangeRate_slow, drawW, drawH);
+               8, locale->doorNSChangeRate_slow, frameW, frameH);
             LoadAnimation(1, &locale->doorNS_right_outside_open_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
             LoadAnimation(2, &locale->doorNS_right_outside_open_anim,
-               8, locale->doorNSChangeRate_slow, drawW, drawH, true);
+               8, locale->doorNSChangeRate_slow, frameW, frameH, true);
             LoadAnimation(3, &locale->doorNS_right_outside_open_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH, true);
+               8, locale->doorNSChangeRate_fast, frameW, frameH, true);
             LoadAnimation(4, &locale->doorNS_right_outside_break_out_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
             LoadAnimation(5, &locale->doorNS_right_outside_break_in_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
          } else {
             part1.hitBox = locale->doorNS_left_outside_part1Clip;
             part2.hitBox = locale->doorNS_left_outside_part2Clip;
             door.hitBox = locale->doorNS_left_outside_doorClip;
 
-            LoadTexture(0, &locale->doorNS_left_outside_open);
-            LoadTexture(1, &locale->doorNS_left_outside_closed);
+            LoadTexture(0, &locale->doorNS_left_outside_closed);
+            LoadTexture(1, &locale->doorNS_left_outside_open);
 
             LoadAnimation(0, &locale->doorNS_left_outside_open_anim,
-               8, locale->doorNSChangeRate_slow, drawW, drawH);
+               8, locale->doorNSChangeRate_slow, frameW, frameH);
             LoadAnimation(1, &locale->doorNS_left_outside_open_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
             LoadAnimation(2, &locale->doorNS_left_outside_open_anim,
-               8, locale->doorNSChangeRate_slow, drawW, drawH, true);
+               8, locale->doorNSChangeRate_slow, frameW, frameH, true);
             LoadAnimation(3, &locale->doorNS_left_outside_open_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH, true);
+               8, locale->doorNSChangeRate_fast, frameW, frameH, true);
             LoadAnimation(4, &locale->doorNS_left_outside_break_out_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
             LoadAnimation(5, &locale->doorNS_left_outside_break_in_anim,
-               8, locale->doorNSChangeRate_fast, drawW, drawH);
+               8, locale->doorNSChangeRate_fast, frameW, frameH);
          }
          break;
       case WEST:
@@ -181,41 +181,41 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             part2.hitBox = locale->doorW_right_part2Clip;
             door.hitBox = locale->doorW_right_doorClip;
 
-            LoadTexture(0, &locale->doorW_right_open);
-            LoadTexture(1, &locale->doorW_right_closed);
+            LoadTexture(0, &locale->doorW_right_closed);
+            LoadTexture(1, &locale->doorW_right_open);
 
             LoadAnimation(0, &locale->doorW_right_open_anim,
-               8, locale->doorWChangeRate_slow, drawW, drawH);
+               8, locale->doorWChangeRate_slow, frameW, frameH);
             LoadAnimation(1, &locale->doorW_right_open_anim,
-               8, locale->doorWChangeRate_fast, drawW, drawH);
+               8, locale->doorWChangeRate_fast, frameW, frameH);
             LoadAnimation(2, &locale->doorW_right_open_anim,
-               8, locale->doorWChangeRate_slow, drawW, drawH, true);
+               8, locale->doorWChangeRate_slow, frameW, frameH, true);
             LoadAnimation(3, &locale->doorW_right_open_anim,
-               8, locale->doorWChangeRate_fast, drawW, drawH, true);
+               8, locale->doorWChangeRate_fast, frameW, frameH, true);
             LoadAnimation(4, &locale->doorW_right_open_anim,
-               8, locale->doorWChangeRate_fast, drawW, drawH);
+               8, locale->doorWChangeRate_fast, frameW, frameH);
             LoadAnimation(5, &locale->doorW_right_open_anim,
-               8, locale->doorWChangeRate_fast, drawW, drawH);
+               8, locale->doorWChangeRate_fast, frameW, frameH);
          } else {
             part1.hitBox = locale->doorW_left_part1Clip;
             part2.hitBox = locale->doorW_left_part2Clip;
             door.hitBox = locale->doorW_left_doorClip;
 
-            LoadTexture(0, &locale->doorW_left_open);
-            LoadTexture(1, &locale->doorW_left_closed);
+            LoadTexture(0, &locale->doorW_left_closed);
+            LoadTexture(1, &locale->doorW_left_open);
 
             LoadAnimation(0, &locale->doorW_left_open_anim,
-               8, locale->doorWChangeRate_slow, drawW, drawH);
+               8, locale->doorWChangeRate_slow, frameW, frameH);
             LoadAnimation(1, &locale->doorW_left_open_anim,
-               8, locale->doorWChangeRate_fast, drawW, drawH);
+               8, locale->doorWChangeRate_fast, frameW, frameH);
             LoadAnimation(2, &locale->doorW_left_open_anim,
-               8, locale->doorWChangeRate_slow, drawW, drawH, true);
+               8, locale->doorWChangeRate_slow, frameW, frameH, true);
             LoadAnimation(3, &locale->doorW_left_open_anim,
-               8, locale->doorWChangeRate_fast, drawW, drawH, true);
+               8, locale->doorWChangeRate_fast, frameW, frameH, true);
             LoadAnimation(4, &locale->doorW_left_open_anim,
-               8, locale->doorWChangeRate_fast, drawW, drawH);
+               8, locale->doorWChangeRate_fast, frameW, frameH);
             LoadAnimation(5, &locale->doorW_left_open_anim,
-               8, locale->doorWChangeRate_fast, drawW, drawH);
+               8, locale->doorWChangeRate_fast, frameW, frameH);
          }
          break;
    }
@@ -232,6 +232,7 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    door.hitBox.y = door.hitBox.y * GZOOM;
    door.hitBox.w = door.hitBox.w * GZOOM;
    door.hitBox.h = door.hitBox.h * GZOOM;
+   doorBackup = door.hitBox;
 
    part1.hitBox.x += (gridX * tileW);
    part1.hitBox.y += (gridY * tileW);
@@ -252,30 +253,23 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    linkedDM = dropmenu;
 }
 
-
-
 void Door::SetHitbox(SDL_Rect* p1, SDL_Rect* p2, SDL_Rect* d) {
    // We'll use this in the future for creating doors that don't perfectly fit
    // our default door structure, such as boss door entrances
    part1.SetHitBox(p1->x, p1->y, p1->w, p1->h);
    part2.SetHitBox(p2->x, p2->y, p2->w, p2->h);
    door.SetHitBox(d->x, d->y, d->w, d->h);
+   doorBackup = door.hitBox;
 }
-
-
 
 void Door::SetLocked(string key) {
    keyID = key;
    isLocked = true;
 }
 
-
-
 void Door::AttemptUnlock(string key) {
    if (key == keyID) Unlock();
 }
-
-
 
 void Door::AttemptOpen(bool fast) {
    //if (isLocked) return; // Inform the player that the door is locked!
@@ -284,55 +278,60 @@ void Door::AttemptOpen(bool fast) {
    this->Open(fast);
 }
 
-
-
 void Door::Open(bool fast) {
    Log("Opening!");
    if (!isOpen) {
       isOpen = true;
       isLocked = false;
 
-      hitBox.w = 0;
-      hitBox.h = 0;
+      door.hitBox.w = 0;
+      door.hitBox.h = 0;
 
       // Queue animation of door opening
-      newPhase = true;
-      if (phase == ANIM_OPEN_FAST || phase == ANIM_OPEN_SLOW) {
-         newPhase = false;
-         frame = anims[phase].frameCount - frame;
-      }
+      // newPhase = true;
+      // if (phase == ANIM_OPEN_FAST || phase == ANIM_OPEN_SLOW) {
+      //    newPhase = false;
+      //    frame = anims[phase].frameCount - frame;
+      // }
 
-      if (fast) phase = ANIM_CLOSE_FAST;
-      else phase = ANIM_CLOSE_SLOW;
+      Log("Setting active anim");
+      if (fast) SetActiveAnim(ANIM_OPEN_FAST);
+      else SetActiveAnim(ANIM_OPEN_SLOW);
+      // BufferTexture(TEXT_OPENED);
+
+      Log("Set active anim and buffer texture");
    }
 }
-
-
 
 void Door::Close(bool fast) {
    if (isOpen) {
-      isOpen = false;
-      hitBox = drawBox;
-
-      // Queue animation of door closing
-      newPhase = true;
-      if (phase == ANIM_CLOSE_FAST || phase == ANIM_CLOSE_SLOW) {
-         newPhase = false;
-         frame = anims[phase].frameCount - frame;
+      if (isBroken) {
+         // tell the player the door is broken
+         return;
       }
 
-      if (fast) phase = ANIM_OPEN_FAST;
-      else phase = ANIM_OPEN_SLOW;
+      Log("Closing the door");
+
+      isOpen = false;
+      door.hitBox.w = doorBackup.w;
+      door.hitBox.h = doorBackup.h;
+
+      // Queue animation of door closing
+      // newPhase = true;
+      // if (phase == ANIM_CLOSE_FAST || phase == ANIM_CLOSE_SLOW) {
+      //    newPhase = false;
+      //    frame = anims[phase].frameCount - frame;
+      // }
+
+      if (fast) SetActiveAnim(ANIM_CLOSE_FAST);
+      else SetActiveAnim(ANIM_CLOSE_SLOW);
+      //BufferTexture(TEXT_CLOSED);
    }
 }
-
-
 
 void Door::Break() {
    // Do the breaking thing
 }
-
-
 
 void Door::Lock() {
    if (!isLocked) {
@@ -340,21 +339,15 @@ void Door::Lock() {
    }
 }
 
-
-
 void Door::Unlock() {
    if (isLocked) {
       isLocked = false;
    }
 }
 
-
-
 void Door::Examine() {
    // Describe if the door is broken, unlocked, has a lock, etc.
 }
-
-
 
 void Door::OpenDropMenu(int mx, int my) {
    Log("Opening door drop menu");
@@ -365,12 +358,14 @@ void Door::OpenDropMenu(int mx, int my) {
    string op = isOpen ? "Close " : "Open ";
 
    dropmenu->AddButton(op + "slowly", LEFTCLICK, [this](int a, int b, int c){
-      this->AttemptOpen(false);
+      if (!this->isOpen) this->AttemptOpen(false);
+      else this->Close(false);
       return false;
    });
 
    dropmenu->AddButton(op + "fast", LEFTCLICK, [this](int a, int b, int c){
-      this->AttemptOpen(true);
+      if (!this->isOpen) this->AttemptOpen(true);
+      else this->Close(false);
       return false;
    });
 
@@ -404,8 +399,6 @@ void Door::OpenDropMenu(int mx, int my) {
    dropmenu->Open(mx, my);
 }
 
-
-
 void Door::Render() {
    if (newPhase) {
       frame = 0;
@@ -413,19 +406,22 @@ void Door::Render() {
    }
 
    Actor::Render(frame, Camera::x, Camera::y);
-   if (frame >= anims[activeAnim].frameCount) {
+   if (usingAnims) frame++;
+   if (anims[activeAnim].animDone) {
       if (activeAnim == ANIM_OPEN_SLOW || activeAnim == ANIM_OPEN_FAST) {
-         activeAnim = TEXT_OPEN;
+         // activeAnim = TEXT_OPENED;
+         // usingAnims = false;
          newPhase = true;
+         SetActiveTexture(TEXT_OPENED);
       } else if (activeAnim == ANIM_CLOSE_SLOW ||
          activeAnim == ANIM_CLOSE_FAST) {
-         activeAnim = TEXT_CLOSE;
+         // activeAnim = TEXT_CLOSED;
+         // usingAnims = false;
          newPhase = true;
+         SetActiveTexture(TEXT_CLOSED);
       }
    }
 }
-
-
 
 Door::~Door() {
    delete locale;

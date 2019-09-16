@@ -8,18 +8,6 @@
 #include "Animation.h"
 
 
-// PHASE_ANIMS_OPENS and PHASE_TEXT_OPENS are used for doors, gates, windows, chests... anything that opens and closes and has static textures displayed while in an open/close state
-// Count: 2
-enum PHASE_ANIMS_OPENS {
-   ANIM_OPEN,
-   ANIM_CLOSE
-};
-
-enum PHASE_TEXT_OPENS {
-   TEXT_CLOSE,
-   TEXT_OPEN
-};
-
 // Actor with melee combat capabilities and some special abilities
 // Count: 16
 enum PHASE_CHARACTER {
@@ -43,9 +31,12 @@ enum PHASE_CHARACTER {
 
 // Simple doors
 // Count: 8
-enum PHASE_DOOR {
+enum PHASE_DOOR_TEXT {
    TEXT_CLOSED,
    TEXT_OPENED,
+};
+
+enum PHASE_DOOR_ANIM {
    ANIM_OPEN_SLOW,
    ANIM_OPEN_FAST,
    ANIM_CLOSE_SLOW,
@@ -79,10 +70,13 @@ class Actor: public Collider {
          int frameW, int frameH, bool reversed = false);
       bool LoadAnimation(int phase, LTexture* ref, int frames, float duration,
          int frameW, int frameH, bool reversed = false);
-      void SetActiveAnim(int anim);
+      void SetActiveAnim(int anim, bool loop = false);
       bool LoadTexture(int phase, string path);
       bool LoadTexture(int phase, LTexture* ref);
       void SetActiveTexture(int phase);
+
+      void BufferTexture(int textPhase);
+      void BufferAnimation(int animPhase, bool loop = false);
 
       void HandleMovement(int camX, int camY);
       void Render(int screenFrame, int camX, int camY);
@@ -111,6 +105,10 @@ class Actor: public Collider {
       int numTextures;
       LTexture* textures;
       int activeTexture;
+
+      int bufferedText;
+      int bufferedAnim;
+      bool loopBufferedAnim;
 };
 
 #endif

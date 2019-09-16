@@ -10,14 +10,10 @@ LTexture::LTexture() {
    loaded = false;
 }
 
-
-
 LTexture::LTexture(string path) {
    LTexture();
    LoadFromFile(path);
 }
-
-
 
 bool LTexture::LoadFromFile(string path) {
    // Get rid of preexisting texture
@@ -57,27 +53,25 @@ bool LTexture::LoadFromFile(string path) {
    return mTexture != NULL;
 }
 
-
-
 bool LTexture::LoadFromReference(LTexture* ref) {
-   // Get rid of preexisting texture
-   if (loaded) Free();
+   Log("Assigning mTexture");
+   mTexture = ref->mTexture;
+   mWidth = ref->mWidth;
+   mHeight = ref->mHeight;
 
-   this->mTexture = ref->mTexture;
-
+   Log("Assigned");
    loaded = true;
 
+   Log("returning");
    // Return success
    return mTexture != NULL;
 }
-
-
 
 bool LTexture::LoadFromRenderedText(string textureText, SDL_Color* textColor,
    TTF_Font* font, int* rw, int* rh) {
    if (loaded) Free();
 
-   SDL_Surface* textSurface = TTF_RenderText_Solid(font, textureText.c_str(),
+   SDL_Surface* textSurface = TTF_RenderText_Blended(font, textureText.c_str(),
    *textColor);
    if (textSurface == NULL) {
       Warn("Failed to load texture from rendered text");
@@ -104,8 +98,6 @@ bool LTexture::LoadFromRenderedText(string textureText, SDL_Color* textColor,
    return mTexture != NULL;
 }
 
-
-
 bool LTexture::CreateBlank(int width, int height, SDL_TextureAccess access) {
    if (loaded) Free();
    mTexture = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_RGBA8888, access,
@@ -125,32 +117,22 @@ bool LTexture::CreateBlank(int width, int height, SDL_TextureAccess access) {
    return mTexture != NULL;
 }
 
-
-
 void LTexture::Render(SDL_Rect* drawBox, SDL_Rect* clip) {
    SDL_RenderCopy(gRenderer, mTexture, clip, drawBox);
 }
-
-
 
 void LTexture::Render(int x, int y, SDL_Rect* clip)  {
    SDL_Rect r = {x, y, mWidth, mHeight};
    SDL_RenderCopy(gRenderer, mTexture, clip, &r);
 }
 
-
-
 int LTexture::GetWidth() {
    return mWidth;
 }
 
-
-
 int LTexture::GetHeight() {
    return mHeight;
 }
-
-
 
 void LTexture::Free() {
    // Free texture if it exists
@@ -162,8 +144,6 @@ void LTexture::Free() {
       loaded = false;
    }
 }
-
-
 
 LTexture::~LTexture() {
    //Deallocate

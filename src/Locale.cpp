@@ -4,8 +4,6 @@ Locale::Locale() {
 
 }
 
-
-
 void Locale::Initialize(string prefix) {
    // First, we initialize the Locale numerical properties based on the
    // provided prefix
@@ -30,9 +28,9 @@ void Locale::Initialize(string prefix) {
    doorNS_right_inside_closed.LoadFromFile(prefix +
       "doorNS_right_inside_closed.png");
    doorNS_right_inside_open_anim.LoadFromFile(prefix +
-      "doorNS_right_inside_open_anim.png");
+      "doorNS_right_inside_anim.png");
    doorNS_right_inside_close_anim.LoadFromFile(prefix +
-      "doorNS_right_inside_close_anim.png");
+      "doorNS_right_inside_anim.png");
    doorNS_right_inside_break_out_anim.LoadFromFile(prefix +
       "doorNS_right_inside_break_out_anim.png");
    doorNS_right_inside_break_in_anim.LoadFromFile(prefix +
@@ -43,9 +41,9 @@ void Locale::Initialize(string prefix) {
    doorNS_left_inside_closed.LoadFromFile(prefix +
       "doorNS_left_inside_closed.png");
    doorNS_left_inside_open_anim.LoadFromFile(prefix +
-      "doorNS_left_inside_open_anim.png");
+      "doorNS_left_inside_anim.png");
    doorNS_left_inside_close_anim.LoadFromFile(prefix +
-      "doorNS_left_inside_close_anim.png");
+      "doorNS_left_inside_anim.png");
    doorNS_left_inside_break_out_anim.LoadFromFile(prefix +
       "doorNS_left_inside_break_out_anim.png");
    doorNS_left_inside_break_in_anim.LoadFromFile(prefix +
@@ -56,9 +54,9 @@ void Locale::Initialize(string prefix) {
    doorNS_right_outside_closed.LoadFromFile(prefix +
       "doorNS_right_outside_closed.png");
    doorNS_right_outside_open_anim.LoadFromFile(prefix +
-      "doorNS_right_outside_open_anim.png");
+      "doorNS_right_outside_anim.png");
    doorNS_right_outside_close_anim.LoadFromFile(prefix +
-      "doorNS_right_outside_close_anim.png");
+      "doorNS_right_outside_anim.png");
    doorNS_right_outside_break_out_anim.LoadFromFile(prefix +
       "doorNS_right_outside_break_out_anim.png");
    doorNS_right_outside_break_in_anim.LoadFromFile(prefix +
@@ -69,9 +67,9 @@ void Locale::Initialize(string prefix) {
    doorNS_left_outside_closed.LoadFromFile(prefix +
       "doorNS_left_outside_closed.png");
    doorNS_left_outside_open_anim.LoadFromFile(prefix +
-      "doorNS_left_outside_open_anim.png");
+      "doorNS_left_outside_anim.png");
    doorNS_left_outside_close_anim.LoadFromFile(prefix +
-      "doorNS_left_outside_close_anim.png");
+      "doorNS_left_outside_anim.png");
    doorNS_left_outside_break_out_anim.LoadFromFile(prefix +
       "doorNS_left_outside_break_out_anim.png");
    doorNS_left_outside_break_in_anim.LoadFromFile(prefix +
@@ -98,8 +96,6 @@ void Locale::Initialize(string prefix) {
    doorW_right_broke_out.LoadFromFile(prefix + "doorW_right_broke_out.png");
 }
 
-
-
 void Locale::InitDungeon() {
    mapSize = 50;
    minRoomDim = 3;
@@ -117,6 +113,9 @@ void Locale::InitDungeon() {
    floorTextureSize = 320;
    wallHeight = 43;
    voidTextureSize = 640;
+
+   defaultDoorFrameW = 40;
+   defaultDoorFrameH = 80;
 
    doorNSChangeRate_slow = 1.5;
    doorNSChangeRate_fast = 0.5;

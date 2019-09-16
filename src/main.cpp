@@ -142,6 +142,9 @@ bool LoadMedia() {
 	FONT_TYPED_BOLD = TTF_OpenFont("fonts/BaskervaldADFStd-Bold.otf", 24);
 	FONT_TYPED_ITALIC = TTF_OpenFont("fonts/BaskervaldADFStd-Italic.otf", 24);
 
+	// TODO: Initialize locale (this should eventually be moved to level loading)
+	dungeon.Initialize("dungeon");
+
 	player.SetDrawBoxSize(0, 0, 20, 40);
 	player.SetHitBoxSize(5, 35, 10, 5);
 	player.LoadAnimation(ANIM_IDLE_I, "media\\images\\Idle_I.png",
@@ -160,10 +163,27 @@ bool LoadMedia() {
 		8, 1.2, 20, 40);
 	player.LoadAnimation(ANIM_WALK_IV, "media\\images\\Walking_IV.png",
 		8, 1.2, 20, 40);
-	player.SetActiveAnim(ANIM_IDLE_IV);
+	// player.LoadAnimation(ANIM_IDLE_I, &dungeon.doorNS_left_inside_open_anim,
+	// 	8, 2.0, 40, 80);
+	// player.LoadAnimation(ANIM_IDLE_I, &dungeon.doorNS_left_inside_open_anim,
+	// 	8, 2.0, 40, 80);
+	// player.LoadAnimation(ANIM_IDLE_II, &dungeon.doorNS_left_inside_open_anim,
+	// 	8, 2.0, 40, 80);
+	// player.LoadAnimation(ANIM_IDLE_III, &dungeon.doorNS_left_inside_open_anim,
+	// 	8, 2.0, 40, 80);
+	// player.LoadAnimation(ANIM_IDLE_IV, &dungeon.doorNS_left_inside_open_anim,
+	// 	8, 2.0, 40, 80);
+	// player.LoadAnimation(ANIM_WALK_I, &dungeon.doorNS_left_inside_open_anim,
+	// 	8, 2.0, 40, 80);
+	// player.LoadAnimation(ANIM_WALK_II, &dungeon.doorNS_left_inside_open_anim,
+	// 	8, 2.0, 40, 80);
+	// player.LoadAnimation(ANIM_WALK_III, &dungeon.doorNS_left_inside_open_anim,
+	// 	8, 2.0, 40, 80);
+	// player.LoadAnimation(ANIM_WALK_IV, &dungeon.doorNS_left_inside_open_anim,
+	// 	8, 2.0, 40, 80);
 
 	// TODO: Initialize locale (this should eventually be moved to level loading)
-	dungeon.Initialize("dungeon");
+	//dungeon.Initialize("dungeon");
 
 	Log("Loading media for UI");
 	// Load UI themes
@@ -284,8 +304,8 @@ int main(int argc, char* args[]) {
 						hoveredCRs = ClickRegion::GetRegionsAtMouse(gmx, gmy);
 						hoveredDMs = DropMenu::GetDMsAtMouse(gmx, gmy);
 
-						printf("\nMouse: %4d, %4d {%4d, %4d}\t\tCRs: %d, DMs: %d",
-						mx, my, gmx, gmy, hoveredCRs.size(), hoveredDMs.size());
+						// printf("\nMouse: %4d, %4d {%4d, %4d}\t\tCRs: %d, DMs: %d",
+						// mx, my, gmx, gmy, hoveredCRs.size(), hoveredDMs.size());
 
 						// TODO: Working on updating this chunk with the new static members of ClickRegion and DropMenu
 						bool eventIssued = false;

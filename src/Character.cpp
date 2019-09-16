@@ -2,7 +2,6 @@
 
 int statCap = 8;
 
-
 Character::Character(int level, int HP, int moveSpeed, int numAnims,
    int numTextures, bool collides): Actor(numAnims, numTextures) {
    charLevel = level;
@@ -17,13 +16,9 @@ Character::Character(int level, int HP, int moveSpeed, int numAnims,
    stats = new int[6];
 }
 
-
-
 int Character::GetStat(STATNAME stat) {
    return stats[stat];
 }
-
-
 
 bool Character::SetStat(STATNAME stat, int newVal, bool ignoreStatCap) {
    if ((newVal > statCap) && !ignoreStatCap) {
@@ -37,8 +32,6 @@ bool Character::SetStat(STATNAME stat, int newVal, bool ignoreStatCap) {
       return true;
    }
 }
-
-
 
 bool Character::SetStats(int strength, int dexterity, int constitution,
    int intellect, int wisdom, int charisma) {
@@ -54,14 +47,10 @@ bool Character::SetStats(int strength, int dexterity, int constitution,
    return success;
 }
 
-
-
 void Character::SetHPAndResourceToFull() {
    currentHP = maxHP;
    currentResource = maxResource;
 }
-
-
 
 void Character::SetSpawnPoint(SDL_Rect r) {
    int x = r.x - (drawBox.w/2);
@@ -69,14 +58,10 @@ void Character::SetSpawnPoint(SDL_Rect r) {
    SetPosition(x, y);
 }
 
-
-
 void Character::SetPosition(int newX, int newY) {
    xPos = newX;
    yPos = newY;
 }
-
-
 
 void Character::MoveTowards(int destX, int destY) {
    float vX = destX - xPos;
@@ -93,8 +78,6 @@ void Character::MoveTowards(int destX, int destY) {
    SetPosition(newX, newY);
 }
 
-
-
 void Character::SetXVelocity(int multiplier) {
    xVelocity = pixelsPerFrame * multiplier;
    xVelocity = (multiplier < 1) ? ceil(xVelocity) : floor (xVelocity);
@@ -102,16 +85,12 @@ void Character::SetXVelocity(int multiplier) {
    queueCollisions = true;
 }
 
-
-
 void Character::SetYVelocity(int multiplier) {
    yVelocity = pixelsPerFrame * multiplier;
    yVelocity = (multiplier < 1) ? ceil(yVelocity) : floor (yVelocity);
 
    queueCollisions = true;
 }
-
-
 
 void Character::Render(int screenFrame, int camX, int camY) {
    // Player animations
@@ -142,7 +121,7 @@ void Character::Render(int screenFrame, int camX, int camY) {
       }
    }
 
-   if (activeAnim != phase) { SetActiveAnim(phase); }
+   if (activeAnim != phase) { SetActiveAnim(phase, true); }
 
    xVelocity = 0;
    yVelocity = 0;
@@ -150,13 +129,9 @@ void Character::Render(int screenFrame, int camX, int camY) {
    Actor::Render(screenFrame, camX, camY);
 }
 
-
-
 void Character::Free() {
    delete stats;
 }
-
-
 
 Character::~Character() {
 

@@ -29,6 +29,10 @@ class Animation: public LTexture {
       // Increment the current frame count
       void IncrementCurrentFrame();
 
+      // Assign the animFrameOffset value - this is called when this animation
+      // is first being triggered
+      void SetAnimFrameOffset(int screenFrame);
+
       // Render the current frame to screen
       void Render(SDL_Rect* drawBox, int screenFrame);
 
@@ -40,10 +44,20 @@ class Animation: public LTexture {
 
       // Number of frames stored in the sprite
       int frameCount;
-      
+
+      // Loop animation or not
+      bool looping;
+
+      // Status of animation completion
+      // Always false if the animation is looping
+      bool animDone;
+
    private:
       // Duration of the animation
       float animDuration;
+
+      // Offset from the system time-implied frame
+      int animFrameOffset;
 
       // Frame dimensions
       int frameW;

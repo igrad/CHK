@@ -1437,7 +1437,7 @@ void Level::GenerateDoors() {
       bool hand = coords[i][4]; // false: left-handed, true: right-handed
 
       doors.push_back(new Door(x, y, locale->doorSize, 1, dir, hand, room,
-         locale));
+         locale->defaultDoorFrameW, locale->defaultDoorFrameH, locale));
       ground[y][x] = 16; // Door tiles use 16
       // We reserve a floor tile to make sure the door can be opened
       if (dir == NORTH) ground[y + 1][x] = 5;
