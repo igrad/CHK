@@ -54,15 +54,12 @@ bool LTexture::LoadFromFile(string path) {
 }
 
 bool LTexture::LoadFromReference(LTexture* ref) {
-   Log("Assigning mTexture");
    mTexture = ref->mTexture;
    mWidth = ref->mWidth;
    mHeight = ref->mHeight;
 
-   Log("Assigned");
    loaded = true;
 
-   Log("returning");
    // Return success
    return mTexture != NULL;
 }

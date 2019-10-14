@@ -21,6 +21,11 @@ DropMenuUI::DropMenuUI() {
    btnPadding = 0;
 }
 
+DropMenuUI::~DropMenuUI() {
+   delete bg;
+   delete btnbg;
+}
+
 UITheme::UITheme() {
 
 }

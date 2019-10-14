@@ -85,6 +85,10 @@ public:
    void ResetDisplace();
    void Render(SDL_Rect* r = NULL);
 
+   ~ClickButton();
+
+   bool loadedFromReference;
+
    string path;
    string text;
    int size;
@@ -130,6 +134,8 @@ public:
 
       buttons.push_back(b);
    }
+
+   void Free();
 
    static vector<DropMenu*> GetDMsAtMouse(int mx, int my);
    static void AddPendingDM(DropMenu* dm);

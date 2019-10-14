@@ -17,7 +17,7 @@ Room::Room() {
 
 
 Room::~Room() {
-   delete connectedRooms;
+   delete[] connectedRooms;
 }
 
 
@@ -1972,6 +1972,7 @@ void Level::RenderDoors(int yO, int yF) {
 
 
 Level::~Level() {
-   delete rooms;
-   delete connectedToSpawn;
+   for (auto door : doors) delete door;
+   delete[] rooms;
+   delete[] connectedToSpawn;
 }

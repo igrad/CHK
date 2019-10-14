@@ -297,7 +297,7 @@ void Door::Open(bool fast) {
       Log("Setting active anim");
       if (fast) SetActiveAnim(ANIM_OPEN_FAST);
       else SetActiveAnim(ANIM_OPEN_SLOW);
-      // BufferTexture(TEXT_OPENED);
+      BufferTexture(TEXT_OPENED);
 
       Log("Set active anim and buffer texture");
    }
@@ -325,7 +325,7 @@ void Door::Close(bool fast) {
 
       if (fast) SetActiveAnim(ANIM_CLOSE_FAST);
       else SetActiveAnim(ANIM_CLOSE_SLOW);
-      //BufferTexture(TEXT_CLOSED);
+      BufferTexture(TEXT_CLOSED);
    }
 }
 
@@ -424,5 +424,5 @@ void Door::Render() {
 }
 
 Door::~Door() {
-   delete locale;
+   delete dropmenu;
 }

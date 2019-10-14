@@ -127,22 +127,20 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    SDL_Color* fontColor, int padding, SDL_Rect* clickRect, SDL_Rect* drawRect,
    CLICKREGION_TYPE ct, string bgPath):
    ClickRegion(clickRect, ct) {
+
+   loadedFromReference = false;
+
    texture = new LTexture();
    path = bgPath;
    text = textStr;
    font = fontStyle;
    displaceSet = false;
 
+   bool autosize = (drawRect == NULL);
    if (clickRect != NULL) this->clickRect = *clickRect;
-   if (drawRect != NULL) this->drawRect = *drawRect;
-   int w = drawRect->w;
-   int h = drawRect->h;
+   if (!autosize) this->drawRect = *drawRect;
 
-   texture->CreateBlank(w, h);
-
-   SDL_Rect r = {0, 0, w, h};
-   SDL_SetRenderTarget(gRenderer, texture->mTexture);
-
+   // Make a temporary texture that will help us render the text
    LTexture tempText;
    int tw, th;
    if (bgPath != "") tempText.LoadFromFile(bgPath);
@@ -153,13 +151,31 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    // Shrink the text to fit the font size
    double woh = tw/th;
    double fontH = fontSize * GZOOM;
-   r = {
-      padding,       // This assumes we want L-justified text (liable to change)
-      (int)((h - fontH)/2), // Assumes vertically-centered text
-      (int)(tw * fontH/th),
-      (int)(fontH)
+
+   // TODO: If we're making an auto-sized button, we want to use 'padding' for
+   // the y value here. If not, use '(int)((th - fontH)/2)'
+   SDL_Rect tempr = {
+      padding, // This assumes we want L-justified text (liable to change)
+      padding, // Used only for auto-sized buttons
+      (int)(tw * fontH/th) + (2 * padding),
+      (int)(fontH) + (2 * padding)
    };
-   tempText.Render(&r);
+
+   // Size up the LTexture that we blit our temptext to
+   int w, h;
+   if (!autosize) {
+      w = drawRect->w;
+      h = drawRect->h;
+   } else {
+      w = tempr.w;
+      h = tempr.h;
+   }
+
+   texture->CreateBlank(w, h);
+   SDL_SetRenderTarget(gRenderer, texture->mTexture);
+
+   // Now we can render our text onto the proper texture
+   tempText.Render(&tempr);
 
    SDL_SetRenderTarget(gRenderer, NULL);
 }
@@ -168,6 +184,9 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    SDL_Color* fontColor, int padding, SDL_Rect* clickRect, SDL_Rect* drawRect,
    CLICKREGION_TYPE ct, LTexture* bg):
    ClickRegion(clickRect, ct) {
+
+   loadedFromReference = true;
+
    texture = new LTexture();
    text = textStr;
    font = fontStyle;
@@ -236,6 +255,9 @@ void ClickButton::Render(SDL_Rect* r) {
    }
 }
 
+ClickButton::~ClickButton() {
+   if (loadedFromReference) delete texture;
+}
 
 
 DropMenu::DropMenu(int x, int y, int cols, int rows, CLICKREGION_TYPE ct,
@@ -384,11 +406,18 @@ void DropMenu::RemovePendingDM(DropMenu* dm) {
       dm->hovered = false;
    }
 
-   if (pendingDMs.size() > 0) focusedDM = pendingDMs.back();
-   else focusedDM = NULL;
+   if (focusedDM == dm) {
+      if (pendingDMs.size() > 0) focusedDM = pendingDMs.back();
+      else focusedDM = NULL;
+   }
 }
 
 void DropMenu::ClearPendingDMs() {
    pendingDMs.clear();
    focusedDM = NULL;
+}
+
+void DropMenu::Free() {
+   ClearButtons();
+   RemovePendingDM(this);
 }

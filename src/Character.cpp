@@ -134,5 +134,5 @@ void Character::Free() {
 }
 
 Character::~Character() {
-
+   delete[] stats;
 }

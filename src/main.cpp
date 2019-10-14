@@ -130,11 +130,6 @@ bool LoadMedia() {
 	//Loading success flag
 	bool success = true;
 
-   if (!gTexture.LoadFromFile("media\\images\\hello_world.png")) {
-      Warn("Failed to load texture image!\n");
-      success = false;
-   }
-
 	// Initialize fonts
 	FONT_SCROLL = TTF_OpenFont("fonts/BLKCHCRY.TTF", 24);
 	FONT_HAND = TTF_OpenFont("fonts/Quikhand.ttf", 24);
@@ -262,7 +257,6 @@ int main(int argc, char* args[]) {
 			// which ones are currently on-screen, and then check if they are
 			// being hovered over or are being clicked on.
 			vector<ClickRegion*>* clickables = &ClickRegion::clickables;
-			DropMenu* focusedDM;
 			vector<DropMenu*>* pendingDMs = &DropMenu::pendingDMs;
 
 			// Compile objects into clickables vector that are sensitive to
@@ -303,9 +297,6 @@ int main(int argc, char* args[]) {
 
 						hoveredCRs = ClickRegion::GetRegionsAtMouse(gmx, gmy);
 						hoveredDMs = DropMenu::GetDMsAtMouse(gmx, gmy);
-
-						// printf("\nMouse: %4d, %4d {%4d, %4d}\t\tCRs: %d, DMs: %d",
-						// mx, my, gmx, gmy, hoveredCRs.size(), hoveredDMs.size());
 
 						// TODO: Working on updating this chunk with the new static members of ClickRegion and DropMenu
 						bool eventIssued = false;
@@ -383,55 +374,6 @@ int main(int argc, char* args[]) {
 								DropMenu::RemovePendingDM(DropMenu::focusedDM);
 							}
 						}
-
-						// Iterate through all buttons and find if the mouse is
-						// currently hovering over them
-						// for (int i = clickables->size() - 1; i >= 0; i--) {
-						// 	// If the button isn't active, we don't need to bother
-						// 	if (!clickables[i]->clickActive) continue;
-						// 	if (ClickRegion::GetRegionsAtMouse(mx + Camera::x,
-						// 		my + Camera::y)) {
-						// 		bool eventIssued = false;
-						// 		switch (e.type) {
-						// 			case SDL_MOUSEBUTTONDOWN:
-						// 				if (e.button.button == SDL_BUTTON_LEFT) {
-						// 					newDMWaiting =
-						// 					clickables[i]->OnLeftClick();
-						// 					eventIssued = true;
-						// 				} else if (e.button.button == SDL_BUTTON_RIGHT) {
-						// 					newDMWaiting =
-						// 					clickables[i]->OnRightClick();
-						// 					eventIssued = true;
-						// 				}
-						//
-						// 				if (clickables[i]->GetDM() == DMWaitingForInput) {
-						// 					clickOutOfWaitingDM = false;
-						// 				}
-						// 				break;
-						// 			case SDL_MOUSEWHEEL:
-						// 				if (e.wheel.y > 0) {
-						// 					newDMWaiting =
-						// 					clickables[i]->OnScrollUp();
-						// 					eventIssued = true;
-						// 				} else if (e.wheel.y < 0) {
-						// 					newDMWaiting =
-						// 					clickables[i]->OnScrollDown();
-						// 					eventIssued = true;
-						// 				}
-						// 				break;
-						// 			}
-						//
-						// 		if (!eventIssued) clickables[i]->OnHover();
-						// 		if (newDMWaiting) {
-						// 			DMWaitingForInput = clickables[i]->GetDM();
-						// 			// Get the buttons from the DM and add them to the
-						// 		}
-						// 	}
-						// }
-						//
-						// if (!clickOutOfWaitingDM && !newDMWaiting) {
-						// 	DMWaitingForInput->Close();
-						// }
 					}
             }
 

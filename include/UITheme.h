@@ -6,6 +6,7 @@
 
 struct DropMenuUI {
    DropMenuUI();
+   ~DropMenuUI();
 
    LTexture* bg;
    LTexture* btnbg;

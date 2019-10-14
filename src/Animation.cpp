@@ -1,6 +1,10 @@
 #include "..\include\LTexture.h"
 #include "..\include\Animation.h"
 
+// Animation
+// Animations build off of LTextures and allow for multiple frames to be applied
+// to the same entity. Animations are typically loaded from PNG or JPEG files
+// color-keyed with cyan
 Animation::Animation() {
    //Initialize
    mTexture = NULL;
@@ -16,14 +20,17 @@ Animation::Animation() {
    currentFrame = 0;
 }
 
+// Return the width of the frame
 int Animation::GetFrameWidth() {
    return frameW;
 }
 
+// Return the height of the frame
 int Animation::GetFrameHeight() {
    return frameH;
 }
 
+// Load an animation from a file
 bool Animation::LoadFromFile(string path, int frames, float duration,
    int frameW, int frameH, bool reversed) {
    // Set the frame count
@@ -69,37 +76,47 @@ bool Animation::LoadFromFile(string path, int frames, float duration,
    this->frameW = frameW;
    this->frameH = frameH;
 
-   if (!reversed) {
-      int xIter = 0;
-      int yIter = 0;
-      for (int i = 0; i < frameCount; i++) {
-         if (xIter * frameW >= mWidth) {
-            yIter++;
-            xIter = 0;
-         } else xIter++;
-         frameClips[i].x = (xIter * frameW) % mWidth;
-         frameClips[i].y = yIter * frameH;
-         frameClips[i].w = frameW;
-         frameClips[i].h = frameH;
+   int xIter = 0;
+   int yIter = 0;
+
+   for (int i = 0; i < frameCount; i++) {
+      if (xIter * frameW >= mWidth) {
+         yIter++;
+         xIter = 0;
       }
-   } else {
-      // TODO: Rework this so that it uses xIter and yIter instead of this
-      // jumbled confusion, because this probably won't work
-      int yIter = ((mHeight > frameH) ? (int)floor(mHeight/frameH) : 0);
-      for (int i = frameCount - 1; i >= 0; i--) {
-         if (i * frameW >= mWidth) {
-            yIter--;
-         }
-         frameClips[i].x = (i * frameW) % mWidth;
-         frameClips[i].y = yIter * frameH;
-         frameClips[i].w = frameW;
-         frameClips[i].h = frameH;
+      // HEY DUMBASS: Was doing else xIter++ here, which started off
+      // new frame loads at index 1 lol
+      // Double-check that other animation loads aren't doing this same thing
+
+      frameClips[i].x = xIter * frameW;
+      frameClips[i].y = yIter * frameH;
+      frameClips[i].w = frameW;
+      frameClips[i].h = frameH;
+
+      xIter++;
+   }
+
+   // If we're reversing the frames of this animation, then we can just reverse
+   // the array in-place
+   if (reversed) {
+      SDL_Rect cpy;
+
+      int i = 0;
+      int j = frameCount - 1;
+      while (j > i) {
+         cpy = frameClips[i];
+         frameClips[i] = frameClips[j];
+         frameClips[j] = cpy;
+
+         i++;
+         j--;
       }
    }
 
    return true;
 }
 
+// Load an animation from a reference to an LTexture
 bool Animation::LoadFromReference(LTexture* ref, int frames, float duration,
    int frameW, int frameH, bool reversed) {
    // Set the frame count
@@ -111,20 +128,14 @@ bool Animation::LoadFromReference(LTexture* ref, int frames, float duration,
    // Get rid of preexisting texture
    LTexture::LoadFromReference(ref);
 
-   Log("Checking for NUL");
    if (mTexture == NULL) {
       Warn("Failed to load texture from reference!");
       return false;
    }
 
-   Log("Not null");
-
    frameClips = new SDL_Rect[frameCount];
    this->frameW = frameW;
    this->frameH = frameH;
-
-   Log("Got dims");
-   printf("\nframeW: %i, frameH: %i, mWidth: %i", frameW, frameH, mWidth);
 
    int xIter = 0;
    int yIter = 0;
@@ -133,11 +144,17 @@ bool Animation::LoadFromReference(LTexture* ref, int frames, float duration,
       if (xIter * frameW >= mWidth) {
          yIter++;
          xIter = 0;
-      } else xIter++;
+      }
+      // HEY DUMBASS: Was doing else xIter++ here, which started off
+      // new frame loads at index 1 lol
+      // Double-check that other animation loads aren't doing this same thing
+
       frameClips[i].x = xIter * frameW;
       frameClips[i].y = yIter * frameH;
       frameClips[i].w = frameW;
       frameClips[i].h = frameH;
+
+      xIter++;
    }
 
    // If we're reversing the frames of this animation, then we can just reverse
@@ -145,19 +162,26 @@ bool Animation::LoadFromReference(LTexture* ref, int frames, float duration,
    if (reversed) {
       SDL_Rect cpy;
 
-      for (int i = 0; i*2 <= frameCount; i++) {
+      int i = 0;
+      int j = frameCount - 1;
+      while (j > i) {
          cpy = frameClips[i];
-         frameClips[i] = frameClips[frameCount - i - 1];
-         frameClips[frameCount - i - 1] = cpy;
+         frameClips[i] = frameClips[j];
+         frameClips[j] = cpy;
+
+         i++;
+         j--;
       }
    }
 
-   Log("Set frameClips");
+   // Log("Set frameClips");
 
    return true;
 }
 
+// Iterate to the next frame, and account for looping
 void Animation::IncrementCurrentFrame() {
+   //printf("\nElement: %08p frame: %i", this, currentFrame);
    if (currentFrame + 1 >= frameCount) {
       if (looping) currentFrame = 0;
       else animDone = true;
@@ -166,11 +190,13 @@ void Animation::IncrementCurrentFrame() {
    }
 }
 
+// An offset of the animation (basically SetCurrentFrame)
 void Animation::SetAnimFrameOffset(int screenFrame) {
    // animFrameOffset = ((float)frameCount/animDuration) *
    // ((float)screenFrame/(float)SCREEN_FPS);
 }
 
+// Render animation to screen
 void Animation::Render(SDL_Rect* drawBox, int screenFrame) {
    //printf("\nRendering frameclip: %i, %i, %i, %i",
    // frameClips[currentFrame].x, frameClips[currentFrame].y,
@@ -185,6 +211,8 @@ void Animation::Render(SDL_Rect* drawBox, int screenFrame) {
    animFrameOfLastScreenFrame = animFrame;
 }
 
+// Destructor
 Animation::~Animation() {
+   delete[] frameClips;
    Free();
 }
