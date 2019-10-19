@@ -104,11 +104,10 @@ void Actor::SetActiveAnim(int phase, bool loop) {
    usingAnims = true;
    activeAnim = phase;
    anims[phase].looping = loop;
+   anims[phase].currentFrame = 0;
+   anims[phase].animDone = false;
 
-   if (!loop) {
-      anims[phase].currentFrame = 0;
-      anims[phase].SetAnimFrameOffset(0);
-   }
+   if (!loop) anims[phase].SetAnimFrameOffset(0);
 }
 
 // Load a texture from file

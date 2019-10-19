@@ -129,7 +129,7 @@ bool Animation::LoadFromReference(LTexture* ref, int frames, float duration,
    LTexture::LoadFromReference(ref);
 
    if (mTexture == NULL) {
-      Warn("Failed to load texture from reference!");
+      // Warn("Failed to load texture from reference!");
       return false;
    }
 
@@ -192,8 +192,8 @@ void Animation::IncrementCurrentFrame() {
 
 // An offset of the animation (basically SetCurrentFrame)
 void Animation::SetAnimFrameOffset(int screenFrame) {
-   // animFrameOffset = ((float)frameCount/animDuration) *
-   // ((float)screenFrame/(float)SCREEN_FPS);
+   animFrameOffset = ((float)frameCount/animDuration) *
+   ((float)screenFrame/(float)SCREEN_FPS);
 }
 
 // Render animation to screen

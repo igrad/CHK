@@ -10,6 +10,7 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    this->hand = hand;
    attachedRoom = room;
    this->locale = locale;
+   this->usingAnims = false;
 
 
    int tileW = PIXELSPERFEET * 5 * GZOOM;
@@ -274,12 +275,10 @@ void Door::AttemptUnlock(string key) {
 void Door::AttemptOpen(bool fast) {
    //if (isLocked) return; // Inform the player that the door is locked!
    //else
-   Log("Attempting to open");
    this->Open(fast);
 }
 
 void Door::Open(bool fast) {
-   Log("Opening!");
    if (!isOpen) {
       isOpen = true;
       isLocked = false;
@@ -287,19 +286,9 @@ void Door::Open(bool fast) {
       door.hitBox.w = 0;
       door.hitBox.h = 0;
 
-      // Queue animation of door opening
-      // newPhase = true;
-      // if (phase == ANIM_OPEN_FAST || phase == ANIM_OPEN_SLOW) {
-      //    newPhase = false;
-      //    frame = anims[phase].frameCount - frame;
-      // }
-
-      Log("Setting active anim");
       if (fast) SetActiveAnim(ANIM_OPEN_FAST);
       else SetActiveAnim(ANIM_OPEN_SLOW);
       BufferTexture(TEXT_OPENED);
-
-      Log("Set active anim and buffer texture");
    }
 }
 
@@ -310,18 +299,9 @@ void Door::Close(bool fast) {
          return;
       }
 
-      Log("Closing the door");
-
       isOpen = false;
       door.hitBox.w = doorBackup.w;
       door.hitBox.h = doorBackup.h;
-
-      // Queue animation of door closing
-      // newPhase = true;
-      // if (phase == ANIM_CLOSE_FAST || phase == ANIM_CLOSE_SLOW) {
-      //    newPhase = false;
-      //    frame = anims[phase].frameCount - frame;
-      // }
 
       if (fast) SetActiveAnim(ANIM_CLOSE_FAST);
       else SetActiveAnim(ANIM_CLOSE_SLOW);
@@ -350,8 +330,6 @@ void Door::Examine() {
 }
 
 void Door::OpenDropMenu(int mx, int my) {
-   Log("Opening door drop menu");
-
    dropmenu->ClearButtons();
    bool canBreak = !isOpen && !isBroken;
 
@@ -400,23 +378,28 @@ void Door::OpenDropMenu(int mx, int my) {
 }
 
 void Door::Render() {
+   // If we're entering a brand new phase (as determined by other functions),
+   // then we want to update the door's frame here
    if (newPhase) {
       frame = 0;
       newPhase = false;
    }
 
+   // Render to screen
    Actor::Render(frame, Camera::x, Camera::y);
+
+   // If we're using an animation, then we can jump to the next frame since
+   // the animation has also continued to the next frame
    if (usingAnims) frame++;
-   if (anims[activeAnim].animDone) {
+
+   // If the animation is now complete, then we can queue up the static texture
+   // that follows the animation
+   if (usingAnims && anims[activeAnim].animDone) {
       if (activeAnim == ANIM_OPEN_SLOW || activeAnim == ANIM_OPEN_FAST) {
-         // activeAnim = TEXT_OPENED;
-         // usingAnims = false;
          newPhase = true;
          SetActiveTexture(TEXT_OPENED);
       } else if (activeAnim == ANIM_CLOSE_SLOW ||
          activeAnim == ANIM_CLOSE_FAST) {
-         // activeAnim = TEXT_CLOSED;
-         // usingAnims = false;
          newPhase = true;
          SetActiveTexture(TEXT_CLOSED);
       }

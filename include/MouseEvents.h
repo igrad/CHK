@@ -85,8 +85,6 @@ public:
    void ResetDisplace();
    void Render(SDL_Rect* r = NULL);
 
-   ~ClickButton();
-
    bool loadedFromReference;
 
    string path;

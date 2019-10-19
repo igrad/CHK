@@ -255,9 +255,6 @@ void ClickButton::Render(SDL_Rect* r) {
    }
 }
 
-ClickButton::~ClickButton() {
-   if (loadedFromReference) delete texture;
-}
 
 
 DropMenu::DropMenu(int x, int y, int cols, int rows, CLICKREGION_TYPE ct,
@@ -342,6 +339,8 @@ void DropMenu::Open(int x, int y) {
    for (int i = 0; i < buttons.size(); i++) {
       ClickRegion::clickables.push_back(&buttons[i]);
    }
+
+   DropMenu::AddPendingDM(this);
 }
 
 void DropMenu::Close() {
@@ -392,6 +391,7 @@ vector<DropMenu*> DropMenu::GetDMsAtMouse(int mx, int my) {
    return results;
 }
 
+// find where this is called in main
 void DropMenu::AddPendingDM(DropMenu* dm) {
    pendingDMs.push_back(dm);
    focusedDM = dm;

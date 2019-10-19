@@ -359,9 +359,9 @@ int main(int argc, char* args[]) {
 						// If we have a new DM opened on this frame, we add it to the
 						// pendingDMs vector and automatically set it as the new
 						// focused DM
-						if (newDMWaiting) {
-							DropMenu::AddPendingDM(hoveredCRs.back()->GetDM());
-						}
+						// if (newDMWaiting) {
+						// 	DropMenu::AddPendingDM(hoveredCRs.back()->GetDM());
+						// }
 
 						// If the cursor isn't over the focused DM, and the DM has
 						// already been moused-over, then it means the user isn't
