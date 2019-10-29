@@ -263,6 +263,13 @@ int main(int argc, char* args[]) {
 			// mouse events
 			for (auto d : randomLevel.doors) clickables->push_back(d);
 
+			// Level reload button
+			SDL_Rect reloadLevelRect = {0, 0, 120, 40};
+			ClickButton reloadLevelBtn = ClickButton("Reload", 14, FONT_TYPED,
+			&FONTC_OFFWHITE, 8, NULL, NULL, CR_ABSOLUTE,
+			"media\\images\\dmbtnbg.png");
+			clickables->push_back(&reloadLevelBtn);
+
 			// Start counting frames per second
 			int countedFrames = 0;
 			fpsTimer.start();
@@ -355,13 +362,6 @@ int main(int argc, char* args[]) {
 								}
 							}
 						}
-
-						// If we have a new DM opened on this frame, we add it to the
-						// pendingDMs vector and automatically set it as the new
-						// focused DM
-						// if (newDMWaiting) {
-						// 	DropMenu::AddPendingDM(hoveredCRs.back()->GetDM());
-						// }
 
 						// If the cursor isn't over the focused DM, and the DM has
 						// already been moused-over, then it means the user isn't
@@ -466,6 +466,8 @@ int main(int argc, char* args[]) {
 
 				randomLevel.RenderWalls(currentY, -1);
 				randomLevel.RenderDoors(currentY, -1);
+
+				reloadLevelBtn.Render(NULL);
 
 				// Render UI
 				for (auto d : randomLevel.doors) {

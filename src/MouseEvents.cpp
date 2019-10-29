@@ -14,7 +14,7 @@ ClickRegion::ClickRegion() {
 }
 
 ClickRegion::ClickRegion(SDL_Rect* area, CLICKREGION_TYPE ct) {
-   clickRect = *area;
+   if (area != NULL) clickRect = *area;
    crType = ct;
 
    clickActive = true;
@@ -128,6 +128,8 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    CLICKREGION_TYPE ct, string bgPath):
    ClickRegion(clickRect, ct) {
 
+   Log("Creating button by path");
+
    loadedFromReference = false;
 
    texture = new LTexture();
@@ -140,42 +142,69 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    if (clickRect != NULL) this->clickRect = *clickRect;
    if (!autosize) this->drawRect = *drawRect;
 
-   // Make a temporary texture that will help us render the text
-   LTexture tempText;
+   // Create 2 tempTexts - one for the background and one for the text.
+   // Current bug is that we're rendering the background, but haven't set the
+   // render target as texture->mTexture yet, so we're not doing anything
+   // helpful.
+   // Need to have tempText load for the bgPath, then tempText2 load from
+   // rendered text and use tw & th from that second tempText to build out the
+   // size of texture
+   LTexture bgTexture;
+   LTexture textTexture;
    int tw, th;
-   if (bgPath != "") tempText.LoadFromFile(bgPath);
-   tempText.Render(NULL);
-   tempText.LoadFromRenderedText(textStr, fontColor, fontStyle, &tw, &th);
+   if (bgPath != "") bgTexture.LoadFromFile(bgPath);
+   else Warn("Passed \"\" as path for background of ClickButton");
+
+   // tempText.Render(NULL);
+   textTexture.LoadFromRenderedText(textStr, fontColor, fontStyle, &tw, &th);
    th = TTF_FontHeight(fontStyle);
 
    // Shrink the text to fit the font size
-   double woh = tw/th;
    double fontH = fontSize * GZOOM;
+   padding = (int)(padding * GZOOM);
 
-   // TODO: If we're making an auto-sized button, we want to use 'padding' for
-   // the y value here. If not, use '(int)((th - fontH)/2)'
-   SDL_Rect tempr = {
-      padding, // This assumes we want L-justified text (liable to change)
-      padding, // Used only for auto-sized buttons
-      (int)(tw * fontH/th) + (2 * padding),
-      (int)(fontH) + (2 * padding)
+   SDL_Rect textRect = {
+      padding,
+      (autosize) ? padding : (int)((th - fontH)/2),
+      (int)(tw * fontH/th),
+      (int)(fontH)
    };
 
-   // Size up the LTexture that we blit our temptext to
+   SDL_Rect bgRect = {
+      0,
+      0,
+      textRect.w + (2 * padding),
+      textRect.h + (2 * padding)
+   };
+
+   // If this button has no clickRect, we assume it's the entire area of the bg
+   if (autosize && clickRect == NULL) this->clickRect = bgRect;
+
+   // If this button didn't have a draw rect specified, we need to assign it one
+   if (autosize) this->drawRect = bgRect;
+
+   // Size up the LTexture that we blit our bgtext to
    int w, h;
    if (!autosize) {
       w = drawRect->w;
       h = drawRect->h;
    } else {
-      w = tempr.w;
-      h = tempr.h;
+      w = bgRect.w;
+      h = bgRect.h;
    }
+
+   printf("\nbgrect\t\tx: %i, y: %i, w: %i, h: %i",
+   bgRect.x,bgRect.y,bgRect.w,bgRect.h);
+   printf("\ntextRect\tx: %i, y: %i, w: %i, h: %i",
+   textRect.x,textRect.y,textRect.w,textRect.h);
+   printf("\nw: %i, h: %i",w,h);
 
    texture->CreateBlank(w, h);
    SDL_SetRenderTarget(gRenderer, texture->mTexture);
 
    // Now we can render our text onto the proper texture
-   tempText.Render(&tempr);
+   bgTexture.Render((!autosize) ? drawRect : &bgRect);
+   textTexture.Render(&textRect);
 
    SDL_SetRenderTarget(gRenderer, NULL);
 }
@@ -184,6 +213,11 @@ ClickButton::ClickButton(string textStr, int fontSize, TTF_Font* fontStyle,
    SDL_Color* fontColor, int padding, SDL_Rect* clickRect, SDL_Rect* drawRect,
    CLICKREGION_TYPE ct, LTexture* bg):
    ClickRegion(clickRect, ct) {
+
+   if (bg == NULL) {
+      Warn("ClickButton passed NULL ref to BG texture");
+      return;
+   }
 
    loadedFromReference = true;
 
