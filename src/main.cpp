@@ -268,6 +268,22 @@ int main(int argc, char* args[]) {
 			ClickButton reloadLevelBtn = ClickButton("Reload", 14, FONT_TYPED,
 			&FONTC_OFFWHITE, 8, NULL, NULL, CR_ABSOLUTE,
 			"media\\images\\dmbtnbg.png");
+			reloadLevelBtn.SetFunction(LEFTCLICK,
+				[&](int a, int b, int c) {
+					Log("\n\nCreating new level");
+					randomLevel = Level(&dungeon);
+					randomLevel.GenerateLevel();
+					randomLevel.WriteOutWholeLevel();
+					player.SetSpawnPoint(randomLevel.GetPlayerSpawn());
+
+					clickables = &ClickRegion::clickables;
+					pendingDMs = &DropMenu::pendingDMs;
+
+					for (auto d : randomLevel.doors) clickables->push_back(d);
+
+					Log("Created level successfully!");
+					return true;
+				});
 			clickables->push_back(&reloadLevelBtn);
 
 			// Start counting frames per second
