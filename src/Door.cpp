@@ -386,7 +386,7 @@ void Door::Render() {
    }
 
    // Render to screen
-   Actor::Render(frame, Camera::x, Camera::y);
+   Actor::Render(frame);
 
    // If we're using an animation, then we can jump to the next frame since
    // the animation has also continued to the next frame

@@ -4,6 +4,8 @@
 #include "essentials.h"
 #include "Actor.h"
 
+class Actor;
+
 enum FOCUSMODE {
    FOCUS_PLAYER,
    FOCUS_AREA

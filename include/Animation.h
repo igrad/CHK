@@ -63,8 +63,10 @@ class Animation: public LTexture {
       int frameW;
       int frameH;
 
+      bool frameClipsAllocated;
+
       // Sections of the spritesheet corresponding to each animation frame
-      SDL_Rect *frameClips;
+      SDL_Rect* frameClips;
 };
 
 #endif

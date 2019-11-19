@@ -2,8 +2,13 @@
 
 int statCap = 8;
 
-Character::Character(int level, int HP, int moveSpeed, int numAnims,
-   int numTextures, bool collides): Actor(numAnims, numTextures) {
+Character::Character() {
+
+}
+
+Character::Character(string charName, string techName,int level, int HP,
+   int moveSpeed, int numAnims, int numTextures, bool collides):
+   Actor(numAnims, numTextures) {
    charLevel = level;
    collisionEnabled = collides;
    this->moveSpeed = moveSpeed;
@@ -14,6 +19,27 @@ Character::Character(int level, int HP, int moveSpeed, int numAnims,
    pixelsPerFrame = pixelVelocity / SCREEN_FPS;
 
    stats = new int[6];
+}
+
+void Character::LoadDefaultArt(string name) {
+   string str = "media\\images\\Characters\\" + name + "_";
+
+   LoadAnimation(ANIM_IDLE_I, str + "Idle_I.png", 8, 2.0, 20, 40);
+	LoadAnimation(ANIM_IDLE_II, str + "Idle_II.png", 8, 2.0, 20, 40);
+	LoadAnimation(ANIM_IDLE_III, str + "Idle_III.png", 8, 2.0, 20, 40);
+	LoadAnimation(ANIM_IDLE_IV, str + "Idle_IV.png", 8, 2.0, 20, 40);
+	LoadAnimation(ANIM_WALK_I, str + "Walking_I.png", 8, 1.2, 20, 40);
+	LoadAnimation(ANIM_WALK_II, str + "Walking_II.png", 8, 1.2, 20, 40);
+	LoadAnimation(ANIM_WALK_III, str + "Walking_III.png", 8, 1.2, 20, 40);
+	LoadAnimation(ANIM_WALK_IV, str + "Walking_IV.png", 8, 1.2, 20, 40);
+	// LoadAnimation(ANIM_JUMP, str + "ANIM_JUMP.png", 8, 1.2, 20, 40);
+	// LoadAnimation(ANIM_KICK, str + "ANIM_KICK.png", 8, 1.2, 20, 40);
+	// LoadAnimation(ANIM_ATTACK_1, str + "ANIM_ATTACK_1.png", 8, 1.2, 20, 40);
+	// LoadAnimation(ANIM_ATTACK_2, str + "ANIM_ATTACK_2.png", 8, 1.2, 20, 40);
+	// LoadAnimation(ANIM_ATTACK_3, str + "ANIM_ATTACK_3.png", 8, 1.2, 20, 40);
+	// LoadAnimation(ANIM_ABILITY_1, str + "ANIM_ABILITY_1.png", 8, 1.2, 20, 40);
+	// LoadAnimation(ANIM_ABILITY_2, str + "ANIM_ABILITY_2.png", 8, 1.2, 20, 40);
+	// LoadAnimation(ANIM_ABILITY_3, str + "ANIM_ABILITY_3.png", 8, 1.2, 20, 40);
 }
 
 int Character::GetStat(STATNAME stat) {
@@ -92,7 +118,7 @@ void Character::SetYVelocity(int multiplier) {
    queueCollisions = true;
 }
 
-void Character::Render(int screenFrame, int camX, int camY) {
+void Character::Render(int screenFrame) {
    // Player animations
    bool movingUp = (yVelocity < 0);
    bool movingDown = (yVelocity > 0);
@@ -126,7 +152,7 @@ void Character::Render(int screenFrame, int camX, int camY) {
    xVelocity = 0;
    yVelocity = 0;
 
-   Actor::Render(screenFrame, camX, camY);
+   Actor::Render(screenFrame);
 }
 
 void Character::Free() {

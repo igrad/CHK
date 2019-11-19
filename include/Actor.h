@@ -3,6 +3,7 @@
 
 #include "essentials.h"
 
+#include "Camera.h"
 #include "LTexture.h"
 #include "Collider.h"
 #include "Animation.h"
@@ -57,6 +58,7 @@ enum PHASE_DOOR_ANIM {
 */
 class Actor: public Collider {
    public:
+      Actor();
       Actor(int numAnims, int numTextures);
 
       void SetXPos(double x);
@@ -79,7 +81,7 @@ class Actor: public Collider {
       void BufferAnimation(int animPhase, bool loop = false);
 
       void HandleMovement(int camX, int camY);
-      void Render(int screenFrame, int camX, int camY);
+      void Render(int screenFrame);
 
       void Free();
 
@@ -97,6 +99,9 @@ class Actor: public Collider {
 
       bool hasAnimations;
       bool hasTextures;
+
+      bool animsAllocated;
+      bool texturesAllocated;
 
       int numAnims;
       Animation* anims;

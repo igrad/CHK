@@ -1927,25 +1927,25 @@ void Level::RenderWalls(int yO, int yF) {
    wallRender.Render(&drawBox, &wallChunk);
 
    // Paint collided walls
-   SDL_SetRenderDrawColor(gRenderer, 255, 0, 0, 63);
-   LTexture colliderDraw;
-   colliderDraw.CreateBlank(wallRender.mWidth, wallRender.mHeight);
-   SDL_SetRenderTarget(gRenderer, colliderDraw.mTexture);
-   for (auto i=walls.begin(); i != walls.end(); i++) {
-      int x = (i->second.hitBox.x) + 5;
-      int y = (i->second.hitBox.y) + 5;
-      int w = (i->second.hitBox.w) - 10;
-      int h = (i->second.hitBox.h) - 10;
-
-      SDL_Rect r = {x, y, w, h};
-      SDL_RenderFillRect(gRenderer, &r);
-   }
-   SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
-   SDL_Rect db = {0, 0, wallRender.mWidth, wallRender.mHeight};
-   colliderDraw.Render(&db);
-
-   SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-   SDL_SetRenderTarget(gRenderer, NULL);
+   // SDL_SetRenderDrawColor(gRenderer, 255, 0, 0, 63);
+   // LTexture colliderDraw;
+   // colliderDraw.CreateBlank(wallRender.mWidth, wallRender.mHeight);
+   // SDL_SetRenderTarget(gRenderer, colliderDraw.mTexture);
+   // for (auto i=walls.begin(); i != walls.end(); i++) {
+   //    int x = (i->second.hitBox.x) + 5;
+   //    int y = (i->second.hitBox.y) + 5;
+   //    int w = (i->second.hitBox.w) - 10;
+   //    int h = (i->second.hitBox.h) - 10;
+   //
+   //    SDL_Rect r = {x, y, w, h};
+   //    SDL_RenderFillRect(gRenderer, &r);
+   // }
+   // SDL_SetRenderTarget(gRenderer, wallRender.mTexture);
+   // SDL_Rect db = {0, 0, wallRender.mWidth, wallRender.mHeight};
+   // colliderDraw.Render(&db);
+   //
+   // SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+   // SDL_SetRenderTarget(gRenderer, NULL);
 }
 
 

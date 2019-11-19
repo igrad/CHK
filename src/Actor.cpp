@@ -9,6 +9,10 @@
 // environment (like a box).
 
 // Default constructor
+Actor::Actor() {
+
+}
+
 Actor::Actor(int numAnims, int numTextures) {
    zoom = GZOOM;
 
@@ -88,13 +92,17 @@ void Actor::SetZoom(float newZoom) {
 // Load an animation from file
 bool Actor::LoadAnimation(int phase, string path, int frames, float duration,
    int frameW, int frameH, bool reversed) {
+   if (!animsAllocated) animsAllocated = true;
+
    return anims[phase].LoadFromFile(path, frames, duration, frameW, frameH,
       reversed);
 }
 
 // Load an animation from a reference to an LTexture
-bool Actor::LoadAnimation(int phase, LTexture* ref, int frames, float duration,
-   int frameW, int frameH, bool reversed) {
+bool Actor::LoadAnimation(int phase, LTexture* ref, int frames,
+   float duration, int frameW, int frameH, bool reversed) {
+   if (!animsAllocated) animsAllocated = true;
+
    return anims[phase].LoadFromReference(ref, frames, duration, frameW, frameH,
       reversed);
 }
@@ -112,11 +120,15 @@ void Actor::SetActiveAnim(int phase, bool loop) {
 
 // Load a texture from file
 bool Actor::LoadTexture(int phase, string path) {
+   if (!texturesAllocated) animsAllocated = true;
+
    return textures[phase].LoadFromFile(path);
 }
 
 // Load a texture from another LTexture's reference
 bool Actor::LoadTexture(int phase, LTexture* ref) {
+   if (!texturesAllocated) animsAllocated = true;
+
    return textures[phase].LoadFromReference(ref);
 }
 
@@ -151,12 +163,12 @@ void Actor::HandleMovement(int camX, int camY) {
 }
 
 // Render the player to the screen
-void Actor::Render(int screenFrame, int camX, int camY) {
+void Actor::Render(int screenFrame) {
    hitBox.x = xPos + hitBoxXOffset;
    hitBox.y = yPos + hitBoxYOffset;
 
-   drawBox.x = (xPos - camX);
-   drawBox.y = (yPos - camY);
+   drawBox.x = (xPos - Camera::x);
+   drawBox.y = (yPos - Camera::y);
 
    bool animDone = false;
    if (usingAnims) {
@@ -184,20 +196,15 @@ void Actor::Render(int screenFrame, int camX, int camY) {
 
 // Destroy the actor and free memory
 void Actor::Free() {
-   if (numAnims > 0) {
-      for (int i = 0; i < numAnims; i++) {
-         anims[i].Free();
-      }
+   if (animsAllocated && anims != NULL) {
+      delete[] anims;
+      animsAllocated = false;
    }
-
-   if (numTextures > 0) {
-      for (int i = 0; i < numTextures; i++) {
-         textures[i].Free();
-      }
+   
+   if (texturesAllocated && textures != NULL) {
+      delete[] textures;
+      texturesAllocated = false;
    }
-
-   if (hasAnimations) delete[] anims;
-   if (hasTextures) delete[] textures;
 }
 
 // Deconstructor

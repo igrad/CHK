@@ -96,8 +96,8 @@ bool Animation::LoadFromFile(string path, int frames, float duration,
       xIter++;
    }
 
-   // If we're reversing the frames of this animation, then we can just reverse
-   // the array in-place
+   // If we're reversing the frames of this animation, then we can just
+   // reverse the array in-place
    if (reversed) {
       SDL_Rect cpy;
 
@@ -112,6 +112,8 @@ bool Animation::LoadFromFile(string path, int frames, float duration,
          j--;
       }
    }
+
+   frameClipsAllocated = true;
 
    return true;
 }
@@ -174,7 +176,7 @@ bool Animation::LoadFromReference(LTexture* ref, int frames, float duration,
       }
    }
 
-   // Log("Set frameClips");
+   frameClipsAllocated = true;
 
    return true;
 }
@@ -213,6 +215,9 @@ void Animation::Render(SDL_Rect* drawBox, int screenFrame) {
 
 // Destructor
 Animation::~Animation() {
-   delete[] frameClips;
-   Free();
+   if (frameClipsAllocated && frameClips != NULL) {
+      delete[] frameClips;
+      frameClipsAllocated = false;
+      Free();
+   }
 }

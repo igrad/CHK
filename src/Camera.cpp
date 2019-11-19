@@ -1,4 +1,5 @@
 #include "..\include\Camera.h"
+#include "..\include\Actor.h"
 
 FOCUSMODE Camera::focusMode = FOCUS_PLAYER;
 double Camera::x = 0;

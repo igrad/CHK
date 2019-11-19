@@ -17,6 +17,8 @@
 #include "..\include\Animation.h"
 #include "..\include\Actor.h"
 #include "..\include\Character.h"
+#include "..\include\NPCBlueprint.h"
+#include "..\include\NPC.h"
 
 #include "..\include\Locale.h"
 #include "..\include\Level.h"
@@ -68,11 +70,17 @@ SDL_Renderer* gRenderer = NULL;
 // The currently displayed texture
 LTexture gTexture;
 
-Character player(1, 10, 15, 16, 0);
+Character player("player", "player", 1, 10, 15, 16, 0);
 
 
 // Declare all locales
 Locale dungeon;
+
+
+
+// Active NPC blueprints
+vector<NPCBlueprint*> activeNPCTypes;
+vector<NPC> activeNPCs;
 
 
 
@@ -199,6 +207,53 @@ bool LoadMedia() {
 
 
 
+void LoadEnemies(Locale* locale) {
+	// Eventually, the locale will determine which enemies are initialized and
+	// loaded in. As this function is called repeatedly throughout runtime,
+	// unused enemy blueprints will be unloaded to free up memory.
+	// For now, we just use goblins as our enemies for all levels
+
+	activeNPCTypes.clear();
+
+	BP_goblinGuard.SetAnimBPDefaults(8, 2.0, 30, 50);
+	BP_goblinGuard.GenerateAnimsAndTextures();
+	activeNPCTypes.push_back(&BP_goblinGuard);
+
+	BP_goblinShaman.SetAnimBPDefaults(8, 2.0, 30, 50);
+	BP_goblinShaman.GenerateAnimsAndTextures();
+	activeNPCTypes.push_back(&BP_goblinShaman);
+}
+
+
+
+void SpawnEnemies(Level* level) {
+	// Iterate through each of the rooms and determine if there's a faction or
+	// NPC-specific point of interest within that room, such as a goblin statue
+	// or an orc grub hall
+
+	int gx, gy, x, y;
+	NPC* npc;
+	for (int room = 1; room < level->roomCount; room++) {
+		for (auto NPCBP = activeNPCTypes.begin();
+			NPCBP < activeNPCTypes.end(); NPCBP++) {
+			// For now, we spawn one of each NPC in each room
+			gx = (level->rooms[room].x + (rand() % level->rooms[room].w));
+		   gy = (level->rooms[room].y + (rand() % level->rooms[room].h));
+		   x = gx * PIXELSPERFEET * 5 * GZOOM;
+		   y = gy * PIXELSPERFEET * 5 * GZOOM;
+
+			// Create the NPC from this blueprint
+			(*NPCBP)->Create(&activeNPCs);
+
+			// Set the NPCs position and other properties
+			npc = &(activeNPCs.back());
+			npc->SetPos(x, y);
+		}
+	}
+}
+
+
+
 // Frees media and shuts down SDL
 void Close() {
    // Free loaded images
@@ -232,12 +287,20 @@ int main(int argc, char* args[]) {
 			Fatal("Failed to load media!");
 		}
 		else {
+			// Select the locale
+			Locale* currentLocale = &dungeon;
+
+			// Load in the goons
+			LoadEnemies(currentLocale);
+
 			// Generate level
-			Level randomLevel = Level(&dungeon);
+			Level randomLevel = Level(currentLocale);
 			randomLevel.GenerateLevel();
 			randomLevel.WriteOutWholeLevel();
 
 			player.SetSpawnPoint(randomLevel.GetPlayerSpawn());
+
+			SpawnEnemies(&randomLevel);
 
          // Main loop flag
          bool quit = false;
@@ -478,7 +541,13 @@ int main(int argc, char* args[]) {
 
 				currentY = player.hitBox.y + player.hitBox.h;
 
-				player.Render(screenFrame, Camera::x, Camera::y);
+				// Render players
+				player.Render(screenFrame);
+
+				// Render NPCs
+				for (auto npc = activeNPCs.begin(); npc < activeNPCs.end(); npc++) {
+					(*npc).Render(screenFrame);
+				}
 
 				randomLevel.RenderWalls(currentY, -1);
 				randomLevel.RenderDoors(currentY, -1);
