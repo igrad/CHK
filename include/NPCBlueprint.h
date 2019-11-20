@@ -43,9 +43,10 @@ class NPCBlueprint {
 public:
    NPCBlueprint();
    NPCBlueprint(NPCROLE role, Faction* faction, int level, string charName,
-   string techName, int maxHP, double HPbonus, double HPRegenRate,
-   int maxResource, double resourceBonus, double resourceRegenRate,
-   int moveSpeed, int numAnims, int numTextures, float density, int packSize,
+   string techName, SDL_Rect drawBox, SDL_Rect hitBox,  int maxHP,
+   double HPbonus, double HPRegenRate, int maxResource,
+   double resourceBonus, double resourceRegenRate, int moveSpeed,
+   int numAnims, int numTextures, float density, int packSize,
    bool collides = true);
 
    void SetAnimBPDefaults(int frames, float duration, int frameW, int frameH);
@@ -59,21 +60,19 @@ public:
    Faction* faction;
 
    int level;
-   string charName;
-   string techName;
+   string charName, techName;
+
+   SDL_Rect drawBox, hitBox;
 
    int maxHP;
-   double HPbonus;
-   double HPRegenRate;
+   double HPbonus, HPRegenRate;
 
    int maxResource;
-   double resourceBonus;
-   double resourceRegenRate;
+   double resourceBonus, resourceRegenRate;
 
    int moveSpeed;
 
-   int numAnims;
-   int numTextures;
+   int numAnims, numTextures;
 
    float density;
    int packSize;

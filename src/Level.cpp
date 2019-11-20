@@ -50,7 +50,7 @@ Level::Level(Locale* locale) {
       }
    }
 
-   // Generate 10 to 16 rooms
+   // Generate a randomnumber of rooms
    int minRoomCount = locale->minRoomCount;
    int maxRoomCount = locale->maxRoomCount;
    int mod = maxRoomCount - minRoomCount;
@@ -68,26 +68,20 @@ Level::Level(Locale* locale) {
 
 
 
+// Determine if the tile is a ground tile
 bool Level::IsGround(int x, int y) {
    int g = ground[y][x];
-   if (g == 1) return true;
-   if (g == 5) return true;
-   if (g == 9) return true;
-   if (g > 15) return true;
-   return false;
+   if (g == 1 || g == 5 || g == 9 || g > 15) return true;
+   else return false;
 }
 
 
 
 bool Level::IsWall(int x, int y) {
    int g = ground[y][x];
-   if (g == 2) return true;
-   if (g == 3) return true;
-   if (g == 6) return true;
-   if (g == 7) return true;
-   if (g == 10) return true;
-   if (g == 11) return true;
-   return false;
+   if (g == 2 || g == 3 || g == 6 || g == 7 || g == 10 || g == 11) {
+      return true;
+   } else return false;
 }
 
 

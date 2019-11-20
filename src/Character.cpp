@@ -156,9 +156,9 @@ void Character::Render(int screenFrame) {
 }
 
 void Character::Free() {
-   delete stats;
+   delete[] stats;
 }
 
 Character::~Character() {
-   delete[] stats;
+   Free();
 }

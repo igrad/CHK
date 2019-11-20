@@ -5,16 +5,10 @@ NPC::NPC() {
 
 }
 
-NPC::NPC(string charName, string techName, NPCROLE role, Faction* faction,
-   int level, int maxHP, int moveSpeed, int numAnims, int numTextures,
-   bool collides): Character(charName, techName, level, maxHP, moveSpeed,
-      numAnims, numTextures, collides) {
-   this->role = role;
-   this->faction = faction;
-}
-
 NPC::NPC(NPCBlueprint* bp): Character(bp->charName, bp->techName, bp->level,
    bp->maxHP, bp->moveSpeed, bp->numAnims, bp->numTextures, bp->collides) {
+   this->drawBox = bp->drawBox;
+   this->hitBox = bp->hitBox;
    this->role = bp->role;
    this->faction = bp->faction;
    this->charName = bp->charName;
@@ -24,6 +18,9 @@ NPC::NPC(NPCBlueprint* bp): Character(bp->charName, bp->techName, bp->level,
    this->maxResource = bp->maxResource;
    this->resourceBonus = bp->resourceBonus;
    this->resourceRegenRate = bp->resourceRegenRate;
+
+   anims = bp->anims;
+   textures = bp->textures;
 }
 
 void NPC::CreatePath() {
@@ -31,5 +28,5 @@ void NPC::CreatePath() {
 }
 
 NPC::~NPC() {
-    
+
 }

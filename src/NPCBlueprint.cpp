@@ -8,13 +8,25 @@ NPCBlueprint::NPCBlueprint() {
 }
 
 NPCBlueprint::NPCBlueprint(NPCROLE role, Faction* faction, int level,
-   string charName, string techName, int maxHP, double HPbonus,
-   double HPRegenRate, int maxResource, double resourceBonus,
-   double resourceRegenRate, int moveSpeed, int numAnims, int numTextures,
-   float density, int packSize, bool collides) {
+   string charName, string techName, SDL_Rect drawBox, SDL_Rect hitBox,
+   int maxHP, double HPbonus, double HPRegenRate, int maxResource,
+   double resourceBonus, double resourceRegenRate, int moveSpeed,
+   int numAnims, int numTextures, float density, int packSize, bool collides) {
    this->role = role;
    this->faction = faction;
    this->level = level;
+   this->drawBox = {
+      int(drawBox.x * GZOOM),
+      int(drawBox.y * GZOOM),
+      int(drawBox.w * GZOOM),
+      int(drawBox.h * GZOOM)
+   };
+   this->hitBox = {
+      int(hitBox.x * GZOOM),
+      int(hitBox.y * GZOOM),
+      int(hitBox.w * GZOOM),
+      int(hitBox.h * GZOOM)
+   };
    this->charName = charName;
    this->techName = techName;
    this->maxHP = maxHP;
@@ -78,11 +90,14 @@ void NPCBlueprint::Create(vector<NPC>* NPCs) {
 Faction F_goblins {1, "Goblins"};
 
 // NPC Blueprints
+SDL_Rect drawBox = {0, 0, 26, 40};
+SDL_Rect hitBox = {8, 0, 10, 6};
 NPCBlueprint BP_goblinGuard(
    GUARD, &F_goblins,   // Role and faction
    1,                   // Level
    "Goblin Guard",      // On-screen name
    "goblinGuard",       // Technical name
+   drawBox, hitBox,     // drawBox, hitBox
    10, 5.00, 0.40,      // HP, HP bonus, and HP regen
    0, 0.00, 0.00,       // Resource, resource bonus, and resource regen
    25,                  // Movespeed
@@ -91,4 +106,5 @@ NPCBlueprint BP_goblinGuard(
 );
 
 NPCBlueprint BP_goblinShaman(GUARD, &F_goblins, 1,
-   "Goblin Shaman", "goblinShaman", 8, 4.00, 0.40, 6, 6.00, 0.60, 25, 8, 1, 0.01, 1);
+   "Goblin Shaman", "goblinShaman", drawBox, hitBox, 8, 4.00, 0.40, 6, 6.00,
+   0.60, 25, 8, 1, 0.01, 1);

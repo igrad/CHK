@@ -215,11 +215,11 @@ void LoadEnemies(Locale* locale) {
 
 	activeNPCTypes.clear();
 
-	BP_goblinGuard.SetAnimBPDefaults(8, 2.0, 30, 50);
+	BP_goblinGuard.SetAnimBPDefaults(8, 2.0, 26, 40);
 	BP_goblinGuard.GenerateAnimsAndTextures();
 	activeNPCTypes.push_back(&BP_goblinGuard);
 
-	BP_goblinShaman.SetAnimBPDefaults(8, 2.0, 30, 50);
+	BP_goblinShaman.SetAnimBPDefaults(8, 2.0, 26, 40);
 	BP_goblinShaman.GenerateAnimsAndTextures();
 	activeNPCTypes.push_back(&BP_goblinShaman);
 }
@@ -237,8 +237,10 @@ void SpawnEnemies(Level* level) {
 		for (auto NPCBP = activeNPCTypes.begin();
 			NPCBP < activeNPCTypes.end(); NPCBP++) {
 			// For now, we spawn one of each NPC in each room
-			gx = (level->rooms[room].x + (rand() % level->rooms[room].w));
-		   gy = (level->rooms[room].y + (rand() % level->rooms[room].h));
+			gx = level->rooms[room].x + 1 +
+				(rand() % (level->rooms[room].w - 2));
+		   gy = level->rooms[room].y + 1 +
+				(rand() % (level->rooms[room].h - 2));
 		   x = gx * PIXELSPERFEET * 5 * GZOOM;
 		   y = gy * PIXELSPERFEET * 5 * GZOOM;
 
