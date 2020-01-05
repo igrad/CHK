@@ -7,6 +7,7 @@
 #include "LTexture.h"
 #include "Collider.h"
 #include "Animation.h"
+#include "ActorY.h"
 
 
 // Actor with melee combat capabilities and some special abilities
@@ -46,6 +47,8 @@ enum PHASE_DOOR_ANIM {
    ANIM_BREAK_OUT
 };
 
+class ActorY;
+
 
 
 /**
@@ -57,63 +60,65 @@ enum PHASE_DOOR_ANIM {
 * Animation object being rendered.
 */
 class Actor: public Collider {
-   public:
-      Actor();
-      Actor(int numAnims, int numTextures);
+public:
+   Actor();
+   Actor(int numAnims, int numTextures);
 
-      void SetXPos(double x);
-      void SetYPos(double y);
-      void SetPos(double x = -0.1, double y = -0.1);
-      void SetHitBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
-      void SetDrawBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
-      void SetZoom(float newZoom);
+   void SetXPos(double x);
+   void SetYPos(double y);
+   void SetPos(double x = -0.1, double y = -0.1);
+   void SetHitBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
+   void SetDrawBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
+   void SetZoom(float newZoom);
 
-      bool LoadAnimation(int phase, string path, int frames, float duration,
-         int frameW, int frameH, bool reversed = false);
-      bool LoadAnimation(int phase, LTexture* ref, int frames, float duration,
-         int frameW, int frameH, bool reversed = false);
-      void SetActiveAnim(int anim, bool loop = false);
-      bool LoadTexture(int phase, string path);
-      bool LoadTexture(int phase, LTexture* ref);
-      void SetActiveTexture(int phase);
+   bool LoadAnimation(int phase, string path, int frames, float duration,
+      int frameW, int frameH, bool reversed = false);
+   bool LoadAnimation(int phase, LTexture* ref, int frames, float duration,
+      int frameW, int frameH, bool reversed = false);
+   void SetActiveAnim(int anim, bool loop = false);
+   bool LoadTexture(int phase, string path);
+   bool LoadTexture(int phase, LTexture* ref);
+   void SetActiveTexture(int phase);
 
-      void BufferTexture(int textPhase);
-      void BufferAnimation(int animPhase, bool loop = false);
+   void BufferTexture(int textPhase);
+   void BufferAnimation(int animPhase, bool loop = false);
 
-      void HandleMovement(int camX, int camY);
-      void Render(int screenFrame);
+   void HandleMovement(int camX, int camY);
+   void Render(int screenFrame);
 
-      void Free();
+   void Free();
 
-      ~Actor();
+   ~Actor();
 
-      float zoom;
+   int allActorsIndex = 0;
 
-      bool xDirection;
-      bool yDirection;
+   float zoom;
 
-      float xVelocity;
-      float yVelocity;
+   bool xDirection;
+   bool yDirection;
 
-      bool usingAnims;
+   float xVelocity;
+   float yVelocity;
 
-      bool hasAnimations;
-      bool hasTextures;
+   bool usingAnims;
 
-      bool animsAllocated;
-      bool texturesAllocated;
+   bool hasAnimations;
+   bool hasTextures;
 
-      int numAnims;
-      Animation* anims;
-      int activeAnim;
+   bool animsAllocated;
+   bool texturesAllocated;
 
-      int numTextures;
-      LTexture* textures;
-      int activeTexture;
+   int numAnims;
+   Animation* anims;
+   int activeAnim;
 
-      int bufferedText;
-      int bufferedAnim;
-      bool loopBufferedAnim;
+   int numTextures;
+   LTexture* textures;
+   int activeTexture;
+
+   int bufferedText;
+   int bufferedAnim;
+   bool loopBufferedAnim;
 };
 
 #endif

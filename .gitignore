@@ -5,3 +5,5 @@ Concept*
 .git
 *.txt
 *.pdn
+.vscode
+*.code-workspace

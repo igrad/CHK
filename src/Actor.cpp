@@ -40,6 +40,10 @@ Actor::Actor(int numAnims, int numTextures) {
    bufferedAnim = -1;
 
    SetDrawBoxSize(0, 0, 40, 80);
+
+   ActorY ay;
+   ay.NewActor(this);
+   if (allActorsIndex == 0) ActorY::PushActor(ay);
 }
 
 // Set X position of actor within the level, with (0.00, 0.00) being the
@@ -53,6 +57,7 @@ void Actor::SetXPos(double x) {
 void Actor::SetYPos(double y) {
    if (y != -0.1) { yPos = y; }
    hitBox.y = yPos + hitBoxYOffset;
+   ActorY::UpdateActor(this);
 }
 
 // Set both X and Y position of actor within the level
@@ -170,6 +175,10 @@ void Actor::Render(int screenFrame) {
    drawBox.x = (xPos - Camera::x);
    drawBox.y = (yPos - Camera::y);
 
+   // Log("Updating actor");
+   // if (yVelocity / 1.f != 0.f) UpdateActor(this);
+   // Log("Update done!");
+
    bool animDone = false;
    if (usingAnims) {
       animDone = anims[activeAnim].animDone;
@@ -200,11 +209,13 @@ void Actor::Free() {
       delete[] anims;
       animsAllocated = false;
    }
-   
+
    if (texturesAllocated && textures != NULL) {
       delete[] textures;
       texturesAllocated = false;
    }
+
+   ActorY::PopActor(allActorsIndex);
 }
 
 // Deconstructor

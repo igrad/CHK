@@ -8,6 +8,7 @@
 #include "CollisionDetection.h"
 #include "MouseEvents.h"
 #include "NPCBlueprint.h"
+#include "ActorY.h"
 
 class NPC : public Character {
 public:

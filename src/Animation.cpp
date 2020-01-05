@@ -48,7 +48,7 @@ bool Animation::LoadFromFile(string path, int frames, float duration,
    // Load the image at specified path
    SDL_Surface* loadedSurface = IMG_Load(path.c_str());
    if (loadedSurface == NULL) {
-      printf("Unable to load image %s! SDL_image error: %s\n", path.c_str(), IMG_GetError());
+      printf("\nUnable to load image! SDL_image error: %s", IMG_GetError());
    } else {
       // Color key the image
       SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0, 0xFF, 0xFF));

@@ -1,4 +1,5 @@
 #include "..\include\Character.h"
+#include "..\include\ActorY.h"
 
 int statCap = 8;
 
@@ -19,6 +20,10 @@ Character::Character(string charName, string techName,int level, int HP,
    pixelsPerFrame = pixelVelocity / SCREEN_FPS;
 
    stats = new int[6];
+
+   ActorY ay;
+   ay.NewCharacter(this);
+   ActorY::PushActor(ay);
 }
 
 void Character::LoadDefaultArt(string name) {
@@ -119,6 +124,7 @@ void Character::SetYVelocity(int multiplier) {
 }
 
 void Character::Render(int screenFrame) {
+   // Log("Rendering character");
    // Player animations
    bool movingUp = (yVelocity < 0);
    bool movingDown = (yVelocity > 0);

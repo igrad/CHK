@@ -19,6 +19,7 @@
 #include "..\include\Character.h"
 #include "..\include\NPCBlueprint.h"
 #include "..\include\NPC.h"
+#include "..\include\ActorY.h"
 
 #include "..\include\Locale.h"
 #include "..\include\Level.h"
@@ -272,6 +273,8 @@ void Close() {
 	// Quit SDL subsystems
    IMG_Quit();
 	SDL_Quit();
+
+	Log("Exiting...");
 }
 
 
@@ -302,7 +305,7 @@ int main(int argc, char* args[]) {
 
 			player.SetSpawnPoint(randomLevel.GetPlayerSpawn());
 
-			SpawnEnemies(&randomLevel);
+			//SpawnEnemies(&randomLevel);
 
          // Main loop flag
          bool quit = false;
@@ -523,6 +526,15 @@ int main(int argc, char* args[]) {
 					Camera::SetFocusOnActor(&player);
 				}
 
+				// Render everything to screen
+				// Order of renders:
+				// 1. floor (if we want to implement multiple floors later on,
+				//		this will need to be part of a loop)
+				// 2. Walls behind actor(s) at current y position
+				// 3. Doors behind actor(s) at current y position
+				// 4. Actor(s) at current y position
+				// 5. Walls after current y position
+				// 6. Doors after current y position
 				// Iterate through the list of actors here, but until we have more
 				// than one actor, we can do this without iterations
 				// We need a vector of actors, sorted by their Y position. If two
@@ -530,26 +542,40 @@ int main(int argc, char* args[]) {
 				// We iterate through this vector, and get the Y tile of the
 				// current actor so that we can chop up the walls
 
-				//vector sortedActors
-
 				int currentY = 0;
+				int actorY = 0;
 
 				randomLevel.RenderFloor();
 
+				// Old code for rendering walls and Characters
 				randomLevel.RenderWalls(currentY,
 					player.hitBox.y + player.hitBox.h);
 				randomLevel.RenderDoors(currentY,
 					player.hitBox.y + player.hitBox.h);
-
+				
 				currentY = player.hitBox.y + player.hitBox.h;
-
+				
 				// Render players
 				player.Render(screenFrame);
-
+				
 				// Render NPCs
 				for (auto npc = activeNPCs.begin(); npc < activeNPCs.end(); npc++) {
 					(*npc).Render(screenFrame);
 				}
+
+				// Render walls and actors
+				// TEST SECTION
+				// for (int actor = 0; actor < ActorY::allActors.size(); actor++) {
+				// 	actorY = ActorY::allActors[actor].GetYBase();
+				// 	randomLevel.RenderWalls(currentY, actorY);
+				// 	// randomLevel.RenderDoors(currentY, actorY);
+
+				// 	// printf("\nRendering actor %i", actor);
+				// 	ActorY::allActors[actor].Render(screenFrame);
+
+				// 	currentY = actorY;
+				// }
+				// END TEST SECTION
 
 				randomLevel.RenderWalls(currentY, -1);
 				randomLevel.RenderDoors(currentY, -1);
@@ -579,3 +605,4 @@ int main(int argc, char* args[]) {
 	Close();
    return 0;
 }
+

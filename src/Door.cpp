@@ -252,6 +252,9 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
 
    dropmenu = new DropMenu(0, 0, 1, 5, CR_ABSOLUTE, &UI.doorDM);
    linkedDM = dropmenu;
+
+   // Add to Actors vector
+   // ActorY::PushActor(this);
 }
 
 void Door::SetHitbox(SDL_Rect* p1, SDL_Rect* p2, SDL_Rect* d) {
