@@ -7,7 +7,7 @@ Character::Character() {
 
 }
 
-Character::Character(string charName, string techName,int level, int HP,
+Character::Character(string charName, string techName, int level, int HP,
    int moveSpeed, int numAnims, int numTextures, bool collides):
    Actor(numAnims, numTextures) {
    charLevel = level;
@@ -18,6 +18,9 @@ Character::Character(string charName, string techName,int level, int HP,
    // The number of feet times the pixels per feet yeids the pixels moved per second
    pixelVelocity = moveSpeed * PIXELSPERFEET * GZOOM;
    pixelsPerFrame = pixelVelocity / SCREEN_FPS;
+   slowVelocity = pixelsPerFrame/2;
+   avgVelocity = pixelsPerFrame;
+   maxVelocity = pixelsPerFrame * 2;
 
    stats = new int[6];
 
@@ -89,76 +92,48 @@ void Character::SetSpawnPoint(SDL_Rect r) {
    SetPosition(x, y);
 }
 
-void Character::SetPosition(int newX, int newY) {
+void Character::SetPosition(double newX, double newY) {
    xPos = newX;
    yPos = newY;
 }
 
-void Character::MoveTowards(int destX, int destY) {
-   float vX = destX - xPos;
-   float vY = destY - yPos;
-
-   float vMag = FindDistance(xPos, yPos, destX, destY);
-
-   float uX = vX/vMag;
-   float uY = vY/vMag;
-
-   int newX = uX * pixelsPerFrame;
-   int newY = uY * pixelsPerFrame;
-
-   SetPosition(newX, newY);
-}
-
-void Character::SetXVelocity(int multiplier) {
-   xVelocity = pixelsPerFrame * multiplier;
-   xVelocity = (multiplier < 1) ? ceil(xVelocity) : floor (xVelocity);
-
-   queueCollisions = true;
-}
-
-void Character::SetYVelocity(int multiplier) {
-   yVelocity = pixelsPerFrame * multiplier;
-   yVelocity = (multiplier < 1) ? ceil(yVelocity) : floor (yVelocity);
-
-   queueCollisions = true;
-}
-
 void Character::Render(int screenFrame) {
-   // Log("Rendering character");
    // Player animations
-   bool movingUp = (yVelocity < 0);
-   bool movingDown = (yVelocity > 0);
-   bool movingLeft = (xVelocity < 0);
-   bool movingRight = (xVelocity > 0);
    PHASE_CHARACTER phase = ANIM_IDLE_I;
+
    if (xDirection) {
-      if (movingUp) { phase = ANIM_WALK_I; }
-      else if (movingDown) { phase = ANIM_WALK_IV; }
-      else if (movingRight) {
-         if (yDirection) { phase = ANIM_WALK_IV; }
-         else { phase = ANIM_WALK_I; }
+      if (walkingPath) {
+         if (!yDirection) phase = ANIM_WALK_I;
+         else phase = ANIM_WALK_IV;
       } else {
-         if (yDirection) { phase = ANIM_IDLE_IV; }
-         else { phase = ANIM_IDLE_I; }
+         if (!yDirection) phase = ANIM_IDLE_I;
+         else phase = ANIM_IDLE_IV;
       }
    } else {
-      if (movingUp) { phase = ANIM_WALK_II; }
-      else if (movingDown) { phase = ANIM_WALK_III; }
-      else if (movingLeft) {
-         if (yDirection) { phase = ANIM_WALK_III; }
-         else { phase = ANIM_WALK_II; }
+      if (walkingPath) {
+         if (!yDirection) phase = ANIM_WALK_II;
+         else phase = ANIM_WALK_III;
       } else {
-         if (yDirection) { phase = ANIM_IDLE_III; }
-         else { phase = ANIM_IDLE_II; }
+         if (!yDirection) phase = ANIM_IDLE_II;
+         else phase = ANIM_IDLE_III;
       }
    }
 
-   if (activeAnim != phase) { SetActiveAnim(phase, true); }
-
-   xVelocity = 0;
-   yVelocity = 0;
+   if (activeAnim != phase) SetActiveAnim(phase, true);
 
    Actor::Render(screenFrame);
+
+   // Render the path being walked
+   if (walkingPath) {
+      for (int point = 0; point < pathNodes.size(); point++) {
+         const SDL_Rect r = {
+            (int)(pathNodes[point].first - Camera::x) - 3,
+            (int)(pathNodes[point].second - Camera::y) - 3,
+            7,
+            7};
+         SDL_RenderFillRect(gRenderer, &r);
+      }
+   }
 }
 
 void Character::Free() {

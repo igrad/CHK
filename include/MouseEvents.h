@@ -21,7 +21,7 @@ enum MOUSEEVENT {
 };
 
 struct MouseEventData {
-   std::function<bool(int, int, int)> proc;
+   function<bool(int, int, int)> proc;
    int par1;
    int par2;
    int par3;

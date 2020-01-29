@@ -71,7 +71,7 @@ void CheckWallCollisions(Actor* actor, map<int, Collider>* others) {
 
          int minOverlap = min(min(min(abs(xPosOverlap), abs(xNegOverlap)), abs(yPosOverlap)), abs(yNegOverlap));
 
-         if (actor->yVelocity < 0 && actor->xVelocity > 0) {
+         if (!actor->yDirection && actor->xDirection) {
             if (abs(yPosOverlap) == minOverlap) {
                actor->SetYPos(actor->yPos - yPosOverlap);
             } else if (abs(yNegOverlap) == minOverlap) {
@@ -110,7 +110,7 @@ void CheckDoorCollisions(Actor* actor, Collider* other) {
       int minOverlap = min(min(min(abs(xPosOverlap), abs(xNegOverlap)),
          abs(yPosOverlap)), abs(yNegOverlap));
 
-      if (actor->yVelocity < 0 && actor->xVelocity > 0) {
+      if (!actor->yDirection && actor->xDirection) {
          if (abs(yPosOverlap) == minOverlap) {
             actor->SetYPos(actor->yPos - yPosOverlap);
          } else if (abs(yNegOverlap) == minOverlap) {
