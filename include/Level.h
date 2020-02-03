@@ -15,6 +15,37 @@
 
 
 
+// Index of tile codes
+enum TILE_CODES {
+   T_VOID_UNUSED,
+   T_GROUND_UNUSED,
+   T_WALL_UNUSED,
+   T_INVIS_WALL_UNUSED,
+   T_VOID_RES,
+   T_GROUND_RES,
+   T_WALL_RES,
+   T_INVIS_WALL_RES,
+   T_VOID_FAKE,
+   T_GROUND_FAKE,
+   T_WALL_FAKE,
+   T_INVIS_WALL_FAKE,
+   T_UNUSED1,
+   T_UNUSED2,
+   T_UNUSED3,
+   T_UNUSED4,
+   T_DOOR
+};
+
+
+
+struct NavBlock {
+   int x;
+   int y;
+   bool mustUse;  // Even if this isn't the furthest block in LoS, it's used
+};
+
+
+
 class Room {
    public:
       Room();
@@ -35,10 +66,22 @@ class Room {
 
 
 
+const int MAXGROUNDSIZE = 100;
+
+
+
 class Level {
    public:
       Level();
       Level(Locale* locale);
+
+      void NearestVacantGrid(int destX, int destY, int* rX, int* rY);
+      bool FindGroundRoute(int origX, int origY, int destX, int destY, 
+         vector<pair<int,int>>* checkpoints);
+      void GetCellsInLineOfSight(int origX, int origY, int destX, int destY,
+         vector<pair<int,int>>* hitCells);
+      bool HasLineOfSight(int origX, int origY, int destX, int destY);
+      bool HasFullLineOfSight(int origX, int origY, int destX, int destY);
 
       bool IsGround(int x, int y);
       bool IsWall(int x, int y);
@@ -46,6 +89,7 @@ class Level {
       bool CheckNewRoom(SDL_Rect* room);
       void GenerateRandomRoom(int roomNum);
 
+      void UpdateGroundCopy();
       void ResetMod10Changes();
       bool PointInRoom(int x, int y, int room);
       bool PointInAnyRoom(int x, int y);
@@ -67,8 +111,6 @@ class Level {
       void GenerateLevel();
       bool LoadFromFile(string path, int width, int height);
 
-      void SetZoom(float newZoom);
-
       SDL_Rect GetPlayerSpawn();
 
       void WriteOutWholeLevel();
@@ -81,7 +123,6 @@ class Level {
       ~Level();
 
       // General
-      float zoom;
       Locale* locale;
 
       // Wall generation variables
@@ -95,9 +136,9 @@ class Level {
       Decal* decals;
 
       // Floor generation variables
-      const static int maxGroundSize = 100;
       int groundSize;
-      uint8_t ground[maxGroundSize][maxGroundSize];
+      uint8_t ground[MAXGROUNDSIZE][MAXGROUNDSIZE];
+      uint8_t groundCopy[MAXGROUNDSIZE][MAXGROUNDSIZE];
 
       Room* rooms;
 

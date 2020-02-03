@@ -14,6 +14,7 @@
 
 #include "..\include\Collider.h"
 #include "..\include\LTexture.h"
+#include "..\include\RenderingString.h"
 #include "..\include\Animation.h"
 #include "..\include\Actor.h"
 #include "..\include\Character.h"
@@ -36,6 +37,7 @@ SDL_Rect SCREEN_RECT = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 // Global zoom
 const float GZOOM = 2.0;
 const float GMAXZOOM = 2.0;
+float RENDERZOOM = 1.f;
 
 // Unscaled level size constants
 const int LEVEL_HEIGHT = 100;
@@ -95,20 +97,27 @@ bool Init() {
 
 	//Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		Fatal("SDL could not initialize! SDL_Error: %s\n" + string(SDL_GetError()));
+		Fatal("SDL could not initialize! SDL_Error: %s\n" + 
+			string(SDL_GetError()));
 		success = false;
 	}
 	else {
 		//Create window
-		gWindow = SDL_CreateWindow("Catacombs of Halfwind Keep", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		gWindow = SDL_CreateWindow("Catacombs of Halfwind Keep", 
+			1940, 30, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+
 		if (gWindow == NULL) {
-			printf("\nWindow could not be created! SDL_Error: %s\n", SDL_GetError());
+			Fatal("Window could not be created! SDL_Error: " + 
+				string(SDL_GetError()));
 			success = false;
 		} else {
          // Create renderer for window
-         gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+         gRenderer = SDL_CreateRenderer(gWindow, -1, 
+				SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
          if (gRenderer == NULL) {
-            Fatal("Renderer could not be created! SDL_Error: %s\n" + string(SDL_GetError()));
+            Fatal("Renderer could not be created! SDL_Error: %s\n" + 
+					string(SDL_GetError()));
          } else {
             // Initialize renderer color
             SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
@@ -116,7 +125,8 @@ bool Init() {
             // Initialize PNG loading
             int imgFlags = IMG_INIT_PNG;
             if (!(IMG_Init(imgFlags) & imgFlags)) {
-               Fatal("SDL_image could not initialize! SDL_image Error: " + string(IMG_GetError()));
+               Fatal("SDL_image could not initialize! SDL_image Error: " + 
+						string(IMG_GetError()));
                success = false;
             }
 
@@ -304,6 +314,7 @@ int main(int argc, char* args[]) {
 			randomLevel.WriteOutWholeLevel();
 
 			player.SetSpawnPoint(randomLevel.GetPlayerSpawn());
+			Camera::SetFocusOnActor(&player);
 
 			//SpawnEnemies(&randomLevel);
 
@@ -319,7 +330,6 @@ int main(int argc, char* args[]) {
 			// The frames per second cap timer
 			LTimer capTimer;
 
-			// Test button
 			// Create a templated vector in main that stores all of the clickable
 		   // objects loaded up, and each tick, iterate through that list to find
 			// which ones are currently on-screen, and then check if they are
@@ -334,7 +344,7 @@ int main(int argc, char* args[]) {
 			// Level reload button
 			SDL_Rect reloadLevelRect = {0, 0, 120, 40};
 			ClickButton reloadLevelBtn = ClickButton("Reload", 14, FONT_TYPED,
-			&FONTC_OFFWHITE, 8, NULL, NULL, CR_ABSOLUTE,
+			&FONTC_OFFWHITE, 8, &reloadLevelRect, &reloadLevelRect, CR_ABSOLUTE,
 			"media\\images\\dmbtnbg.png");
 			reloadLevelBtn.SetFunction(LEFTCLICK,
 				[&](int a, int b, int c) {
@@ -349,10 +359,152 @@ int main(int argc, char* args[]) {
 
 					for (auto d : randomLevel.doors) clickables->push_back(d);
 
+					Camera::SetFocusOnActor(&player);
+
 					Log("Created level successfully!");
 					return true;
 				});
 			clickables->push_back(&reloadLevelBtn);
+
+			// Zoom in button
+			SDL_Rect zoomInRect = {128, 0, 120, 40};
+			SDL_Rect zoomOutRect = {256, 0, 120, 40};
+			SDL_Rect zoomResetRect = {384, 0, 120, 40};
+			ClickButton zoomInBtn = ClickButton("Zoom In", 14, FONT_TYPED,
+				&FONTC_OFFWHITE, 8, &zoomInRect, &zoomInRect, CR_ABSOLUTE,
+				"media\\images\\dmbtnbg.png");
+			zoomInBtn.SetFunction(LEFTCLICK,
+				[&](int a, int b, int c) {
+					Log("Zooming in");
+					RENDERZOOM = RENDERZOOM * 2;
+					if (RENDERZOOM > 2) RENDERZOOM = 2.f;
+
+					SDL_RenderSetScale(gRenderer, RENDERZOOM, RENDERZOOM);
+
+					reloadLevelRect.x = reloadLevelRect.x / RENDERZOOM;
+					reloadLevelRect.y = reloadLevelRect.y / RENDERZOOM;
+					reloadLevelRect.w = reloadLevelRect.w / RENDERZOOM;
+					reloadLevelRect.h = reloadLevelRect.h / RENDERZOOM;
+					zoomInRect.x = zoomInRect.x / RENDERZOOM;
+					zoomInRect.y = zoomInRect.y / RENDERZOOM;
+					zoomInRect.w = zoomInRect.w / RENDERZOOM;
+					zoomInRect.h = zoomInRect.h / RENDERZOOM;
+					zoomOutRect.x = zoomOutRect.x / RENDERZOOM;
+					zoomOutRect.y = zoomOutRect.y / RENDERZOOM;
+					zoomOutRect.w = zoomOutRect.w / RENDERZOOM;
+					zoomOutRect.h = zoomOutRect.h / RENDERZOOM;
+					zoomResetRect.x = zoomResetRect.x / RENDERZOOM;
+					zoomResetRect.y = zoomResetRect.y / RENDERZOOM;
+					zoomResetRect.w = zoomResetRect.w / RENDERZOOM;
+					zoomResetRect.h = zoomResetRect.h / RENDERZOOM;
+					return true;
+				});
+			clickables->push_back(&zoomInBtn);
+
+			// Zoom out button
+			ClickButton zoomOutBtn = ClickButton("Zoom Out", 14, FONT_TYPED,
+				&FONTC_OFFWHITE, 8, &zoomOutRect, &zoomOutRect, CR_ABSOLUTE,
+				"media\\images\\dmbtnbg.png");
+			zoomOutBtn.SetFunction(LEFTCLICK,
+				[&](int a, int b, int c) {
+					Log("Zooming out");
+					RENDERZOOM = RENDERZOOM/2;
+					if (RENDERZOOM < 0.1) RENDERZOOM = 0.1f;
+
+					SDL_RenderSetScale(gRenderer, RENDERZOOM, RENDERZOOM);
+
+					reloadLevelRect.x = reloadLevelRect.x / RENDERZOOM;
+					reloadLevelRect.y = reloadLevelRect.y / RENDERZOOM;
+					reloadLevelRect.w = reloadLevelRect.w / RENDERZOOM;
+					reloadLevelRect.h = reloadLevelRect.h / RENDERZOOM;
+					zoomInRect.x = zoomInRect.x / RENDERZOOM;
+					zoomInRect.y = zoomInRect.y / RENDERZOOM;
+					zoomInRect.w = zoomInRect.w / RENDERZOOM;
+					zoomInRect.h = zoomInRect.h / RENDERZOOM;
+					zoomOutRect.x = zoomOutRect.x / RENDERZOOM;
+					zoomOutRect.y = zoomOutRect.y / RENDERZOOM;
+					zoomOutRect.w = zoomOutRect.w / RENDERZOOM;
+					zoomOutRect.h = zoomOutRect.h / RENDERZOOM;
+					zoomResetRect.x = zoomResetRect.x / RENDERZOOM;
+					zoomResetRect.y = zoomResetRect.y / RENDERZOOM;
+					zoomResetRect.w = zoomResetRect.w / RENDERZOOM;
+					zoomResetRect.h = zoomResetRect.h / RENDERZOOM;
+					return true;
+				});
+			clickables->push_back(&zoomOutBtn);
+
+			// Reset zoom button
+			ClickButton zoomResetBtn = ClickButton("Reset zoom", 14, FONT_TYPED,
+				&FONTC_OFFWHITE, 8, &zoomResetRect, &zoomResetRect, CR_ABSOLUTE,
+				"media\\images\\dmbtnbg.png");
+			zoomResetBtn.SetFunction(LEFTCLICK,
+				[&](int a, int b, int c) {
+					Log("Zoom reset");
+					RENDERZOOM = 1.f;
+
+					SDL_RenderSetScale(gRenderer, RENDERZOOM, RENDERZOOM);
+
+					reloadLevelRect.x = reloadLevelRect.x / RENDERZOOM;
+					reloadLevelRect.y = reloadLevelRect.y / RENDERZOOM;
+					reloadLevelRect.w = reloadLevelRect.w / RENDERZOOM;
+					reloadLevelRect.h = reloadLevelRect.h / RENDERZOOM;
+					zoomInRect.x = zoomInRect.x / RENDERZOOM;
+					zoomInRect.y = zoomInRect.y / RENDERZOOM;
+					zoomInRect.w = zoomInRect.w / RENDERZOOM;
+					zoomInRect.h = zoomInRect.h / RENDERZOOM;
+					zoomOutRect.x = zoomOutRect.x / RENDERZOOM;
+					zoomOutRect.y = zoomOutRect.y / RENDERZOOM;
+					zoomOutRect.w = zoomOutRect.w / RENDERZOOM;
+					zoomOutRect.h = zoomOutRect.h / RENDERZOOM;
+					zoomResetRect.x = zoomResetRect.x / RENDERZOOM;
+					zoomResetRect.y = zoomResetRect.y / RENDERZOOM;
+					zoomResetRect.w = zoomResetRect.w / RENDERZOOM;
+					zoomResetRect.h = zoomResetRect.h / RENDERZOOM;
+
+					return true;
+				});
+			clickables->push_back(&zoomResetBtn);
+
+			// Debug stats
+			RenderingString debugFPS = RenderingString("", &FONTC_WHITE,
+				FONT_TYPED, ALIGN_LEFT, VERT_ANCHOR_CENTER, 12);
+			SDL_Rect debugFPSRect = {
+				SCREEN_WIDTH - 200,
+				4,
+				200,
+				12};
+
+			RenderingString debugCursorPos = RenderingString("", &FONTC_WHITE,
+				FONT_TYPED, ALIGN_LEFT, VERT_ANCHOR_CENTER, 12);
+			SDL_Rect debugCursorPosRect = {
+				SCREEN_WIDTH - 200,
+				28,
+				200,
+				12};
+			
+			RenderingString debugGCursorPos = RenderingString("", &FONTC_WHITE,
+				FONT_TYPED, ALIGN_LEFT, VERT_ANCHOR_CENTER, 12);
+			SDL_Rect debugGCursorPosRect = {
+				SCREEN_WIDTH - 200,
+				52,
+				200,
+				12};
+
+			RenderingString debugTCursorPos = RenderingString("", &FONTC_WHITE,
+				FONT_TYPED, ALIGN_LEFT, VERT_ANCHOR_CENTER, 12);
+			SDL_Rect debugTCursorPosRect = {
+				SCREEN_WIDTH - 200,
+				76,
+				200,
+				12};
+
+			RenderingString debugPlayerPos = RenderingString("", &FONTC_WHITE,
+				FONT_TYPED, ALIGN_LEFT, VERT_ANCHOR_CENTER, 12);
+			SDL_Rect debugPlayerPosRect = {
+				SCREEN_WIDTH - 200,
+				100,
+				200,
+				12};
 
 			// Start counting frames per second
 			int countedFrames = 0;
@@ -370,6 +522,21 @@ int main(int argc, char* args[]) {
          while(!quit) {
 				// Start the cap timer
 				capTimer.start();
+
+				// Mouse handling
+				SDL_PumpEvents();
+				SDL_GetMouseState(&mx, &my);
+				gmx = mx + Camera::x;
+				gmy = my + Camera::y;
+
+				newDMWaiting = false;
+
+				hoveredCRs = ClickRegion::GetRegionsAtMouse(gmx, gmy);
+				hoveredDMs = DropMenu::GetDMsAtMouse(gmx, gmy);
+
+				// Update cursor
+
+
             // Handle events in the queue
             while(SDL_PollEvent(&e) != 0) {
                // User requests quit
@@ -379,16 +546,6 @@ int main(int argc, char* args[]) {
 						e.type == SDL_MOUSEBUTTONDOWN ||
 						e.type == SDL_MOUSEBUTTONUP ||
 						e.type == SDL_MOUSEWHEEL) {
-						SDL_PumpEvents();
-						SDL_GetMouseState(&mx, &my);
-						gmx = mx + Camera::x;
-						gmy = my + Camera::y;
-
-						newDMWaiting = false;
-
-						hoveredCRs = ClickRegion::GetRegionsAtMouse(gmx, gmy);
-						hoveredDMs = DropMenu::GetDMsAtMouse(gmx, gmy);
-
 						// TODO: Working on updating this chunk with the new static members of ClickRegion and DropMenu
 						bool eventIssued = false;
 						switch (e.type) {
@@ -400,6 +557,11 @@ int main(int argc, char* args[]) {
 									newDMWaiting =
 									hoveredCRs.back()->OnLeftClick(mx, my);
 								}
+
+								// User has clicked in an area with no buttons or
+								// clickRegions, meaning they want to move to this spot
+								player.PlotMovement(&randomLevel, gmx, gmy);
+								player.SetCurrentSpeed(2);
 							} else if (e.button.button == SDL_BUTTON_RIGHT) {
 								eventIssued = true;
 
@@ -470,34 +632,32 @@ int main(int argc, char* args[]) {
 				// Handle keyboard input
 				const Uint8* keyStates = SDL_GetKeyboardState(NULL);
 
-				// Player movement
+				// Camera control
 				bool W = keyStates[SDL_SCANCODE_W];
 				bool S = keyStates[SDL_SCANCODE_S];
 				bool A = keyStates[SDL_SCANCODE_A];
 				bool D = keyStates[SDL_SCANCODE_D];
 
-				if (W && S) {
-					player.SetYVelocity(0);
-				} else if (W) {
-					player.yDirection = false;
-					player.SetYVelocity(-1);
-				} else if (S) {
-					player.yDirection = true;
-					player.SetYVelocity(1);
-				}
+				// Player movement speed controls
+				bool ctrl = keyStates[SDL_SCANCODE_LCTRL];
+				bool shift = keyStates[SDL_SCANCODE_LSHIFT];
 
-				if (A && D) {
-					player.SetXVelocity(0);
-				} else if (A) {
-					player.xDirection = false;
-					player.SetXVelocity(-1);
-				} else if (D) {
-					player.xDirection = true;
-					player.SetXVelocity(1);
-				}
+				// System controls
+				bool bksp = keyStates[SDL_SCANCODE_BACKSPACE];
+
+				if (W && !S) Camera::SetYDirNeg();
+				else if (!W && S) Camera::SetYDirPos();
+
+				if (A && !D) Camera::SetXDirNeg();
+				else if (!A && D) Camera::SetXDirPos();
+
+				if (ctrl) player.SetCurrentSpeed(1);
+				else if (shift) player.SetCurrentSpeed(3);
+
+				if (bksp) Close();
 
 				// Handle character movements
-				player.HandleMovement(Camera::x, Camera::y);
+				player.HandleMovement(&randomLevel);
 
 				// Handle collisions
 				// First, players
@@ -580,12 +740,30 @@ int main(int argc, char* args[]) {
 				randomLevel.RenderWalls(currentY, -1);
 				randomLevel.RenderDoors(currentY, -1);
 
-				reloadLevelBtn.Render(NULL);
-
 				// Render UI
 				for (auto d : randomLevel.doors) {
 					d->dropmenu->Render();
 				}
+
+				// Render debugging tools & data
+				reloadLevelBtn.Render(&reloadLevelRect);
+				zoomInBtn.Render(&zoomInRect);
+				zoomOutBtn.Render(&zoomOutRect);
+				zoomResetBtn.Render(&zoomResetRect);
+
+				debugFPS.str = "FPS: " + to_string((double)avgFPS);
+				debugCursorPos.str = "cX: " + to_string(mx) + 
+					", cY: " + to_string(my);
+				debugGCursorPos.str = "cGX: " + to_string(mx + (int)Camera::x) + 
+					", cGY: " + to_string(my + (int)Camera::y);
+				debugTCursorPos.str = "cTX: " + to_string((int)((mx + (int)Camera::x)/(PIXELSPERFEET * GZOOM * 5))) + ", cTY: " + to_string((int)((my + (int)Camera::y)/(PIXELSPERFEET * GZOOM * 5)));
+				debugPlayerPos.str = "pX: " + to_string((int)player.xPos) + 
+					", pY: " + to_string((int)player.yPos);
+				debugFPS.Render(&debugFPSRect);
+				debugCursorPos.Render(&debugCursorPosRect);
+				debugGCursorPos.Render(&debugGCursorPosRect);
+				debugTCursorPos.Render(&debugTCursorPosRect);
+				debugPlayerPos.Render(&debugPlayerPosRect);
 
             // Update screen
             SDL_RenderPresent(gRenderer);

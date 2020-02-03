@@ -92,9 +92,9 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
          break;
       case EAST:
          if (hand) {
-            part1.hitBox = locale->doorE_right_part1Clip;
-            part2.hitBox = locale->doorE_right_part2Clip;
-            door.hitBox = locale->doorE_right_doorClip;
+            part1.hitBox = locale->doorE_part1Clip;
+            part2.hitBox = locale->doorE_part2Clip;
+            door.hitBox = locale->doorE_doorClip;
 
             LoadTexture(0, &locale->doorE_right_closed);
             LoadTexture(1, &locale->doorE_right_open);
@@ -112,9 +112,9 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             LoadAnimation(5, &locale->doorE_right_open_anim,
                8, locale->doorEChangeRate_fast, frameW, frameH);
          } else {
-            part1.hitBox = locale->doorE_left_part1Clip;
-            part2.hitBox = locale->doorE_left_part2Clip;
-            door.hitBox = locale->doorE_left_doorClip;
+            part1.hitBox = locale->doorE_part1Clip;
+            part2.hitBox = locale->doorE_part2Clip;
+            door.hitBox = locale->doorE_doorClip;
 
             LoadTexture(0, &locale->doorE_left_closed);
             LoadTexture(1, &locale->doorE_left_open);
@@ -178,9 +178,9 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
          break;
       case WEST:
          if (hand) {
-            part1.hitBox = locale->doorW_right_part1Clip;
-            part2.hitBox = locale->doorW_right_part2Clip;
-            door.hitBox = locale->doorW_right_doorClip;
+            part1.hitBox = locale->doorW_part1Clip;
+            part2.hitBox = locale->doorW_part2Clip;
+            door.hitBox = locale->doorW_doorClip;
 
             LoadTexture(0, &locale->doorW_right_closed);
             LoadTexture(1, &locale->doorW_right_open);
@@ -198,9 +198,9 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
             LoadAnimation(5, &locale->doorW_right_open_anim,
                8, locale->doorWChangeRate_fast, frameW, frameH);
          } else {
-            part1.hitBox = locale->doorW_left_part1Clip;
-            part2.hitBox = locale->doorW_left_part2Clip;
-            door.hitBox = locale->doorW_left_doorClip;
+            part1.hitBox = locale->doorW_part1Clip;
+            part2.hitBox = locale->doorW_part2Clip;
+            door.hitBox = locale->doorW_doorClip;
 
             LoadTexture(0, &locale->doorW_left_closed);
             LoadTexture(1, &locale->doorW_left_open);

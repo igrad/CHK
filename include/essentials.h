@@ -1,6 +1,8 @@
 #ifndef ESSENTIALS_LOADED
 #define ESSENTIALS_LOADED
 
+const bool DEBUG_MOVEMENT = false;
+
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>

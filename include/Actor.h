@@ -48,6 +48,7 @@ enum PHASE_DOOR_ANIM {
 };
 
 class ActorY;
+class Level;
 
 
 
@@ -64,9 +65,6 @@ public:
    Actor();
    Actor(int numAnims, int numTextures);
 
-   void SetXPos(double x);
-   void SetYPos(double y);
-   void SetPos(double x = -0.1, double y = -0.1);
    void SetHitBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
    void SetDrawBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
    void SetZoom(float newZoom);
@@ -83,7 +81,11 @@ public:
    void BufferTexture(int textPhase);
    void BufferAnimation(int animPhase, bool loop = false);
 
-   void HandleMovement(int camX, int camY);
+   void HandleMovement(Level* level);
+   void MoveTowards(double destX, double destY, int speedType);
+   void PlotMovement(Level* level, double destX, double destY);
+   void SetCurrentSpeed(int newSpeed);
+
    void Render(int screenFrame);
 
    void Free();
@@ -97,8 +99,11 @@ public:
    bool xDirection;
    bool yDirection;
 
-   float xVelocity;
-   float yVelocity;
+   float slowVelocity;
+   float avgVelocity;
+   float maxVelocity;
+   float currentVelocity;
+   int currentSpeed;
 
    bool usingAnims;
 
@@ -119,6 +124,11 @@ public:
    int bufferedText;
    int bufferedAnim;
    bool loopBufferedAnim;
+
+   int boundingRadius;
+
+   bool walkingPath;
+   vector<pair<int,int>> pathNodes;
 };
 
 #endif

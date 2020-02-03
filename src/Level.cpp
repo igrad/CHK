@@ -4,6 +4,8 @@ int NUMROOMCOLLISIONS = 0;
 int NUMROOMCOLLISIONSALLOWED = 0;
 int MAXCORRIDORS = 0;
 
+int TILEW = PIXELSPERFEET * 5 * GZOOM;
+int HALFTILEW = (int)(TILEW/2);
 
 
 Room::Room() {
@@ -14,19 +16,13 @@ Room::Room() {
    maxConnections = (rand() % 3) + 2;
 }
 
-
-
 Room::~Room() {
    delete[] connectedRooms;
 }
 
-
-
 Level::Level() {
 
 }
-
-
 
 Level::Level(Locale* locale) {
    this->locale = locale;
@@ -42,15 +38,13 @@ Level::Level(Locale* locale) {
 
    decals = NULL;
 
-   zoom = 1.0 * GZOOM;
-
-   for (int i = 0; i < maxGroundSize; i++) {
-      for (int j = 0; j < maxGroundSize; j++) {
+   for (int i = 0; i < MAXGROUNDSIZE; i++) {
+      for (int j = 0; j < MAXGROUNDSIZE; j++) {
          ground[i][j] = 0;
       }
    }
 
-   // Generate a randomnumber of rooms
+   // Generate a random number of rooms
    int minRoomCount = locale->minRoomCount;
    int maxRoomCount = locale->maxRoomCount;
    int mod = maxRoomCount - minRoomCount;
@@ -66,16 +60,640 @@ Level::Level(Locale* locale) {
    renderTargetsCompiled = false;
 }
 
+// Find the nearest unoccupied ground space
+// Used heavily by character pathing functions
+void Level::NearestVacantGrid(int destX, int destY, int* rX, int* rY) {
+   int gridX = (int)(destX / TILEW);
+   int gridY = (int)(destY / TILEW);
 
+   // First, check if the cell clicked into is already a valid tile
+   if (IsGround(gridX, gridY)) {
+      *rX = destX;
+      *rY = destY;
+      return;
+   }
+
+   // Set the preferred direction
+   // Find the nearest tile edge, and set the direction to that tile edge as the
+   // preferred direction
+   int prefX = EAST;
+   int prefY = SOUTH;
+   int innerX = destX % TILEW;
+   int innerY = destY % TILEW;
+
+   int dX = innerX;
+   int dY = innerY;
+
+   if (innerX < HALFTILEW) prefX = WEST;
+   else dX = TILEW - innerX;
+
+   if (innerY < HALFTILEW) prefY = NORTH;
+   else dY = TILEW - innerY;
+
+   int prefDir = prefX;
+   if (innerX > innerY) prefDir = prefY;
+
+   // Reel it in a little if it's outside of the level
+   if (gridX <= 0) gridX = 1;
+   else if (gridX >= groundSize) gridX = groundSize - 1;
+
+   if (gridY <= 0) gridY = 1;
+   else if (gridY >= groundSize) gridY = groundSize - 1;   
+
+   // Search for the nearest vacant spot via a radial search
+   int radius = 0;
+   bool pollingRadius = true;
+
+   bool vN = false, vE = false, vS = false, vW = false;
+   int vNX = gridX, vEX = gridX, vSX = gridX, vWX = gridX;
+   int vNY = gridY, vEY = gridY, vSY = gridY, vWY = gridY;
+
+   while (pollingRadius) {
+      // Check EW edges
+      for (int iter = 0; iter < radius; iter++) {
+         if (IsGround(gridX - radius, gridY - iter) && !vW) {
+            vW = true;
+            vWX = gridX - radius;
+            vWY = gridY - iter;
+         } else if (IsGround(gridX - radius, gridY + iter) && !vW) {
+            vW = true;
+            vWX = gridX - radius;
+            vWY = gridY + iter;
+         }
+         
+         if (IsGround(gridX + radius, gridY - iter) && !vE) {
+            vE = true;
+            vEX = gridX + radius;
+            vEY = gridY - iter;
+         } else if (IsGround(gridX + radius, gridY + iter) && !vE) {
+            vE = true;
+            vEX = gridX + radius;
+            vEY = gridY + iter;
+         }
+      }
+
+      // Check NS edges
+      for (int iter = 0; iter < radius; iter++) {
+         if (IsGround(gridX - iter, gridY - radius) && !vN) {
+            vN = true;
+            vNX = gridX - iter;
+            vNY = gridY - radius;
+         } else if (IsGround(gridX + iter, gridY - radius) && !vN) {
+            vN = true;
+            vNX = gridX + iter;
+            vNY = gridY - radius;
+         }
+         
+         if (IsGround(gridX + iter, gridY + radius) && !vS) {
+            vS = true;
+            vSX = gridX + iter;
+            vSY = gridY + radius;
+         } else if (IsGround(gridX + iter, gridY + radius) && !vS) {
+            vS = true;
+            vSX = gridX + iter;
+            vSY = gridY + radius;
+         }
+      }
+
+      // Decide the new dest coords
+      if (vN || vE || vS || vW) {
+         bool setN = false, setE = false, setS = false, setW = false;
+         switch (prefDir) {
+            case NORTH:
+               if (vN) setN = true;
+               else if (vW) setW = true;
+               else if (vE) setE = true;
+               break;
+            case EAST:
+               if (vE) setE = true;
+               else if (vN) setN = true;
+               else if (vS) setS = true;
+               break;
+            case SOUTH:
+               if (vS) setS = true;
+               else if (vE) setE = true;
+               else if (vW) setW = true;
+               break;
+            case WEST:
+               if (vW) setW = true;
+               else if (vS) setS = true;
+               else if (vN) setN = true;
+               break;
+         }
+
+         if (setN) {
+            gridX = vNX;
+            gridY = vNY;
+         } else if (setE) {
+            gridX = vEX;
+            gridY = vEY;
+         } else if (setS) {
+            gridX = vSX;
+            gridY = vSY;
+         } else if (setW) {
+            gridX = vWX;
+            gridY = vWY;
+         }
+
+         if (setN || setE || setS || setW) pollingRadius = false;
+      }
+
+      radius++;
+   }
+
+   *rX = (gridX * TILEW) + (TILEW / 2);
+   *rY = (gridY * TILEW) + (TILEW / 2);
+}
+
+// Find walking paths within the level
+bool Level::FindGroundRoute(int origX, int origY, int destX, int destY, 
+   vector<pair<int,int>>* checkpoints) {
+   // Translate to grid coordinates
+   int x1 = (int)(origX/TILEW);
+   int y1 = (int)(origY/TILEW);
+   int x2 = (int)(destX/TILEW);
+   int y2 = (int)(destY/TILEW);
+
+   if (DEBUG_MOVEMENT) printf("\nFinding ground route from {%i, %i} to {%i, %i}", y2, x2, y1, x1);
+
+   // Copy of the ground
+   UpdateGroundCopy();
+
+   // We have three values for every point in the queue, in this order:
+   // Y coord, X coord, path rank
+   uint8_t queue[1300][3];
+   int queuectr = 1;    // Static version of ctr to prevent infinite loops
+   int ctr = 1;         // Number of nodes in the list
+   bool running = true;
+   queue[0][0] = y2;
+   queue[0][1] = x2;
+   queue[0][2] = 0;
+
+   int list[4][3];      // X, Y, and score of cardinal neighbors
+   int score = 0;       // Largest score
+   int scoreIndex = 0;  // Point in the queue to resume branching from
+   bool scoreIndexUpdated = true;
+
+   while (running) {
+      queuectr = ctr;
+      if (!scoreIndexUpdated) {
+         running = false;
+         if (DEBUG_MOVEMENT) Log("Ground Path: Score index not updated");
+      } else scoreIndexUpdated = false;
+
+      if (score > 24) running = false;
+
+      // If we've looked at 1200 nodes and still haven't found the endpoint,
+      // just start a new path
+      if (queuectr >= 1200 || !running) {
+         if (DEBUG_MOVEMENT) {
+            Log("Ground Path: queuectr >= 1200 or !running");
+            for (int i = 0; i < queuectr; i++)
+               printf("\n%i %i %i", queue[i][0], queue[i][1], queue[i][2]);
+         }
+         return false;
+      }
+
+      // Let's make sure we only need to look at the leaves of our tree
+      for (int i = scoreIndex; i < queuectr; i++) {
+         if (!running) {
+            if (DEBUG_MOVEMENT) Log("Stop running");
+            break;
+         }
+
+         // Index 0 = NORTH
+         list[0][0] = queue[i][0] - 1;
+         list[0][1] = queue[i][1];
+
+         // Index 1 = EAST
+         list[1][0] = queue[i][0];
+         list[1][1] = queue[i][1] + 1;
+
+         // Index 2 = SOUTH
+         list[2][0] = queue[i][0] + 1;
+         list[2][1] = queue[i][1];
+
+         // Index 3 = WEST
+         list[3][0] = queue[i][0];
+         list[3][1] = queue[i][1] - 1;
+
+         for (int j = 0; j < 4; j++) {
+            // Validate that we aren't trying to access ground coordinates
+            // at/beyond the edge of the map
+            if ((list[j][0] < 2) || (list[j][1] < 2)) continue;
+            if ((list[j][0] > groundSize - 2) ||
+               (list[j][1] > groundSize - 2)) continue;
+
+            // Copy the score from the parent
+            list[j][2] = queue[i][2] + 1;
+
+            // First, check if it's already in the queue
+            bool inQ = false;
+            for (int k = ctr; k >= 0; k--) {
+               if ((queue[k][0] == list[j][0]) && (queue[k][1] == list[j][1])) {
+                  if (queue[k][2] > list[j][2]) queue[k][2] = list[j][2];
+                  inQ = true;
+                  break;
+               }
+            }
+
+            if (!inQ) {
+               // Next, check if it's our end point
+               // Here, we add the tile to the queue if it isn't already in the
+               // queue.
+               bool pushToQueue = false;
+               if ((list[j][0] == y1) && (list[j][1] == x1)) {
+                  pushToQueue = true;
+                  running = false;
+
+                  // printf("\n\t{%i, %i}, {%i, %i}", list[j][1], list[j][0], x1, y1);
+               } else if (IsGround(list[j][1], list[j][0])) {
+                  // Check if it's walkable
+                  pushToQueue = true;
+                  // printf("\n\t{%i, %i} is a ground tile - pushed to queue", 
+                     // list[j][0], list[j][1]);
+               }
+
+               // If any of the specifications are met, add this tile to the
+               // queue
+               if (pushToQueue) {
+                  queue[ctr][0] = list[j][0];
+                  queue[ctr][1] = list[j][1];
+                  queue[ctr][2] = list[j][2];
+                  if (list[j][2] > score) {
+                     scoreIndex = ctr;
+                     score = list[j][2];
+                     scoreIndexUpdated = true;
+                  }
+                  ctr++;
+               }
+            }
+         }
+      }
+
+      if (DEBUG_MOVEMENT) {
+         ofstream myFile;
+         myFile.open("debug.txt");
+         for (int yi = min(y1, y2) - 1; yi < max(y1, y2) + 1; yi++) {
+            for (int xi = min(x1, x2) - 1; xi < max(x1, x2) + 1; xi++) {
+               string o = "  ";
+               switch (groundCopy[yi][xi]) {
+                  case 1: o = "::"; break;
+                  case 2: o = "##"; break;
+                  default: {
+                     o = to_string(groundCopy[yi][xi] % 10);
+                     if (o.size() < 2) o = "0" + o;
+                  }
+               }
+
+               for (int s = 0; s < queuectr; s++) {
+                  if (queue[s][0] == yi && queue[s][1] == xi) {
+                     o = to_string(queue[s][2]);
+                     if (o.size() < 2) o = "0" + o;
+                  }
+               }
+
+               myFile << o;
+            }
+            myFile << "\n";
+         }
+
+         myFile.close();
+      }
+   }
+
+   
+
+   // Now that we've laid out our path candidates, our best path is the one that
+   // takes the fewest tiles and the fewest turns. But before we find that path,
+   // we need to draw on our map to help find the way.
+   // We draw in multiples of 10 so that we don't overwrite any of the existing
+   // data, at least not in base 10 we aren't :)
+   for (int i = 0; i < ctr; i++) {
+      int y = queue[i][0];
+      int x = queue[i][1];
+      int s = queue[i][2];
+      int orig = groundCopy[y][x] % 10;
+      int newval = orig + (10 * (s + 1));
+      if (newval < 255) groundCopy[y][x] = newval;
+   }
+
+   groundCopy[y1][x1] = 250 + groundCopy[y1][x1];
+
+   // Set our cursor at the start point
+   int cx = x1;
+   int cy = y1;
+   int cs = 25;
+
+   // Now we can start backtracing through the grid to find our optimal path
+   // First, find the best direction from orig to dest
+   int bdir = NORTH;
+   int n = ground[x1][y1-1] % 10;
+   int e = ground[x1+1][y1] % 10;
+   int s = ground[x1][y1+1] % 10;
+   int w = ground[x1-1][y1] % 10;
+   int min = (n > 0) ? n : 99;
+   if (e > 0 && e == min) bdir = EAST;
+   else if (s > 0 && s == min) bdir = SOUTH;
+   else if (w > 0 && w == min) bdir = WEST;
+
+   int lastDir = bdir;
+   int path[50][2];
+   int pathCtr = 0;
+   while (!((cx == x2) && (cy == y2))) {
+      cs = (groundCopy[cy][cx] - (groundCopy[cy][cx] % 10)) / 10;
+
+      // Index 0 = NORTH
+      list[0][0] = cy - 1;
+      list[0][1] = cx;
+
+      // Index 1 = EAST
+      list[1][0] = cy;
+      list[1][1] = cx + 1;
+
+      // Index 2 = SOUTH
+      list[2][0] = cy + 1;
+      list[2][1] = cx;
+
+      // Index 3 = WEST
+      list[3][0] = cy;
+      list[3][1] = cx - 1;
+
+      bool candidates[4];
+      int minVal = cs;
+      int numCandidates = 0;
+
+      for (int i = 0; i < 4; i++) {
+         candidates[i] = false;
+         int ly = list[i][0];
+         int lx = list[i][1];
+         int lv = list[i][2];
+
+         int initVal = groundCopy[ly][lx];
+         int pathVal = (initVal - (initVal % 10)) / 10;
+
+         if ((ly < 2) || (lx < 2)) {
+            continue;
+         } else if ((ly > (groundSize - 3)) || (lx > (groundSize - 3))) {
+            continue;
+         } else if (initVal < 10) {
+            continue;
+         } else {
+            // Make sure our potential path isn't outside the queue entirely,
+            // and also ensure that it's actually closer to the end goal than
+            // the cursor is currently.
+            if (pathVal <= minVal) {
+               // If this is the shortest path, then the previous candidates
+               // don't really matter to us since they're longer.
+               if (pathVal < minVal) {
+                  for (int j = 0; j < i; j++) candidates[j] = false;
+                  numCandidates = 0;
+                  minVal = pathVal;
+               }
+               candidates[i] = true;
+               numCandidates++;
+            }
+         }
+      }
+
+      if (numCandidates == 0) {
+         return false;
+      }
+
+      // Path candidates have been found, lets find the best match
+      int selectedDir = -1;
+      if (candidates[lastDir]) selectedDir = lastDir;
+      else {
+         int candidatePick = rand() % numCandidates;
+         int candidateCtr = 0;
+         for (int i = 0; i < 4; i++) {
+            if (candidates[i]) {
+               if (candidateCtr == candidatePick) {
+                  // Find the direction of this path and compare it to the last
+                  // known direction of the existing path
+                  int dir = 0;
+
+                  // We share a Y coord with the cursor
+                  if (list[i][0] == cy) {
+                     if (list[i][1] < cx) dir = WEST;
+                     else dir = EAST;
+                  } else {
+                     if (list[i][0] < cy) dir = NORTH;
+                     else dir = SOUTH;
+                  }
+
+                  selectedDir = dir;
+                  break;
+               } else {
+                  candidateCtr++;
+               }
+            }
+         }
+      }
+      // Update our last direction followed for the next node
+      lastDir = selectedDir;
+
+      // We've picked our path - push the current position to the path and
+      // move the cursor further down the path.
+      checkpoints->push_back(make_pair(
+         (cx * TILEW) + HALFTILEW,
+         (cy * TILEW) + HALFTILEW));
+      cy = list[selectedDir][0];
+      cx = list[selectedDir][1];
+      pathCtr++;
+   }
+
+   checkpoints->push_back(make_pair(
+      (cx * TILEW) + HALFTILEW,
+      (cy * TILEW) + HALFTILEW));
+   pathCtr++;
+
+   return true;
+}
+
+void Level::GetCellsInLineOfSight(int origX, int origY, int destX, int destY,
+   vector<pair<int,int>>* hitCells) {
+   // Find slope of path
+   float m = (destX != origX) ? 
+      ((float)(destY - origY)/(float)(destX - origX)) : 
+      ((float)(destY - origY)/(float)(TILEW / groundSize));
+
+   // Find offset
+   int b = origY - (int)(m * origX);
+
+   // Calculate the first cell hit and the initial lasty value
+   int cell0X = (int)(origX / TILEW);
+   int cell0Y = (int)(origY / TILEW);
+
+   int cellNX = (int)(destX / TILEW);
+   int cellNY = (int)(destY / TILEW);
+
+   if (DEBUG_MOVEMENT) {
+      printf("\n\tFormula: %f * x + %i", m, b);
+      printf("\n\tRaw input: %i %i %i %i", origX, origY, destX, destY);
+      printf("\n\tcell0: %i %i, cellN: %i %i", cell0X, cell0Y, cellNX, cellNY);
+   }
+
+   // Loop through X range
+   for (int x = min(cell0X, cellNX); x <= max(cell0X, cellNX); x++) {
+      // Go through the cells hit by this line segment and add them to the stack
+      if (cell0X == cellNX) {
+         if (DEBUG_MOVEMENT) printf("\n\tcell0X == cellNX");
+         for (int y = min(cell0Y, cellNY); y <= max(cell0Y, cellNY); y++) {
+            hitCells->push_back(make_pair(x, y));
+         }
+      } else {
+         // Get y of endpoint of the line segment through the width of X
+         int yi = (int)((m*(x*TILEW) + b) / TILEW);
+         int yj = (int)((m*((x+1)*TILEW) + b) / TILEW);
+         int y0 = max(min(cell0Y, cellNY), min(yi, yj));
+         int yN = min(max(cell0Y, cellNY), max(yi, yj));
+
+         // y0 and yN are used to prevent overstretching the bounds in cases of
+         // extreme slopes (prevent checking more than we need to)
+         for (int y = y0; y <= yN; y++) {
+            hitCells->push_back(make_pair(x, y));
+         }
+      }
+   }
+
+   if (DEBUG_MOVEMENT) {
+      printf("\n\tHIT CELLS: %i", hitCells->size());
+      for (int point = 0; point < hitCells->size(); point++) {
+         printf("\n\t%i, %i", 
+            (*hitCells)[point].first, (*hitCells)[point].second);
+         // const SDL_Rect r = {
+         //    (int)(((*hitCells)[point].first * TILEW) - Camera::x) - 5,
+         //    (int)(((*hitCells)[point].second * TILEW) - Camera::y) - 5,
+         //    11,
+         //    11};
+         // SDL_RenderFillRect(gRenderer, &r);
+      }
+      // SDL_RenderPresent(gRenderer);
+      // cin.get();
+   }
+}
+
+// Find if the entire width of the block has LoS
+bool Level::HasFullLineOfSight(int origX, int origY, int destX, int destY) {
+   origX = origX * TILEW;
+   origY = origY * TILEW;
+   destX = destX * TILEW;
+   destY = destY * TILEW;
+
+   vector<pair<int,int>> hitCells;
+
+   // Check NW corner
+   GetCellsInLineOfSight(origX, origY, destX, destY, &hitCells);
+   for (int iter = 0; iter < hitCells.size(); iter++) {
+      if (IsWall(hitCells[iter].first, hitCells[iter].second)) return false;
+
+      // TODO: Need to add a function here to determine if an actor's hitbox is
+      // blocking LoS, or a statue, or other entity. More than just walls can
+      // block a line of sight
+      // TODO: Related to above, add a bool value to arguments to determine
+      // if this should only check for wall obstructions or if it should also 
+      // factor in other static parts of the level
+   }
+
+   // Check NE corner
+   GetCellsInLineOfSight(origX + TILEW - 1, origY, 
+      destX + TILEW - 1, destY, &hitCells);
+   for (int iter = 0; iter < hitCells.size(); iter++) {
+      if (IsWall(hitCells[iter].first, hitCells[iter].second)) return false;
+   }
+
+   // Check SE corner
+   GetCellsInLineOfSight(origX + TILEW - 1, origY + TILEW - 1, 
+      destX + TILEW - 1, destY + TILEW - 1, &hitCells);
+   for (int iter = 0; iter < hitCells.size(); iter++) {
+      if (IsWall(hitCells[iter].first, hitCells[iter].second)) return false;
+   }
+
+   // Check SW corner
+   GetCellsInLineOfSight(origX, origY + TILEW - 1, 
+      destX, destY + TILEW - 1, &hitCells);
+   for (int iter = 0; iter < hitCells.size(); iter++) {
+      if (IsWall(hitCells[iter].first, hitCells[iter].second)) return false;
+   }
+
+   return true;
+}
+
+// Find if two points have direct line of sight
+bool Level::HasLineOfSight(int origX, int origY, int destX, int destY) {
+   // Create vector of cells hit by the line
+   vector<pair<int,int>> hitCells;
+   GetCellsInLineOfSight(origX, origY, destX, destY, &hitCells);
+
+   // Go through the hit cells to determine if any of them are blocking line
+   // of sight
+   int cX, cY;
+   for (int iter = 0; iter < hitCells.size(); iter++) {
+      cX = hitCells[iter].first;
+      cY = hitCells[iter].second;
+      if (IsWall(cX, cY)) {
+         // Check for half-height cells
+         if (!IsGround(cX, cY - 1)) {
+            return false;
+         } else {
+            // Found half-height wall collider
+            float m = (destX != origX) ? 
+               ((float)(destY - origY)/(float)(destX - origX)) : 
+               ((float)(destY - origY)/(float)(TILEW / groundSize));
+
+            // Find offset
+            int b = origY - (int)(m * origX);
+
+            // Get Y intercepts
+            int y0 = (int)(m * hitCells[iter].first * TILEW) + b;
+            int y1 = (int)(m * (hitCells[iter].first + 1) * TILEW) + b;
+
+            // If either of the Y intercepts are South of the halfway point,
+            // then they have hit the bottom half of the tile and collided 
+            // with a wall
+            if (((y0 % (int)(y0 / TILEW)) > TILEW/2) && 
+               ((y1 % (int)(y1 / TILEW)) > TILEW/2)) {
+               return false;
+            }
+         }
+      }
+
+      // TODO: Need to add a function here to determine if an actor's hitbox is
+      // blocking LoS, or a statue, or other entity. More than just walls can
+      // block a line of sight
+      // TODO: Related to above, add a bool value to arguments to determine
+      // if this should only check for wall obstructions or if it should also 
+      // factor in other static parts of the level
+      if (ground[cY][cX] == T_DOOR) {
+         // If we encounter a door and it is closed, we can't see through it
+         for (int iter = 0; iter < doors.size(); iter++) {
+            if ((int)(doors[iter]->xPos/TILEW) == cX &&
+               (int)(doors[iter]->yPos/TILEW) == cY) {
+               if (!doors[iter]->isOpen) return false;
+            }
+         }
+      }
+   }
+
+   if (DEBUG_MOVEMENT) {
+      SDL_RenderDrawLine(gRenderer, 
+         origX - (int)Camera::x, origY - (int)Camera::y,
+         destX - (int)Camera::x, destY - (int)Camera::y);
+   }
+
+   return true;
+}
 
 // Determine if the tile is a ground tile
 bool Level::IsGround(int x, int y) {
    int g = ground[y][x];
-   if (g == 1 || g == 5 || g == 9 || g > 15) return true;
+   if (g == 1 || 
+      g == 5 || g == 6 || 
+      g == 8 || g == 9 || g == 10 || g == 11 ||
+      g > 15) return true;
    else return false;
 }
-
-
 
 bool Level::IsWall(int x, int y) {
    int g = ground[y][x];
@@ -83,8 +701,6 @@ bool Level::IsWall(int x, int y) {
       return true;
    } else return false;
 }
-
-
 
 bool Level::CheckNewRoom(SDL_Rect* room) {
    // Check that it still fits on the board
@@ -124,8 +740,6 @@ bool Level::CheckNewRoom(SDL_Rect* room) {
    if (passingCollision) { NUMROOMCOLLISIONS++; }
    return true;
 }
-
-
 
 void Level::GenerateRandomRoom(int roomNum) {
    bool buildingRoom = true;
@@ -174,8 +788,6 @@ void Level::GenerateRandomRoom(int roomNum) {
    }
 }
 
-
-
 bool Level::CheckWallHeights() {
    // Iterate through the whole map and find if we have created any walls that
    // are only one unit high. We want a wall height of at least two units so
@@ -194,7 +806,13 @@ bool Level::CheckWallHeights() {
    return true;
 }
 
-
+void Level::UpdateGroundCopy() {
+   for (int y = 0; y < groundSize; y++) {
+      for (int x = 0; x < groundSize; x++) {
+         groundCopy[y][x] = ground[y][x];
+      }
+   }
+}
 
 void Level::ResetMod10Changes() {
    for (int cy = 0; cy < groundSize; cy++) {
@@ -204,13 +822,9 @@ void Level::ResetMod10Changes() {
    }
 }
 
-
-
 bool Level::PointInRoom(int x, int y, int room) {
    return PointInRect(x, y, &rooms[room].rect);
 }
-
-
 
 bool Level::PointInAnyRoom(int x, int y) {
    for (int i = 0; i < roomCount; i++) {
@@ -218,8 +832,6 @@ bool Level::PointInAnyRoom(int x, int y) {
    }
    return false;
 }
-
-
 
 bool Level::FindPath(int a, int b, int adir) {
    // Locate our starting room, and pick an appropriate starting point on the
@@ -625,8 +1237,6 @@ bool Level::FindPath(int a, int b, int adir) {
    return true;
 }
 
-
-
 bool Level::DigCorridor(int a, int b) {
    // Set some simple variables for sanity's sake
    int ax = rooms[a].rect.x;
@@ -743,8 +1353,6 @@ bool Level::DigCorridor(int a, int b) {
    return true;
 }
 
-
-
 bool Level::DigShortCorridor(int x1, int y1, int x2, int y2) {
    int xi = min(x1, x2);
    int xf = max(x1, x2);
@@ -770,8 +1378,6 @@ bool Level::DigShortCorridor(int x1, int y1, int x2, int y2) {
    }
    return true;
 }
-
-
 
 bool Level::DigNeighbor(int a, int b) {
    // Set some simple variables for sanity's sake
@@ -874,8 +1480,6 @@ bool Level::DigNeighbor(int a, int b) {
 
    return false;
 }
-
-
 
 bool Level::GenerateCorridors() {
    int numCorridors = 0;
@@ -1080,8 +1684,6 @@ bool Level::GenerateCorridors() {
    return true;
 }
 
-
-
 void Level::CheckConnectionsToSpawn(int iter) {
    for (int i = 0; i < rooms[iter].connections; i++) {
       int dest = rooms[iter].connectedRooms[i];
@@ -1091,8 +1693,6 @@ void Level::CheckConnectionsToSpawn(int iter) {
       }
    }
 }
-
-
 
 void Level::GenerateWalls() {
    // Iterates through every tile on the map to find tiles that aren't floor
@@ -1130,10 +1730,8 @@ void Level::GenerateWalls() {
    }
 }
 
-
-
 void Level::FinalizeWalls() {
-   int blockSize = PIXELSPERFEET * zoom * 5;
+   int blockSize = PIXELSPERFEET * GZOOM * 5;
 
    for (int cY = 1; cY < groundSize - 1; cY++) {
       for (int cX = 1; cX < groundSize - 1; cX++) {
@@ -1277,8 +1875,6 @@ void Level::FinalizeWalls() {
       }
    }
 }
-
-
 
 void Level::GenerateDoors() {
    // Lambda function to generate a percentile chance
@@ -1432,16 +2028,14 @@ void Level::GenerateDoors() {
 
       doors.push_back(new Door(x, y, locale->doorSize, 1, dir, hand, room,
          locale->defaultDoorFrameW, locale->defaultDoorFrameH, locale));
-      ground[y][x] = 16; // Door tiles use 16
+      ground[y][x] = T_DOOR; // Door tiles use 16
       // We reserve a floor tile to make sure the door can be opened
-      if (dir == NORTH) ground[y + 1][x] = 5;
-      else if (dir == EAST) ground[y][x - 1] = 5;
-      else if (dir == SOUTH) ground[y - 1][x] = 5;
-      else if (dir == WEST) ground[y][x + 1] = 5;
+      if (dir == NORTH) ground[y + 1][x] = T_GROUND_RES;
+      else if (dir == EAST) ground[y][x - 1] = T_GROUND_RES;
+      else if (dir == SOUTH) ground[y - 1][x] = T_GROUND_RES;
+      else if (dir == WEST) ground[y][x + 1] = T_GROUND_RES;
    }
 }
-
-
 
 void Level::GenerateLevel() {
    // Start a timer for level generation for optimization
@@ -1663,25 +2257,13 @@ void Level::GenerateLevel() {
    printf("\nLevel generation time: %4i ms", timer.getTicks());
 }
 
-
-
 bool Level::LoadFromFile(string path, int width, int height) {
    return false;
 }
 
-
-
-void Level::SetZoom(float newZoom) {
-   zoom = newZoom * GZOOM;
-
-   renderTargetsCompiled = false;
-}
-
-
-
 SDL_Rect Level::GetPlayerSpawn() {
-   int gx = (rooms[0].x + (rand() % rooms[0].w));
-   int gy = (rooms[0].y + (rand() % rooms[0].h));
+   int gx = (rooms[0].x + (rand() % (rooms[0].w - 2))) + 1;
+   int gy = (rooms[0].y + (rand() % (rooms[0].h - 2))) + 1;
    int x = gx * PIXELSPERFEET * 5 * GZOOM;
    int y = gy * PIXELSPERFEET * 5 * GZOOM;
 
@@ -1690,8 +2272,6 @@ SDL_Rect Level::GetPlayerSpawn() {
    SDL_Rect r = {x, y, 0, 0};
    return r;
 }
-
-
 
 void Level::WriteOutWholeLevel() {
    ofstream myFile;
@@ -1713,8 +2293,6 @@ void Level::WriteOutWholeLevel() {
    myFile.close();
 }
 
-
-
 void Level::CompileRenderTargets(int xQ, int yQ) {
    // Accepts args x and y if we want to only render out a specific tile
    int iterYStart = 0;
@@ -1728,10 +2306,9 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
       iterXMax = xQ + 1;
    }
 
-   int floorTextureSize = locale->floorTextureSize * zoom;
-   int voidTextureSize = locale->voidTextureSize * zoom;
-   int tileW = PIXELSPERFEET * 5 * zoom;
-   int wallHeight = locale->wallHeight * zoom;
+   int floorTextureSize = locale->floorTextureSize * GZOOM;
+   int voidTextureSize = locale->voidTextureSize * GZOOM;
+   int wallHeight = locale->wallHeight * GZOOM;
 
    // First, we paint the repeating texture of the floor everywhere
    SDL_SetRenderTarget(gRenderer, floorRender.mTexture);
@@ -1758,17 +2335,17 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
          if ((ground[yi][xi] == 0) || (ground[yi][xi] == 2) ||
          (ground[yi][xi] == 3)) {
             SDL_Rect r = {
-               tileW * xi,
-               tileW * yi,
-               tileW,
-               tileW
+               TILEW * xi,
+               TILEW * yi,
+               TILEW,
+               TILEW
             };
 
             SDL_Rect c = {
-               (int) (((xi * tileW) % voidTextureSize)/zoom),
-               (int) (((yi * tileW) % voidTextureSize)/zoom),
-               (int) (tileW/zoom),
-               (int) (tileW/zoom)
+               (int) (((xi * TILEW) % voidTextureSize)/GZOOM),
+               (int) (((yi * TILEW) % voidTextureSize)/GZOOM),
+               (int) (TILEW/GZOOM),
+               (int) (TILEW/GZOOM)
             };
 
             locale->voidTexture.Render(&r, &c);
@@ -1782,23 +2359,23 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
       for (int xi = iterXStart; xi < iterXMax; xi++) {
          if (ground[yi][xi] == 2) {
             SDL_Rect r = {
-               tileW * xi,
-               tileW * yi,
-               tileW,
-               tileW
+               TILEW * xi,
+               TILEW * yi,
+               TILEW,
+               TILEW
             };
 
             SDL_Rect rF = {
-               tileW * xi,
-               (tileW * yi) - (wallHeight - tileW),
-               tileW,
+               TILEW * xi,
+               (TILEW * yi) - (wallHeight - TILEW),
+               TILEW,
                wallHeight
             };
 
             SDL_Rect c = {
                0,
-               wallHeight - tileW,
-               tileW,
+               wallHeight - TILEW,
+               TILEW,
                wallHeight
             };
 
@@ -1880,29 +2457,23 @@ void Level::CompileRenderTargets(int xQ, int yQ) {
    renderTargetsCompiled = true;
 }
 
-
-
 void Level::RenderFloor() {
    if (!renderTargetsCompiled) { CompileRenderTargets(); }
    floorRender.Render(-Camera::x, -Camera::y);
 }
 
-
-
 void Level::RenderWalls(int yO, int yF) {
    // yO is the pixel Y position of our current actor
    // yF, if positive, is the pixel Y position of the next actor
-   int tileW = PIXELSPERFEET * 5 * zoom;
-
-   int yOT = (int) floor(yO/tileW);
-   int yFT = (yF == -1) ? (groundSize - 1) : ((int) floor(yF/tileW));
+   int yOT = (int) floor(yO/TILEW);
+   int yFT = (yF == -1) ? (groundSize - 1) : ((int) floor(yF/TILEW));
 
    if (yF == -1) {
-      yF = groundSize * tileW;
+      yF = groundSize * TILEW;
    }
 
-   yO = yOT * tileW;
-   yF = yFT * tileW;
+   yO = yOT * TILEW;
+   yF = yFT * TILEW;
 
    SDL_Rect wallChunk = {
       0,
@@ -1942,28 +2513,22 @@ void Level::RenderWalls(int yO, int yF) {
    // SDL_SetRenderTarget(gRenderer, NULL);
 }
 
-
-
 void Level::RenderDoors(int yO, int yF) {
-   int tileW = PIXELSPERFEET * 5 * zoom;
-
-   int yOT = (int) floor(yO/tileW);
-   int yFT = (yF == -1) ? (groundSize - 1) : ((int) floor(yF/tileW));
+   int yOT = (int) floor(yO/TILEW);
+   int yFT = (yF == -1) ? (groundSize - 1) : ((int) floor(yF/TILEW));
 
    if (yF == -1) {
-      yF = groundSize * tileW;
+      yF = groundSize * TILEW;
    }
 
-   yO = yOT * tileW;
-   yF = yFT * tileW;
+   yO = yOT * TILEW;
+   yF = yFT * TILEW;
 
    for (int i = 0; i < doors.size(); i++) {
       int y = (int)doors[i]->drawCutoff;
       if (y >= yO && y <= yF) doors[i]->Render();
    }
 }
-
-
 
 Level::~Level() {
    for (auto door : doors) delete door;

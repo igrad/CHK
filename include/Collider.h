@@ -18,9 +18,17 @@ class Collider {
       SDL_Rect* GetHitBox();
       SDL_Rect* GetDrawBox();
 
-      void SetPos(double x = -1, double y = -1);
+      void GetFoot(double* x, double* y);
+      void GetFoot(int* x, int* y);
+      void GetCoM(double* x, double* y);
+      void GetCoM(int* x, int* y);
+
+      void SetXPos(double x = -999);
+      void SetYPos(double y = -999);
+      void SetPos(double x = -999, double y = -999);
       void SetHitBox(int x = -1, int y = -1, int w = -1, int h = -1);
       void SetDrawBox(int x = -1, int y = -1, int w = -1, int h = -1);
+      void SetHitBoxOffsets(int x = 0, int y = 0);
 
       ~Collider();
 
@@ -37,7 +45,6 @@ class Collider {
       // Because the collider's hitbox may not necessary correspond with their origin on screen, we separate the two values.
       SDL_Rect hitBox;
       SDL_Rect drawBox;
-
       int hitBoxXOffset;
       int hitBoxYOffset;
 };

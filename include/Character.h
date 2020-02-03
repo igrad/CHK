@@ -5,6 +5,7 @@
 
 #include "Camera.h"
 #include "Actor.h"
+#include "Level.h"
 
 extern int statCap;
 
@@ -28,10 +29,7 @@ class Character: public Actor {
       void SetHPAndResourceToFull();
 
       void SetSpawnPoint(SDL_Rect r);
-      void SetPosition(int newX, int newY);
-      void MoveTowards(int destX, int destY);
-      void SetXVelocity(int multiplier);
-      void SetYVelocity(int multiplier);
+      void SetPosition(double newX, double newY);
 
       void Render(int screenFrame);
 
@@ -64,6 +62,10 @@ class Character: public Actor {
 
       // An array of ints to represent character stats
       int* stats;
+
+      // Movement pathing data
+      bool pathing;
+      vector<pair<int, int>> pathPoints;
 };
 
 #endif
