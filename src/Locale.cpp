@@ -117,11 +117,11 @@ void Locale::InitDungeon() {
    defaultDoorFrameW = 40;
    defaultDoorFrameH = 80;
 
-   doorNSChangeRate_slow = 1.5;
+   doorNSChangeRate_slow = 2;
    doorNSChangeRate_fast = 0.5;
-   doorEChangeRate_slow = 1.5;
+   doorEChangeRate_slow = 2;
    doorEChangeRate_fast = 0.5;
-   doorWChangeRate_slow = 1.5;
+   doorWChangeRate_slow = 2;
    doorWChangeRate_fast = 0.5;
 
    doorNS_right_inside_part1Clip = {0, 20, 9, 23};
@@ -136,16 +136,10 @@ void Locale::InitDungeon() {
    doorNS_left_outside_part1Clip = {0, 20, 9, 20};
    doorNS_left_outside_part2Clip = {32, 20, 9, 20};
    doorNS_left_outside_doorClip = {10, 20, 22, 20};
-   // doorE_left_part1Clip = {};
-   // doorE_left_part2Clip;
-   // doorE_left_doorClip;
-   // doorE_right_part1Clip;
-   // doorE_right_part2Clip;
-   // doorE_right_doorClip;
-   // doorW_left_part1Clip;
-   // doorW_left_part2Clip;
-   // doorW_left_doorClip;
-   // doorW_right_part1Clip;
-   // doorW_right_part2Clip;
-   // doorW_right_doorClip;
+   doorE_part1Clip = {31, 31, 9, 9};
+   doorE_part2Clip = {31, 0, 9, 9};
+   doorE_doorClip = {31, 10, 20, 20};
+   doorW_part1Clip = {0, 31, 9, 9};
+   doorW_part2Clip = {0, 0, 9, 9};
+   doorW_doorClip = {0, 10, 20, 20};
 }

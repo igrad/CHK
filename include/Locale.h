@@ -111,9 +111,9 @@ public:
    LTexture doorE_left_closed_anim;
    LTexture doorE_left_broke_in_anim;
    LTexture doorE_left_broke_out_anim;
-   SDL_Rect doorE_left_part1Clip;
-   SDL_Rect doorE_left_part2Clip;
-   SDL_Rect doorE_left_doorClip;
+   SDL_Rect doorE_part1Clip;
+   SDL_Rect doorE_part2Clip;
+   SDL_Rect doorE_doorClip;
 
    LTexture doorE_right_open;
    LTexture doorE_right_closed;
@@ -123,9 +123,6 @@ public:
    LTexture doorE_right_closed_anim;
    LTexture doorE_right_broke_in_anim;
    LTexture doorE_right_broke_out_anim;
-   SDL_Rect doorE_right_part1Clip;
-   SDL_Rect doorE_right_part2Clip;
-   SDL_Rect doorE_right_doorClip;
 
    LTexture doorW_left_open;
    LTexture doorW_left_closed;
@@ -135,9 +132,9 @@ public:
    LTexture doorW_left_closed_anim;
    LTexture doorW_left_broke_in_anim;
    LTexture doorW_left_broke_out_anim;
-   SDL_Rect doorW_left_part1Clip;
-   SDL_Rect doorW_left_part2Clip;
-   SDL_Rect doorW_left_doorClip;
+   SDL_Rect doorW_part1Clip;
+   SDL_Rect doorW_part2Clip;
+   SDL_Rect doorW_doorClip;
 
    LTexture doorW_right_open;
    LTexture doorW_right_closed;
@@ -147,9 +144,6 @@ public:
    LTexture doorW_right_closed_anim;
    LTexture doorW_right_broke_in_anim;
    LTexture doorW_right_broke_out_anim;
-   SDL_Rect doorW_right_part1Clip;
-   SDL_Rect doorW_right_part2Clip;
-   SDL_Rect doorW_right_doorClip;
 
    LTexture voidTexture;
    int voidTextureSize;

@@ -151,10 +151,6 @@ void Actor::HandleMovement(Level* level) {
 
 // Move towards a target destination
 void Actor::MoveTowards(double destX, double destY, int speedType) {
-   // Find the feet position
-   int footX, footY;
-   GetFoot(&footX, &footY);
-
    // printf("\nMoving from {%i, %i} to {%i, %i}", 
    //    footX, footY, (int)destX, (int)destY);
 
@@ -182,9 +178,11 @@ void Actor::MoveTowards(double destX, double destY, int speedType) {
    }
    
    // If we're very close to the target, just move the remaining distance
-   if (FindDistance(footX, footY, (int)destX, (int)destY) < velocity) {
+   int x = hitBox.x;
+   int y = hitBox.y;
+   if (FindDistance(x, y, (int)destX, (int)destY) < velocity) {
       // printf("\nSetting position from {%i, %i} to {%i, %i}", (int)footX, (int)footY, (int)(destX - (footX - xPos)), (int)(destY - (footY - yPos)));
-      SetPos(destX - (footX - xPos), destY - (footY - yPos));
+      SetPos(destX - (x - xPos), destY - (y - yPos));
 
       pathNodes.pop_back();
 
@@ -193,15 +191,15 @@ void Actor::MoveTowards(double destX, double destY, int speedType) {
          SetCurrentSpeed(0);
       }
    } else {
-      float vX = destX - footX;
-      float vY = destY - footY;
+      float vX = destX - x;
+      float vY = destY - y;
 
-      float vMag = FindDistance(footX, footY, destX, destY);
+      float vMag = FindDistance(x, y, destX, destY);
 
       double newX = (vX/vMag) * velocity;
       double newY = (vY/vMag) * velocity;
 
-      // printf("\nSetting position from {%i, %i} to {%i + %i, %i + %i}", (int)footX, (int)footY, (int)footX, (int)newX, (int)footY, (int)newY);
+      // printf("\nSetting position from {%i, %i} to {%i + %i, %i + %i}", (int)x, (int)footY, (int)x, (int)newX, (int)footY, (int)newY);
 
       SetPos(xPos + newX, yPos + newY);
    }
@@ -213,102 +211,220 @@ void Actor::PlotMovement(Level* level, double destX, double destY) {
    // Determine if the dest is in-bounds (not a wall)
    // If it's OOB, make the destination the closest (revealed) inbounds point
    // that can be reached.
+   int TILEW = PIXELSPERFEET * 5 * GZOOM;
+   int HALFTILEW = (int)(TILEW/2);
    bool OOB = false;
+
    int footX, footY;
    GetFoot(&footX, &footY);
 
    int dX, dY;
    level->NearestVacantGrid((int)destX, (int)destY, &dX, &dY);
-   Log("Found nearest vacancy");
 
    // Find a path to the target destination
    // This is the full path - not the checkpoints that we want.
    // This vector has all of the nodes stored in correct order, 0-n
    vector<pair<int,int>> path;
-   path.push_back(make_pair(footX, footY));
-   if (!level->FindGroundRoute(footX, footY, dX, dY, &path)) {
-      Warn("Failed to find ground path to target");
+   if ((int)(footX/TILEW) == (int)(destX/TILEW) &&
+      (int)(footY/TILEW) == (int)(destY/TILEW)){
+      path.push_back(make_pair((int)(footX/TILEW), (int)(destX/TILEW)));
+   } else if (!level->FindGroundRoute(footX, footY, dX, dY, &path)) {
+      if (DEBUG_MOVEMENT) Warn("Failed to find ground path to target");
       return;
    }
-   path.push_back(make_pair(dX, dY));
 
-   Log("Here's the raw oath");
-   for (int i = 0; i < path.size(); i++) {
-      printf("\n\t {%i, %i}", path[i].first, path[i].second);
-   }
+   if (DEBUG_MOVEMENT) {
+      Log("Here's the raw path");
+      for (int i = 0; i < path.size(); i++) {
+         printf("\n\t {%i, %i}", path[i].first, path[i].second);
+      }
 
-   Log("Found ground route");
-   int tileW = PIXELSPERFEET * GZOOM * 5;
-   SDL_SetRenderDrawColor(gRenderer, 0xFF, 0, 0, 0x50);
-   for (int i = 0; i < path.size(); i++) {
-      const SDL_Rect r = {
-         (int)(path[i].first - (tileW/2) - Camera::x),
-         (int)(path[i].second - (tileW/2) - Camera::y),
-         tileW,
-         tileW
-      };
-      SDL_RenderFillRect(gRenderer, &r);
+      SDL_SetRenderDrawColor(gRenderer, 0xFF, 0, 0, 0x50);
+      for (int i = 0; i < path.size(); i++) {
+         const SDL_Rect r = {
+            (int)(path[i].first - (TILEW/2) - Camera::x),
+            (int)(path[i].second - (TILEW/2) - Camera::y),
+            TILEW,
+            TILEW
+         };
+         SDL_RenderFillRect(gRenderer, &r);
+      }
+      SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+      SDL_RenderPresent(gRenderer);
+      cin.get();
    }
-   SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-   SDL_RenderPresent(gRenderer);
-   cin.get();
 
    // From here, we can take our path and trim it down until we get individual
    // path nodes to travel along. We do this by travelling through the vector
    // to find the furthest path point that we can see from all corners of the
    // hitbox.
+   if (DEBUG_MOVEMENT) Log("Starting blocking");
+   vector<NavBlock> blocks;
 
-   bool donePathing = false;
-   if (pathNodes.size() > 0) pathNodes.clear();
-
-   // int tileW = PIXELSPERFEET * GZOOM * 5;
    int x1 = hitBox.x;
    int y1 = hitBox.y;
+   int w = hitBox.w;
+   int h = hitBox.h;
+   blocks.push_back({x1, y1, true});
    
-   int lastNode = 0;
-   Log("Starting LoS pathing");
-   while (!donePathing) {
-      int furthestLoSPoint = lastNode + 1;
-      for (int pathPoint = lastNode + 2; pathPoint < path.size(); pathPoint++) {
-         int x2 = path[pathPoint].first;
-         int y2 = path[pathPoint].second;
-         printf("\n\n\tChecking LoS from {%i, %i} to {%i, %i}", x1, y1, x2, y2);
-         if (level->HasLineOfSight(x1, y1, x2, y2)) {
-            furthestLoSPoint = pathPoint;
+   int lastDir = NORTH;
+   if (path[1].first > path[0].first) lastDir = EAST;
+   else if (path[1].second > path[0].second) lastDir = SOUTH;
+   else if (path[1].first < path[0].first) lastDir = WEST;
+
+   int dir, cX, cY, cNX, cNY, tX, tY, tNX, tNY;
+   for (int tile = 1; tile < path.size() - 1; tile++) {
+      dir = NORTH;
+      cX = (int)(path[tile].first / TILEW);
+      cY = (int)(path[tile].second / TILEW);
+      cNX = (int)(path[tile+1].first / TILEW);
+      cNY = (int)(path[tile+1].second / TILEW);
+      tX = path[tile].first;
+      tY = path[tile].second;
+      tNX = path[tile+1].first;
+      tNY = path[tile+1].second;
+
+      if (tNX > tX) dir = EAST;
+      else if (tNY > tY) dir = SOUTH;
+      else if (tNX < tX) dir = WEST;
+
+      // If we see a change in direction, we need to add a block to the inner
+      // corner
+      int blockX, blockY;
+      if (lastDir != dir) {
+         if (dir == NORTH || lastDir == SOUTH) {
+            blockY = tY - HALFTILEW + 1;
+         } else blockY = tY + HALFTILEW - h - 1;
+
+         if (dir == WEST || lastDir == EAST) {
+            blockX = tX - HALFTILEW + 1;
+         } else blockX = tX + HALFTILEW - w - 1;
+
+         // Rounding the corner of a half-height wall
+         if (((lastDir == EAST && dir == SOUTH) || 
+            (lastDir == NORTH && dir == WEST)) && 
+            level->IsWall(cX - 1, cY + 1)) {
+            blockY += HALFTILEW;
+         } else if (((lastDir == NORTH && dir == EAST) || 
+            (lastDir == WEST && dir == SOUTH)) && 
+            level->IsWall(cX + 1, cY + 1)) {
+            blockY += HALFTILEW;
+         }
+
+         blocks.push_back({blockX, blockY, false});
+      } else if (level->ground[cY][cX] == T_DOOR) {
+         // Direction has remained the same, but we're in a doorway
+         blockX = tX - (int)(w/2);
+         blockY = tY - h;
+
+         blocks.push_back({blockX, blockY, true});
+      } else if (level->ground[cNY][cNX] == T_DOOR) {
+         // The next tile is a door, so we want to get close to it in case it's
+         // closed
+
+         // TODO: Leaving this out for now, can revisit later. Currently, this puts an additional block in the door tile's space, which means it won't be "seen" when searching through LoS pathing. A few minor adjustments would create a point close to the door, but for now we don't want that.
+         // switch(dir) {
+         // case NORTH:
+         //    blockX = tX - (int)(w/2);
+         //    blockY = tY - HALFTILEW + h + 1;
+         //    break;
+         // case EAST:
+         //    blockX = tNX + HALFTILEW - w - 1 -
+         //       level->locale->doorE_part1Clip.w;
+         //    blockY = tY - (int)(h/2);
+         //    break;
+         // case SOUTH:
+         //    blockX = tX - (int)(w/2);
+         //    blockY = tNY + HALFTILEW - h - 1 - 
+         //       level->locale->doorNS_left_inside_part1Clip.h;
+         //    break;
+         // case WEST:
+         //    blockX = tNX - HALFTILEW + w + 1 +
+         //       level->locale->doorE_part1Clip.w;
+         //    blockY = tY - (int)(h/2);
+         //    break;
+         // }
+
+         // blocks.push_back({blockX, blockY, true});
+      }
+
+      lastDir = dir;
+   }
+
+   blocks.push_back({dX - (int)(w / 2), dY - h, true});
+
+   if (DEBUG_MOVEMENT) {
+      printf("\nBlocks: %i", blocks.size());
+      for (int b = 0; b < blocks.size(); b++) {
+         printf("\n\t%i %i", blocks[b].x, blocks[b].y);
+      }
+
+      SDL_SetRenderDrawColor(gRenderer, 0, 0xFF, 0, 0xFF);
+      for (int i = 0; i < blocks.size(); i++) {
+         const SDL_Rect r = {
+            (int)(blocks[i].x - Camera::x),
+            (int)(blocks[i].y - Camera::y),
+            w,
+            h
+         };
+         SDL_RenderFillRect(gRenderer, &r);
+      }
+      SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+      SDL_RenderPresent(gRenderer);
+      cin.get();
+   }
+
+   if (pathNodes.size() > 0) pathNodes.clear();
+
+   int lastBlock = 0;
+   if (DEBUG_MOVEMENT) Log("Starting LoS pathing between blocks");
+   bool LoSPathing = true;
+   while (LoSPathing) {
+      int furthestLoSBlock = lastBlock;
+      for (int block = lastBlock + 1; block < blocks.size(); block++) {
+         int x2 = blocks[block].x;
+         int y2 = blocks[block].y;
+         if (level->HasLineOfSight(x1, y1, x2, y2) &&
+            level->HasLineOfSight(x1+w, y1, x2+w, y2) &&
+            level->HasLineOfSight(x1, y1+h, x2, y2+h) &&
+            level->HasLineOfSight(x1+w, y1+h, x2+w, y2+h)) {
+            furthestLoSBlock = block;
+            if (blocks[block].mustUse) break;
          } else break;
       }
 
-      printf("\nfurthestLoSPoint: %i to %i", lastNode, furthestLoSPoint);
-      pathNodes.insert(pathNodes.begin(), path[furthestLoSPoint]);
-      Log("Pushed");
-      if (furthestLoSPoint == path.size() - 1) donePathing = true;
+      pathNodes.insert(pathNodes.begin(), 
+         make_pair(blocks[furthestLoSBlock].x, blocks[furthestLoSBlock].y));
+      if (furthestLoSBlock == blocks.size() - 1) LoSPathing = false;
+      else if (furthestLoSBlock == lastBlock) LoSPathing = false;
       else {
-         lastNode = furthestLoSPoint;
-         x1 = path[lastNode].first;
-         y1 = path[lastNode].second;
-         Log("Next cycle");
+         lastBlock = furthestLoSBlock;
+         x1 = blocks[lastBlock].x;
+         y1 = blocks[lastBlock].y;
       }
    }
 
-   Log("HERE'S THE PATH");
-   printf("\nStarting pos: %i, %i", footX, footY);
-   for (int i = 0; i < pathNodes.size(); i++) {
-      printf("\n\tPath point %i: %i, %i", i, path[i].first, path[i].second);
-   }
+   if (DEBUG_MOVEMENT) { 
+      Log("HERE'S THE PATH");
+      printf("\nStarting pos: %i, %i", footX, footY);
+      for (int i = 0; i < pathNodes.size(); i++) {
+         printf("\n\tPath point %i: %i, %i", i, path[i].first, path[i].second);
+      }
 
-   SDL_SetRenderDrawColor(gRenderer, 0, 0, 0xFF, 0xFF);
-   for (int i = 0; i < pathNodes.size(); i++) {
-      const SDL_Rect r = {
-         (int)(pathNodes[i].first - Camera::x) - 4,
-         (int)(pathNodes[i].second - Camera::y) - 4,
-         9,
-         9
-      };
-      SDL_RenderFillRect(gRenderer, &r);
+      SDL_SetRenderDrawColor(gRenderer, 0, 0, 0xFF, 0xFF);
+      for (int i = 0; i < pathNodes.size(); i++) {
+         const SDL_Rect r = {
+            (int)(pathNodes[i].first - Camera::x),
+            (int)(pathNodes[i].second - Camera::y),
+            w,
+            h
+         };
+         SDL_RenderFillRect(gRenderer, &r);
+      }
+      SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+      SDL_RenderPresent(gRenderer);
+      cin.get();
    }
-   SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-   SDL_RenderPresent(gRenderer);
-   cin.get();
 
    // The path nodes have been set
    walkingPath = true;

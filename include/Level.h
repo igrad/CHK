@@ -15,6 +15,37 @@
 
 
 
+// Index of tile codes
+enum TILE_CODES {
+   T_VOID_UNUSED,
+   T_GROUND_UNUSED,
+   T_WALL_UNUSED,
+   T_INVIS_WALL_UNUSED,
+   T_VOID_RES,
+   T_GROUND_RES,
+   T_WALL_RES,
+   T_INVIS_WALL_RES,
+   T_VOID_FAKE,
+   T_GROUND_FAKE,
+   T_WALL_FAKE,
+   T_INVIS_WALL_FAKE,
+   T_UNUSED1,
+   T_UNUSED2,
+   T_UNUSED3,
+   T_UNUSED4,
+   T_DOOR
+};
+
+
+
+struct NavBlock {
+   int x;
+   int y;
+   bool mustUse;  // Even if this isn't the furthest block in LoS, it's used
+};
+
+
+
 class Room {
    public:
       Room();
