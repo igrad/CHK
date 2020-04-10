@@ -31,6 +31,7 @@ public:
    int cornerSize = 1;
    CORRIDOR_TYPE corridorType = CORRIDOR_CORNERS;
    int corridorSize = 1;
+   int corridorEarlyTurnVariance;
    int doorSize = 1;
    int doorPercentChance = 100;
    LTexture floorTexture;

@@ -10,7 +10,7 @@
 #include "MouseEvents.h"
 #include "UITheme.h"
 
-class Door: public Actor, public ClickRegion {
+class Door: public Actor, public ClickRegion, virtual public RenderedActor {
 public:
    Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
       int room, int frameW, int frameH, Locale* locale);

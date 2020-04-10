@@ -7,7 +7,6 @@
 #include "LTexture.h"
 #include "Collider.h"
 #include "Animation.h"
-#include "ActorY.h"
 
 
 // Actor with melee combat capabilities and some special abilities
@@ -47,8 +46,17 @@ enum PHASE_DOOR_ANIM {
    ANIM_BREAK_OUT
 };
 
-class ActorY;
 class Level;
+
+
+
+class RenderedActor: public Collider {
+public:
+   bool CheckRendering();
+   virtual void Render(int screenFrame);
+
+   bool isRendering;
+};
 
 
 
@@ -60,10 +68,11 @@ class Level;
 * on-screen. This class essentially just allows for easier maintenance of an
 * Animation object being rendered.
 */
-class Actor: public Collider {
+class Actor: virtual public RenderedActor {
 public:
    Actor();
-   Actor(int numAnims, int numTextures);
+   Actor(int numAnims, int numTextures, bool addToAllActors = true, 
+      bool unique = true);
 
    void SetHitBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
    void SetDrawBoxSize(int x = 0, int y = 0, int w = 0, int h = 0);
@@ -86,13 +95,15 @@ public:
    void PlotMovement(Level* level, double destX, double destY);
    void SetCurrentSpeed(int newSpeed);
 
-   void Render(int screenFrame);
+   virtual void Render(int screenFrame);
+   //void Render2(int screenFrame);
 
    void Free();
 
    ~Actor();
 
-   int allActorsIndex = 0;
+   int allActorsIndex;
+   bool unique;
 
    float zoom;
 
@@ -129,6 +140,12 @@ public:
 
    bool walkingPath;
    vector<pair<int,int>> pathNodes;
+
+   // Static
+   static void SortRenderingActorVector();
+   static void RemoveActor(Actor* actor);
+   static vector<RenderedActor*> allActors;
+   static vector<RenderedActor*> renderingActors;
 };
 
 #endif

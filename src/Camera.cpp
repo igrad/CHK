@@ -15,6 +15,15 @@ void Camera::Update() {
    Camera::y += ySpeed * updateY;
 }
 
+const SDL_Rect Camera::GetRect() {
+   return {
+      (int)x,
+      (int)y,
+      SCREEN_WIDTH,
+      SCREEN_HEIGHT
+   };
+}
+
 void Camera::SetXDirPos() {
    Camera::x += xSpeed * 1.0;
 }

@@ -106,6 +106,7 @@ void Locale::InitDungeon() {
    cornerSize = 1;
    corridorType = CORRIDOR_CORNERS;
    corridorSize = 1;
+   corridorEarlyTurnVariance = 5;
 
    doorSize = 1;
    doorPercentChance = 100;

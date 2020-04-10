@@ -47,12 +47,10 @@ public:
    double HPbonus, double HPRegenRate, int maxResource,
    double resourceBonus, double resourceRegenRate, int moveSpeed,
    int numAnims, int numTextures, float density, int packSize,
-   bool collides = true);
+   bool collides = true, bool unique = false);
 
    void SetAnimBPDefaults(int frames, float duration, int frameW, int frameH);
    void GenerateAnimsAndTextures();
-
-   void Create(vector<NPC>* NPCs);
 
    ~NPCBlueprint();
 
@@ -78,6 +76,7 @@ public:
    int packSize;
 
    bool collides;
+   bool unique;
 
    NPCAnim* animBPs;
 

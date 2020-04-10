@@ -6,7 +6,8 @@ NPC::NPC() {
 }
 
 NPC::NPC(NPCBlueprint* bp): Character(bp->charName, bp->techName, bp->level,
-   bp->maxHP, bp->moveSpeed, bp->numAnims, bp->numTextures, bp->collides) {
+   bp->maxHP, bp->moveSpeed, bp->numAnims, bp->numTextures, bp->collides, 
+   bp->unique) {
    this->drawBox = bp->drawBox;
    this->hitBox = bp->hitBox;
    this->role = bp->role;

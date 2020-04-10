@@ -1167,8 +1167,15 @@ bool Level::FindPath(int a, int b, int adir) {
 
       // Path candidates have been found, lets find the best match
       int selectedDir = -1;
-      if (candidates[lastDir]) selectedDir = lastDir;
-      else {
+
+      // If the last direction used is currently available, it's favorable to
+      // use that same direction. But, we want a small chance that it will turn
+      // before the last minute. This chance is determined in the locale and 
+      // used here.
+      if (candidates[lastDir] && 
+         ((rand() % 100) < locale->corridorEarlyTurnVariance)) {
+         selectedDir = lastDir;
+      } else {
          int candidatePick = rand() % numCandidates;
          int candidateCtr = 0;
          for (int i = 0; i < 4; i++) {
@@ -2516,10 +2523,6 @@ void Level::RenderWalls(int yO, int yF) {
 void Level::RenderDoors(int yO, int yF) {
    int yOT = (int) floor(yO/TILEW);
    int yFT = (yF == -1) ? (groundSize - 1) : ((int) floor(yF/TILEW));
-
-   if (yF == -1) {
-      yF = groundSize * TILEW;
-   }
 
    yO = yOT * TILEW;
    yF = yFT * TILEW;

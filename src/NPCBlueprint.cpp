@@ -10,8 +10,8 @@ NPCBlueprint::NPCBlueprint() {
 NPCBlueprint::NPCBlueprint(NPCROLE role, Faction* faction, int level,
    string charName, string techName, SDL_Rect drawBox, SDL_Rect hitBox,
    int maxHP, double HPbonus, double HPRegenRate, int maxResource,
-   double resourceBonus, double resourceRegenRate, int moveSpeed,
-   int numAnims, int numTextures, float density, int packSize, bool collides) {
+   double resourceBonus, double resourceRegenRate, int moveSpeed, int numAnims,
+   int numTextures, float density, int packSize, bool collides, bool unique) {
    this->role = role;
    this->faction = faction;
    this->level = level;
@@ -41,6 +41,7 @@ NPCBlueprint::NPCBlueprint(NPCROLE role, Faction* faction, int level,
    this->density = density;
    this->packSize = packSize;
    this->collides = collides;
+   this->unique = unique;
 
    animBPs = new NPCAnim[numAnims];
    anims = new Animation[numAnims];
@@ -80,10 +81,6 @@ void NPCBlueprint::GenerateAnimsAndTextures() {
    for (int iter = 0; iter < numTextures; iter++) {
       textures[iter].LoadFromFile(prefix + to_string(iter) + ".png");
    }
-}
-
-void NPCBlueprint::Create(vector<NPC>* NPCs) {
-   NPCs->push_back(NPC(this));
 }
 
 // Factions

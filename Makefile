@@ -24,3 +24,5 @@ OBJ_NAME = CHK.exe
 #This is the target that compiles our executable
 all : $(OBJS)
 	$(CC) $(OBJS) $(INCLUDE_PATHS) $(LIBRARY_PATHS) $(COMPILER_FLAGS) $(LINKER_FLAGS) -o $(OBJ_NAME)
+
+# g++ src/*.cpp -IC:\mingw_dev_lib\include\SDL2 -IC:\include -LC:\mingw_dev_lib\lib -std=c++14 -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -o CHK.exe

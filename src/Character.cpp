@@ -1,15 +1,13 @@
 #include "..\include\Character.h"
-#include "..\include\ActorY.h"
 
 int statCap = 8;
 
 Character::Character() {
-
 }
 
 Character::Character(string charName, string techName, int level, int HP,
-   int moveSpeed, int numAnims, int numTextures, bool collides):
-   Actor(numAnims, numTextures) {
+   int moveSpeed, int numAnims, int numTextures, bool collides, bool unique):
+   Actor(numAnims, numTextures, true, unique) {
    charLevel = level;
    collisionEnabled = collides;
    this->moveSpeed = moveSpeed;
@@ -23,10 +21,6 @@ Character::Character(string charName, string techName, int level, int HP,
    maxVelocity = pixelsPerFrame * 2;
 
    stats = new int[6];
-
-   ActorY ay;
-   ay.NewCharacter(this);
-   ActorY::PushActor(ay);
 }
 
 void Character::LoadDefaultArt(string name) {
@@ -124,16 +118,16 @@ void Character::Render(int screenFrame) {
    Actor::Render(screenFrame);
 
    // Render the path being walked
-   if (walkingPath) {
-      for (int point = 0; point < pathNodes.size(); point++) {
-         const SDL_Rect r = {
-            (int)(pathNodes[point].first - Camera::x) - 3,
-            (int)(pathNodes[point].second - Camera::y) - 3,
-            7,
-            7};
-         SDL_RenderFillRect(gRenderer, &r);
-      }
-   }
+   // if (walkingPath) {
+   //    for (int point = 0; point < pathNodes.size(); point++) {
+   //       const SDL_Rect r = {
+   //          (int)(pathNodes[point].first - Camera::x) - 3,
+   //          (int)(pathNodes[point].second - Camera::y) - 3,
+   //          7,
+   //          7};
+   //       SDL_RenderFillRect(gRenderer, &r);
+   //    }
+   // }
 }
 
 void Character::Free() {

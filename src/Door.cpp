@@ -1,7 +1,7 @@
 #include "..\include\Door.h"
 
 Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
-   int room, int frameW, int frameH, Locale* locale): Actor(6, 4) {
+   int room, int frameW, int frameH, Locale* locale): Actor(6, 4, false) {
    char buf[6];
    snprintf(buf, 6, "%2i%2i", gridX, gridY);
    id = buf;
@@ -242,6 +242,14 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    door.hitBox.x += (gridX * tileW);
    door.hitBox.y += (gridY * tileW);
 
+   // Set the hitbox so that Collider functions work on doors
+   hitBoxXOffset = 0;
+   hitBoxYOffset = part1.hitBox.y;
+   hitBox.x = (int)xPos;
+   hitBox.y = (int)yPos + hitBoxYOffset;
+   hitBox.w = tileW;
+   hitBox.h = part1.hitBox.h;
+
    // Set the mouseHandler parameters
    clickRect = {
       gridX * tileW,
@@ -254,7 +262,8 @@ Door::Door(int gridX, int gridY, int gridW, int gridH, int direction, bool hand,
    linkedDM = dropmenu;
 
    // Add to Actors vector
-   // ActorY::PushActor(this);
+   // allActorsIndex = allActors.size();
+   // Actor::allActors.push_back(this);
 }
 
 void Door::SetHitbox(SDL_Rect* p1, SDL_Rect* p2, SDL_Rect* d) {

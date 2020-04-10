@@ -14,6 +14,7 @@ enum FOCUSMODE {
 class Camera {
    public:
       static void Update();
+      const static SDL_Rect GetRect();
       static void SetXDirPos();
       static void SetXDirNeg();
       static void SetYDirPos();

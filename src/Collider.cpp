@@ -6,6 +6,9 @@ Collider::Collider() {
 
    xPos = 0;
    yPos = 0;
+
+   hitBoxXOffset = 0;
+   hitBoxYOffset = 0;
 }
 
 Collider* Collider::operator=(const Collider* o) {
@@ -28,23 +31,23 @@ SDL_Rect* Collider::GetDrawBox() {
 }
 
 void Collider::GetFoot(double* x, double* y) {
-   *x = xPos + hitBoxXOffset + hitBox.w/2;
-   *y = yPos + hitBoxYOffset + hitBox.h;
+   if (x != NULL) *x = xPos + hitBoxXOffset + hitBox.w/2;
+   if (y != NULL) *y = yPos + hitBoxYOffset + hitBox.h;
 }
 
 void Collider::GetFoot(int* x, int* y) {
-   *x = (int)(xPos + hitBoxXOffset + hitBox.w/2);
-   *y = (int)(yPos + hitBoxYOffset + hitBox.h);
+   if (x != NULL) *x = (int)(xPos + hitBoxXOffset + hitBox.w/2);
+   if (y != NULL) *y = (int)(yPos + hitBoxYOffset + hitBox.h);
 }
 
 void Collider::GetCoM(double* x, double* y) {
-   *x = xPos + max(hitBox.w, drawBox.w)/2;
-   *y = yPos + max(hitBox.h, drawBox.h)/2;
+   if (x != NULL) *x = xPos + drawBox.w/2.f;
+   if (y != NULL) *y = yPos + drawBox.w/2.f;
 }
 
 void Collider::GetCoM(int* x, int* y) {
-   *x = (int)(xPos + max(hitBox.w, drawBox.w)/2);
-   *y = (int)(yPos + max(hitBox.h, drawBox.h)/2);
+   if (x != NULL) *x = (int)(xPos + drawBox.w/2.f);
+   if (y != NULL) *y = (int)(yPos + drawBox.w/2.f);
 }
 
 void Collider::SetXPos(double x) {

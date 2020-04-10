@@ -16,11 +16,12 @@ struct Resource {
    int base;
 };
 
-class Character: public Actor {
+class Character: public Actor, virtual public RenderedActor {
    public:
       Character();
       Character(string charName, string techName, int level, int maxHP,
-         int moveSpeed, int numAnims, int numTextures, bool collides = true);
+         int moveSpeed, int numAnims, int numTextures, bool collides = true, 
+         bool unique = true);
 
       void LoadDefaultArt(string name);
       int GetStat(STATNAME stat);
@@ -31,7 +32,7 @@ class Character: public Actor {
       void SetSpawnPoint(SDL_Rect r);
       void SetPosition(double newX, double newY);
 
-      void Render(int screenFrame);
+      void Render(int screenFrame) override;
 
       void Free();
 

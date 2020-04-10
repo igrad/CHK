@@ -20,7 +20,6 @@
 #include "..\include\Character.h"
 #include "..\include\NPCBlueprint.h"
 #include "..\include\NPC.h"
-#include "..\include\ActorY.h"
 
 #include "..\include\Locale.h"
 #include "..\include\Level.h"
@@ -76,6 +75,7 @@ LTexture gTexture;
 Character player("player", "player", 1, 10, 15, 16, 0);
 
 
+
 // Declare all locales
 Locale dungeon;
 
@@ -83,7 +83,7 @@ Locale dungeon;
 
 // Active NPC blueprints
 vector<NPCBlueprint*> activeNPCTypes;
-vector<NPC> activeNPCs;
+vector<NPC*> activeNPCs;
 
 
 
@@ -218,6 +218,7 @@ bool LoadMedia() {
 
 
 
+// Load enemy profiles from storage
 void LoadEnemies(Locale* locale) {
 	// Eventually, the locale will determine which enemies are initialized and
 	// loaded in. As this function is called repeatedly throughout runtime,
@@ -237,16 +238,19 @@ void LoadEnemies(Locale* locale) {
 
 
 
+// Instantiate and place NPCs throughout the level
 void SpawnEnemies(Level* level) {
 	// Iterate through each of the rooms and determine if there's a faction or
 	// NPC-specific point of interest within that room, such as a goblin statue
 	// or an orc grub hall
 
 	int gx, gy, x, y;
-	NPC* npc;
+	
 	for (int room = 1; room < level->roomCount; room++) {
-		for (auto NPCBP = activeNPCTypes.begin();
-			NPCBP < activeNPCTypes.end(); NPCBP++) {
+		printf("\nSpawning one of each type of enemy in room %i", room);
+		for (int iter = 0; iter < activeNPCTypes.size(); iter++) {
+			Log("Spawning new NPC");
+
 			// For now, we spawn one of each NPC in each room
 			gx = level->rooms[room].x + 1 +
 				(rand() % (level->rooms[room].w - 2));
@@ -255,12 +259,14 @@ void SpawnEnemies(Level* level) {
 		   x = gx * PIXELSPERFEET * 5 * GZOOM;
 		   y = gy * PIXELSPERFEET * 5 * GZOOM;
 
-			// Create the NPC from this blueprint
-			(*NPCBP)->Create(&activeNPCs);
+			// Create the NPC from this blueprint 
+			NPC* npc = new NPC(activeNPCTypes[iter]);
 
 			// Set the NPCs position and other properties
-			npc = &(activeNPCs.back());
 			npc->SetPos(x, y);
+
+			// Add to activeNPCs
+			activeNPCs.push_back(npc);
 		}
 	}
 }
@@ -269,6 +275,11 @@ void SpawnEnemies(Level* level) {
 
 // Frees media and shuts down SDL
 void Close() {
+	// Delete loaded NPCs
+	for (int iter = activeNPCs.size() - 1; iter >= 0; iter--) {
+		delete activeNPCs[iter];
+	}
+
    // Free loaded images
    gTexture.Free();
 	//myDummy.Free();
@@ -289,18 +300,15 @@ void Close() {
 
 
 
+// Main thread
 int main(int argc, char* args[]) {
    // Start up SDL and create window
 	Log("Initializing");
-	if (!Init()) {
-		Fatal("Failed to initialize!");
-	}
+	if (!Init()) Fatal("Failed to initialize!");
 	else {
 		// Load media
 		Log("Loading media");
-		if (!LoadMedia()) {
-			Fatal("Failed to load media!");
-		}
+		if (!LoadMedia()) Fatal("Failed to load media!");
 		else {
 			// Select the locale
 			Locale* currentLocale = &dungeon;
@@ -313,10 +321,15 @@ int main(int argc, char* args[]) {
 			randomLevel.GenerateLevel();
 			randomLevel.WriteOutWholeLevel();
 
+			// Initialize the player within the level
+			player.allActorsIndex = Actor::allActors.size();
+			Actor::allActors.push_back(&player);
 			player.SetSpawnPoint(randomLevel.GetPlayerSpawn());
 			Camera::SetFocusOnActor(&player);
 
-			//SpawnEnemies(&randomLevel);
+			Log("Spawning enemies");
+			SpawnEnemies(&randomLevel);
+			Log("Spawned enemies successfully");
 
          // Main loop flag
          bool quit = false;
@@ -534,6 +547,8 @@ int main(int argc, char* args[]) {
 				hoveredCRs = ClickRegion::GetRegionsAtMouse(gmx, gmy);
 				hoveredDMs = DropMenu::GetDMsAtMouse(gmx, gmy);
 
+				Actor::renderingActors.clear();
+
 				// Update cursor
 
 
@@ -661,26 +676,24 @@ int main(int argc, char* args[]) {
 
 				// Handle collisions
 				// First, players
-				if (player.queueCollisions) {
-					// Check collisions with other characters, and then walls
-					CheckWallCollisions(&player, &randomLevel.walls);
-					for (int i = 0; i < (&randomLevel.doors)->size(); i++) {
-						CheckDoorCollisions(&player, &randomLevel.doors[i]->part1);
-						CheckDoorCollisions(&player, &randomLevel.doors[i]->door);
-						CheckDoorCollisions(&player, &randomLevel.doors[i]->part2);
-					}
-				}
+				// if (player.queueCollisions) {
+				// 	// Check collisions with other characters, and then walls
+				// 	CheckWallCollisions(&player, &randomLevel.walls);
+				// 	for (int i = 0; i < (&randomLevel.doors)->size(); i++) {
+				// 		CheckDoorCollisions(&player, &randomLevel.doors[i]->part1);
+				// 		CheckDoorCollisions(&player, &randomLevel.doors[i]->door);
+				// 		CheckDoorCollisions(&player, &randomLevel.doors[i]->part2);
+				// 	}
+				// }
 
 				// Next, other characters
 				// Finally, items
 				// Next, projectiles
 
-            // Clear screen
-            SDL_RenderClear(gRenderer);
+				// Clear screen
+				SDL_RenderClear(gRenderer);
 
 				int screenFrame = countedFrames%SCREEN_FPS;
-            // Render texture to screen
-				gTexture.Render(&SCREEN_RECT);
 
 				if (Camera::focusMode == FOCUS_PLAYER) {
 					Camera::SetFocusOnActor(&player);
@@ -702,43 +715,54 @@ int main(int argc, char* args[]) {
 				// We iterate through this vector, and get the Y tile of the
 				// current actor so that we can chop up the walls
 
-				int currentY = 0;
-				int actorY = 0;
+				// First, check through all actors and see which ones are rendering
+				for (int ai = 0; ai < Actor::allActors.size(); ai++) {
+					if (Actor::allActors[ai]->CheckRendering()) {
+						Actor::renderingActors.push_back(Actor::allActors[ai]);
+					}
+				}
+
+				// Old code for rendering walls and Characters
+				// randomLevel.RenderWalls(currentY,
+				// 	player.hitBox.y + player.hitBox.h);
+				// randomLevel.RenderDoors(currentY,
+				// 	player.hitBox.y + player.hitBox.h);
+				
+				// currentY = player.hitBox.y + player.hitBox.h;
+				
+				// Render players
+				// player.Render(screenFrame);
+				
+				// Render NPCs
+				// for (auto npc = activeNPCs.begin(); npc < activeNPCs.end(); npc++) {
+				// 	(*npc).Render(screenFrame);
+				// }
+
+				// Render walls and actors
+				// TEST SECTION 2
+				int currentY = Camera::y;
 
 				randomLevel.RenderFloor();
 
-				// Old code for rendering walls and Characters
-				randomLevel.RenderWalls(currentY,
-					player.hitBox.y + player.hitBox.h);
-				randomLevel.RenderDoors(currentY,
-					player.hitBox.y + player.hitBox.h);
-				
-				currentY = player.hitBox.y + player.hitBox.h;
-				
-				// Render players
-				player.Render(screenFrame);
-				
-				// Render NPCs
-				for (auto npc = activeNPCs.begin(); npc < activeNPCs.end(); npc++) {
-					(*npc).Render(screenFrame);
+				Actor::SortRenderingActorVector();
+
+				for (int iter = 0; iter < Actor::renderingActors.size(); iter++) {
+					RenderedActor* actor = Actor::renderingActors[iter];
+					int newY;// = (int)actor->yPos + actor->hitBoxYOffset + 
+					// actor->hitBox.h;
+					actor->GetFoot(NULL, &newY);
+					randomLevel.RenderWalls(currentY, newY);
+					randomLevel.RenderDoors(currentY, newY);
+
+					actor->Render(screenFrame);
+					
+					currentY = newY;
 				}
 
-				// Render walls and actors
-				// TEST SECTION
-				// for (int actor = 0; actor < ActorY::allActors.size(); actor++) {
-				// 	actorY = ActorY::allActors[actor].GetYBase();
-				// 	randomLevel.RenderWalls(currentY, actorY);
-				// 	// randomLevel.RenderDoors(currentY, actorY);
-
-				// 	// printf("\nRendering actor %i", actor);
-				// 	ActorY::allActors[actor].Render(screenFrame);
-
-				// 	currentY = actorY;
-				// }
-				// END TEST SECTION
-
-				randomLevel.RenderWalls(currentY, -1);
-				randomLevel.RenderDoors(currentY, -1);
+				// TODO: This cameraHeight isn't high enough - it's clipping the very bottom of the screen.
+				int cameraHeight = Camera::GetRect().h;
+				randomLevel.RenderWalls(currentY, Camera::y + cameraHeight);
+				randomLevel.RenderDoors(currentY, Camera::y + cameraHeight);
 
 				// Render UI
 				for (auto d : randomLevel.doors) {
@@ -765,8 +789,8 @@ int main(int argc, char* args[]) {
 				debugTCursorPos.Render(&debugTCursorPosRect);
 				debugPlayerPos.Render(&debugPlayerPosRect);
 
-            // Update screen
-            SDL_RenderPresent(gRenderer);
+				// Update screen
+				SDL_RenderPresent(gRenderer);
 
 				++countedFrames;
 
@@ -776,7 +800,7 @@ int main(int argc, char* args[]) {
 					// Wait for the remaining time
 					SDL_Delay(SCREEN_TICKS_PER_FRAME - frameTicks);
 				}
-         }
+			}
 		}
 	}
 

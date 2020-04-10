@@ -9,12 +9,32 @@
 // characters (i.e. players or NPCs), but more for dynamic props within the
 // environment (like a box).
 
+vector<RenderedActor*> Actor::allActors;
+vector<RenderedActor*> Actor::renderingActors;
+
+bool RenderedActor::CheckRendering() {
+   drawBox.x = (xPos - Camera::x);
+   drawBox.y = (yPos - Camera::y);
+   
+   SDL_Rect r = {(int)xPos, (int)yPos, drawBox.w, drawBox.h};
+   SDL_Rect camRect = Camera::GetRect();
+   isRendering = IsRectCollision(&r, &camRect);
+
+   return isRendering;
+}
+
+void RenderedActor::Render(int screenFrame) {
+
+}
+
+
+
 // Default constructor
 Actor::Actor() {
 
 }
 
-Actor::Actor(int numAnims, int numTextures) {
+Actor::Actor(int numAnims, int numTextures, bool addToAllActors, bool unique) {
    zoom = GZOOM;
 
    hasAnimations = (numAnims > 0);
@@ -42,9 +62,12 @@ Actor::Actor(int numAnims, int numTextures) {
 
    SetDrawBoxSize(0, 0, 40, 80);
 
-   ActorY ay;
-   ay.NewActor(this);
-   if (allActorsIndex == 0) ActorY::PushActor(ay);
+   if (addToAllActors) {
+      allActorsIndex = allActors.size();
+      allActors.push_back(this);
+   }
+
+   this->unique = unique;
 }
 
 // Set hitBox dimensions
@@ -145,7 +168,12 @@ void Actor::HandleMovement(Level* level) {
    hitBox.y = (int)yPos + hitBoxYOffset;
 
    if (walkingPath) {
-      MoveTowards(pathNodes.back().first, pathNodes.back().second, currentSpeed);
+      // Handle displacement
+      MoveTowards(pathNodes.back().first, pathNodes.back().second, 
+         currentSpeed);
+
+      // Handle static collisions
+      CheckWallCollisions(this, &level->walls);
    }
 }
 
@@ -452,16 +480,18 @@ void Actor::SetCurrentSpeed(int newSpeed) {
 }
 
 // Render the actor to the screen
+// Make sure that CheckRendering is always called before Render is called
 void Actor::Render(int screenFrame) {
    drawBox.x = (xPos - Camera::x);
    drawBox.y = (yPos - Camera::y);
 
    bool animDone = false;
+
    if (usingAnims) {
       animDone = anims[activeAnim].animDone;
-      anims[activeAnim].Render(GetDrawBox(), screenFrame);
+      if (isRendering) anims[activeAnim].Render(GetDrawBox(), screenFrame);
    } else {
-      textures[activeTexture].Render(GetDrawBox());
+      if (isRendering) textures[activeTexture].Render(GetDrawBox());
    }
 
    // Check for buffered animations/textures queued up
@@ -478,19 +508,57 @@ void Actor::Render(int screenFrame) {
    queueCollisions = false;
 }
 
+// Sort a vector of actor references
+void Actor::SortRenderingActorVector() {
+   int actorY, nextY;
+   bool sorting = true;
+   bool swapped;
+   RenderedActor* actor;
+   while (sorting) {
+      swapped = false;
+
+      for (int iter = 0; iter < renderingActors.size() - 1; iter++) {
+         actor = renderingActors[iter];
+
+         actor->GetFoot(NULL, &actorY);
+         (renderingActors[iter+1])->GetFoot(NULL, &nextY);
+
+         if (actorY > nextY) {
+            renderingActors[iter] = renderingActors[iter+1];
+            renderingActors[iter+1] = actor;
+
+            swapped = true;
+         }
+      }
+
+      if (!swapped) sorting = false;
+   }
+}
+
+void Actor::RemoveActor(Actor* actor) {
+   for (int iter = 0; iter < allActors.size(); iter++) {
+      if (allActors[iter] == actor) {
+         allActors.erase(allActors.begin() + iter);
+         return;
+      }
+   }
+}
+
 // Destroy the actor and free memory
 void Actor::Free() {
-   if (animsAllocated && anims != NULL) {
-      delete[] anims;
-      animsAllocated = false;
+   if (unique) {
+      if (animsAllocated && anims != NULL) {
+         delete[] anims;
+         animsAllocated = false;
+      }
+
+      if (texturesAllocated && textures != NULL) {
+         delete[] textures;
+         texturesAllocated = false;
+      }
    }
 
-   if (texturesAllocated && textures != NULL) {
-      delete[] textures;
-      texturesAllocated = false;
-   }
-
-   ActorY::PopActor(allActorsIndex);
+   RemoveActor(this);
 }
 
 // Deconstructor

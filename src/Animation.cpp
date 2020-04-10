@@ -215,7 +215,7 @@ void Animation::Render(SDL_Rect* drawBox, int screenFrame) {
 
 // Destructor
 Animation::~Animation() {
-   if (frameClipsAllocated && frameClips != NULL) {
+   if (frameClipsAllocated && frameClips) {
       delete[] frameClips;
       frameClipsAllocated = false;
       Free();
