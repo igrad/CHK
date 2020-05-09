@@ -88,7 +88,7 @@ Faction F_goblins {1, "Goblins"};
 
 // NPC Blueprints
 SDL_Rect drawBox = {0, 0, 26, 40};
-SDL_Rect hitBox = {8, 0, 10, 6};
+SDL_Rect hitBox = {8, 34, 10, 6};
 NPCBlueprint BP_goblinGuard(
    GUARD, &F_goblins,   // Role and faction
    1,                   // Level
