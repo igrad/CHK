@@ -17,6 +17,9 @@ Collider* Collider::operator=(const Collider* o) {
       yPos = o->yPos;
       hitBox = o->hitBox;
       drawBox = o->drawBox;
+
+      hitBoxXOffset = o->hitBoxXOffset;
+      hitBoxYOffset = o->hitBoxYOffset;
    }
 
    return this;
