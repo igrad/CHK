@@ -7,3 +7,13 @@ Concept*
 *.pdn
 .vscode
 *.code-workspace
+*.obj
+*.tlog
+*.pdb
+*.log
+*.idb
+*.ipch
+.vs
+CHK.sln
+CHK.vcxproj*
+CppProperties.json
